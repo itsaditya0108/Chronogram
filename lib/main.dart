@@ -1,6 +1,8 @@
 import 'package:chronogram/login/login_provider/login_screen_provider.dart';
 import 'package:chronogram/login/login_screen/login_screen.dart';
 import 'package:chronogram/sign_up/sign_up_provider/sign_up_provider.dart';
+import 'package:chronogram/sign_up/sign_up_screen/sign_up_screen.dart';
+import 'package:chronogram/splash_screen/splash_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -14,7 +16,7 @@ class MyApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_)=>LoginScreenProvider()),
-        ChangeNotifierProvider(create: (_)=>SignUpScreenProvider())
+       ChangeNotifierProvider(create: (_)=>SignUpScreenProvider())
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
@@ -24,6 +26,8 @@ class MyApp extends StatelessWidget {
           colorScheme: .fromSeed(seedColor: Colors.deepPurple),
         ),
         home: LoginScreen()
+             // SignUpScreen()
+            
       ),
     );
   }

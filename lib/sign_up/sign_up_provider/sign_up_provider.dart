@@ -1,71 +1,41 @@
 import 'package:flutter/material.dart';
 
 class SignUpScreenProvider extends ChangeNotifier {
-  TextEditingController emailController = TextEditingController();
-  TextEditingController passwordController = TextEditingController();
+  TextEditingController mobileController = TextEditingController();
+  String? mobileError;
+  TextEditingController otpController = TextEditingController();
+  String? otpError;
 
-  //// List For DynamicFiles
-  List<Map<String, dynamic>> get signUpScreenList => [
-    {
-      'title': 'Email',
-      'controller': emailController,
-      'icon': Icon(Icons.email),
-    },
-    {
-      'title': 'Password',
-      'controller': passwordController,
-      'icon': Icon(Icons.lock),
-    },
-  ];
-
-  ////LiginScreen Validator Function
-
-  String? signUpScreenValidator(String title, String? value) {
-  if (value == null || value.trim().isEmpty) {
-    return '$title is required';
+  bool validateMobile() {
+    String value = mobileController.text.trim();
+    if (value.isEmpty) {
+      mobileError = "Mobile number is required";
+    } else if (!RegExp(r'^[0-9]+$').hasMatch(value)) {
+      mobileError = "Only digits allowed";
+    } else if (!RegExp(r'^6\d{0,9}$').hasMatch(value)) {
+      // 6 se start aur max 10 digit
+      mobileError = "Please enter a valid mobile number";
+    } else if (value.length != 10) {
+      mobileError = "Mobile number must be 10 digits";
+    } else {
+      mobileError = null;
+    }
+    notifyListeners();
+    return mobileError == null;
   }
 
-  final input = value.trim();
-
-  /// EMAIL VALIDATION
-  if (title == 'Email') {
-    final emailRegex = RegExp(
-        r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
-
-    if (!emailRegex.hasMatch(input)) {
-      return "Enter valid email";
+  bool validateOtp() {
+    String value = otpController.text.trim();
+    if (value.isEmpty) {
+      otpError = 'Please enter OTP';
+    } else if (!RegExp(r'^[0=9]+$').hasMatch(value)) {
+      otpError = 'OTP must be ditits only';
+    } else if (value.length != 6) {
+      otpError = 'OTP must be 6 digits';
+    } else {
+      otpError = null;
     }
+    notifyListeners();
+    return otpError == null;
   }
-
-  /// MOBILE VALIDATION (INDIA)
-  if (title == 'Mobile') {
-    final mobileRegex = RegExp(r'^[6-9]\d{9}$');
-
-    if (!mobileRegex.hasMatch(input)) {
-      return "Enter valid mobile number";
-    }
-  }
-
-  /// PASSWORD VALIDATION
-  if (title == 'Password') {
-    if (input.length < 8) {
-      return "Password must be at least 8 characters";
-    }
-
-    if (!RegExp(r'[A-Z]').hasMatch(input)) {
-      return "Include at least 1 capital letter";
-    }
-
-    if (!RegExp(r'[0-9]').hasMatch(input)) {
-      return "Include at least 1 number";
-    }
-
-    if (!RegExp(r'[!@#\$&*~]').hasMatch(input)) {
-      return "Include at least 1 special character";
-    }
-  }
-
-  return null;
-}
-
 }

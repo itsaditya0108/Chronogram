@@ -37,6 +37,8 @@ dependencies:
   flutter_svg: ^2.2.3
   provider: ^6.1.5+1
   flutter_otp_text_field: ^1.5.1+1
+  video_player: ^2.10.1
+  http: ^1.6.0
 
 dev_dependencies:
   flutter_test:
@@ -64,8 +66,8 @@ flutter:
   assets:
   - assets/svg/
   - assets/images/
-  
 
+  
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
 

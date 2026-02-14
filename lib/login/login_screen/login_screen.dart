@@ -1,6 +1,7 @@
+import 'package:chronogram/home_screen/home_screen.dart';
 import 'package:chronogram/login/login_helper/aseet_helper.dart';
 import 'package:chronogram/login/login_provider/login_screen_provider.dart';
-import 'package:chronogram/sign_up/sign_up_screen.dart';
+import 'package:chronogram/sign_up/sign_up_screen/sign_up_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/svg.dart';
@@ -30,7 +31,7 @@ class _LoginScreenState extends State<LoginScreen> {
           width: double.maxFinite,
           decoration: BoxDecoration(
             image: DecorationImage(
-              image: AssetImage(LoginScreenImage.loginBg),
+              image: AssetImage(ScreenImage.loginBg),
               fit: BoxFit.cover,
             ),
           ),
@@ -67,18 +68,16 @@ class _LoginScreenState extends State<LoginScreen> {
                               ClipRRect(
                                 borderRadius: BorderRadiusGeometry.circular(15),
                                 child: Image.asset(
-                                  'assets/images/chronogram_logo.jpg',
-                                  height: 40,
-                                  fit: BoxFit.cover,
-                                  width: 50,
+                                  ScreenImage.allLogoBr,
+                                  height: 120,
                                 ),
                               ),
                               SizedBox(height: 5),
                               Text(
-                                'Login',
+                                'Chronogram',
                                 style: TextStyle(
                                   color: Colors.black,
-                                  fontSize: 20,
+                                  fontSize: 27,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
@@ -87,7 +86,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 'Enter your email and password to log in',
                                 style: TextStyle(
                                   color: Colors.black54,
-                                  fontSize: 12,
+                                  fontSize: 14,
                                 ),
                               ),
                               ListView.separated(
@@ -122,20 +121,34 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ),
                               ),
                               SizedBox(height: 20),
-                              Container(
-                                width: double.infinity,
-                                decoration: BoxDecoration(
-                                  color: Color(0XFF1D61E7),
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: Padding(
-                                  padding: const EdgeInsets.all(16.0),
-                                  child: Center(
-                                    child: Text(
-                                      'Login',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.white,
+                              InkWell(
+                                onTap: () {
+                                  if (_formKey.currentState!.validate()) {
+                                    loginScreenProviver.clearLogin();
+                                    // Validation success
+                                    Navigator.pushReplacement(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => HomeScreen(),
+                                      ),
+                                    );
+                                  }
+                                },
+                                child: Container(
+                                  width: double.infinity,
+                                  decoration: BoxDecoration(
+                                    color: Color(0XFF1D61E7),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(16.0),
+                                    child: Center(
+                                      child: Text(
+                                        'Login',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.white,
+                                        ),
                                       ),
                                     ),
                                   ),
@@ -201,8 +214,9 @@ class _LoginScreenState extends State<LoginScreen> {
     );
     return TextFormField(
       controller: controller,
+      autovalidateMode: AutovalidateMode.onUserInteraction,
       validator: (value) {
-        return loginScreenProvider.loginScreenValidator(title, value);
+        return loginScreenProvider.loginValidator(title, value);
       },
       decoration: InputDecoration(
         hintText: title,

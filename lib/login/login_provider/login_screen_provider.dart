@@ -1,72 +1,128 @@
 import 'package:flutter/material.dart';
 
 class LoginScreenProvider extends ChangeNotifier {
-  TextEditingController emailController = TextEditingController();
-  TextEditingController passwordController = TextEditingController();
 
-  //// List For DynamicFiles
+  final TextEditingController emailController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
 
+  /// Dynamic Fields List
   List<Map<String, dynamic>> get loginScreenList => [
-    {
-      'title': 'Email',
-      'controller': emailController,
-      'icon': Icon(Icons.email),
-    },
-    {
-      'title': 'Password',
-      'controller': passwordController,
-      'icon': Icon(Icons.lock),
-    },
-  ];
+    
+        {
+          'title': 'Email',
+          'controller': emailController,
+          'icon': const Icon(Icons.email_outlined),
+        },
+        {
+          'title': 'Password',
+          'controller': passwordController,
+          'icon': const Icon(Icons.lock_outline),
+        },
+      ];
 
-  ////LiginScreen Validator Function
-
-  String? loginScreenValidator(String title, String? value) {
+  // ==============================
+  // 🔥 COMPANY LEVEL VALIDATOR
+  // ==============================
+  String? loginValidator(String field, String? value) {
   if (value == null || value.trim().isEmpty) {
-    return '$title is required';
+    return "Please enter $field";
   }
 
   final input = value.trim();
 
-  /// EMAIL VALIDATION
-  if (title == 'Email') {
+  // ================= EMAIL VALIDATION =================
+  if (field == "Email") {
+
+    // only small letters + number + @gmail.com
     final emailRegex = RegExp(
-        r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+      r'^[a-z0-9]+[a-z0-9]*@gmail\.com$',
+    );
+
+    if (RegExp(r'[A-Z]').hasMatch(input)) {
+      return "Capital letters not allowed";
+    }
 
     if (!emailRegex.hasMatch(input)) {
-      return "Enter valid email";
+      return "Enter valid gmail (example: abcd123@gmail.com)";
     }
+
+    if (!input.endsWith("@gmail.com")) {
+      return "Email must end with @gmail.com";
+    }
+
   }
 
-  /// MOBILE VALIDATION (INDIA)
-  if (title == 'Mobile') {
-    final mobileRegex = RegExp(r'^[6-9]\d{9}$');
+  // ================= PASSWORD VALIDATION =================
+  if (field == "Password") {
 
-    if (!mobileRegex.hasMatch(input)) {
-      return "Enter valid mobile number";
-    }
-  }
-
-  /// PASSWORD VALIDATION
-  if (title == 'Password') {
-    if (input.length < 8) {
-      return "Password must be at least 8 characters";
+    if (input.length > 25) {
+      return "Password max 25 characters only";
     }
 
-    if (!RegExp(r'[A-Z]').hasMatch(input)) {
-      return "Include at least 1 capital letter";
-    }
+    final passwordRegex = RegExp(
+      r'^(?=.*[A-Z])(?=.*[a-z])(?=.*[@#\$&*])(?=.*[0-9])[A-Za-z0-9@#\$&*]{5,25}$',
+    );
 
-    if (!RegExp(r'[0-9]').hasMatch(input)) {
-      return "Include at least 1 number";
-    }
-
-    if (!RegExp(r'[!@#\$&*~]').hasMatch(input)) {
-      return "Include at least 1 special character";
+    if (!passwordRegex.hasMatch(input)) {
+      return "Password like Abcd#123 required";
     }
   }
 
   return null;
 }
 
+  // ================= EMAIL VALIDATOR =================
+  String? _emailValidator(String email) {
+
+    final emailRegex = RegExp(
+      r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]+$",
+    );
+
+    if (!emailRegex.hasMatch(email)) {
+      return "Please enter a valid email address";
+    }
+
+    return null;
+  }
+
+  // ================= PASSWORD VALIDATOR =================
+  String? _passwordValidator(String password) {
+
+    if (password.length < 8) {
+      return "Password must be at least 8 characters";
+    }
+
+    if (!RegExp(r'[A-Z]').hasMatch(password)) {
+      return "Include at least 1 uppercase letter";
+    }
+
+    if (!RegExp(r'[a-z]').hasMatch(password)) {
+      return "Include at least 1 lowercase letter";
+    }
+
+    if (!RegExp(r'[0-9]').hasMatch(password)) {
+      return "Include at least 1 number";
+    }
+
+    if (!RegExp(r'[!@#\$%^&*(),.?":{}|<>]').hasMatch(password)) {
+      return "Include at least 1 special character";
+    }
+
+    return null;
+  }
+
+  // ================= GET LOGIN DATA =================
+  Map<String, String> getLoginData() {
+    return {
+      "email": emailController.text.trim(),
+      "password": passwordController.text.trim(),
+    };
+  }
+
+  // ================= CLEAR =================
+  void clearLogin() {
+    emailController.clear();
+    passwordController.clear();
+    notifyListeners();
+  }
 }
