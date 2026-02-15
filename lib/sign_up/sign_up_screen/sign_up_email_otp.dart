@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:chronogram/home_screen/home_screen.dart';
 import 'package:chronogram/login/login_helper/aseet_helper.dart';
 import 'package:chronogram/login/login_provider/login_screen_provider.dart';
@@ -16,6 +18,11 @@ class SignUpEmailOtpScreen extends StatefulWidget {
 }
 
 class _SignUpEmailOtpScreenState extends State<SignUpEmailOtpScreen> {
+  List<TextEditingController> otpControllers = List.generate(
+    6,
+    (index) => TextEditingController(),
+  );
+
   final _formKey = GlobalKey<FormState>();
   @override
   Widget build(BuildContext context) {
@@ -59,6 +66,8 @@ class _SignUpEmailOtpScreenState extends State<SignUpEmailOtpScreen> {
                                 return SizedBox(
                                   width: 45,
                                   child: TextFormField(
+                                    controller:
+                                        otpControllers[index], //// important line
                                     keyboardType: TextInputType.number,
                                     textAlign: TextAlign.center,
                                     maxLength: 1,
@@ -101,7 +110,20 @@ class _SignUpEmailOtpScreenState extends State<SignUpEmailOtpScreen> {
                             SizedBox(height: 30),
                             InkWell(
                               onTap: () {
-                                  Navigator.push(context, MaterialPageRoute(builder:(context) => HomeScreen(),));
+                                String otp = otpControllers
+                                    .map((e) => e.text)
+                                    .join(); /////
+                                final provider = context
+                                    .read<SignUpScreenProvider>();
+                                provider.otpController.text = otp;
+                                if (provider.validateOtp()) {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => HomeScreen(),
+                                    ),
+                                  );
+                                }
                               },
                               child: Container(
                                 width: double.infinity,

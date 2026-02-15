@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:chronogram/login/login_helper/aseet_helper.dart';
 import 'package:chronogram/login/login_provider/login_screen_provider.dart';
 import 'package:chronogram/login/login_screen/login_screen.dart';
@@ -13,8 +15,11 @@ class SignUpMobileOtpScreen extends StatefulWidget {
   @override
   State<SignUpMobileOtpScreen> createState() => _SignUpMobileOtpScreenState();
 }
-
 class _SignUpMobileOtpScreenState extends State<SignUpMobileOtpScreen> {
+  List<TextEditingController> otpControllers = List.generate(
+    6,
+    (index) => TextEditingController(),
+  );
   final _formKey = GlobalKey<FormState>();
   @override
   Widget build(BuildContext context) {
@@ -43,7 +48,7 @@ class _SignUpMobileOtpScreenState extends State<SignUpMobileOtpScreen> {
                         key: _formKey,
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
-                          children: [ 
+                          children: [
                             Text(
                               'Enter the OTP sent to your mobile number',
                               style: TextStyle(
@@ -58,6 +63,7 @@ class _SignUpMobileOtpScreenState extends State<SignUpMobileOtpScreen> {
                                 return SizedBox(
                                   width: 45,
                                   child: TextFormField(
+                                    controller: otpControllers[index], // t
                                     keyboardType: TextInputType.number,
                                     textAlign: TextAlign.center,
                                     maxLength: 1,
@@ -104,12 +110,20 @@ class _SignUpMobileOtpScreenState extends State<SignUpMobileOtpScreen> {
                             SizedBox(height: 30),
                             InkWell(
                               onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => SignUpEmailScreen(),
-                                  ),
-                                );
+                                String otp = otpControllers
+                                    .map((e) => e.text)
+                                    .join();
+                                final provider = context
+                                    .read<SignUpScreenProvider>();
+                                provider.otpController.text = otp;
+                                if (provider.validateOtp()) {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => SignUpEmailScreen(),
+                                    ),
+                                  );
+                                }
                               },
                               child: Container(
                                 width: double.infinity,

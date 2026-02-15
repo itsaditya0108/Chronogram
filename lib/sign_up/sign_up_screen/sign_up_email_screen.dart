@@ -64,56 +64,67 @@ class _SignUpEmailScreenState extends State<SignUpEmailScreen> {
                               ),
                             ),
                             SizedBox(height: 15),
-                            TextFormField(
-                              keyboardType: TextInputType.phone,
-                              inputFormatters: [
-                                FilteringTextInputFormatter
-                                    .digitsOnly, //This Line use for digits only
-                              ],
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w500,
-                              ),
-                              decoration: InputDecoration(
-                                hintText: "Enter your email",
+                            Consumer<SignUpScreenProvider>(
+                              builder: (context, value, child) {
+                                return TextFormField(
+                                  controller: value
+                                      .emailController, // This is the importaint line
+                                  keyboardType: TextInputType.emailAddress,
 
-                                /// 📱 icon
-                                prefixIcon: Container(
-                                  child: const Icon(
-                                    Icons.email,
-                                    color: Colors.blueAccent,
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w500,
                                   ),
-                                ),
-                                hintStyle: TextStyle(color: Colors.grey[500]),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                  borderSide: BorderSide.none,
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: const BorderSide(
-                                    color: Color(0xff1D61E7),
-                                    width: 2,
+                                  decoration: InputDecoration(
+                                    hintText: "Enter your email",
+                                    errorText: value.emailError,
+
+                                    /// 📱 icon
+                                    prefixIcon: Container(
+                                      child: const Icon(
+                                        Icons.email,
+                                        color: Colors.blueAccent,
+                                      ),
+                                    ),
+                                    hintStyle: TextStyle(
+                                      color: Colors.grey[500],
+                                    ),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                      borderSide: BorderSide.none,
+                                    ),
+                                    focusedBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide: const BorderSide(
+                                        color: Color(0xff1D61E7),
+                                        width: 2,
+                                      ),
+                                    ),
+                                    filled: true,
+                                    fillColor: Colors.white38,
+                                    contentPadding: const EdgeInsets.symmetric(
+                                      vertical: 18,
+                                      horizontal: 10,
+                                    ),
                                   ),
-                                ),
-                                filled: true,
-                                fillColor: Colors.white38,
-                                contentPadding: const EdgeInsets.symmetric(
-                                  vertical: 18,
-                                  horizontal: 10,
-                                ),
-                              ),
+                                );
+                              },
                             ),
+
                             SizedBox(height: 30),
                             InkWell(
                               onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) =>
-                                        SignUpEmailOtpScreen(),
-                                  ),
-                                );
+                                final provider = context
+                                    .read<SignUpScreenProvider>();
+                                if (provider.validateEmail()) {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          SignUpEmailOtpScreen(),
+                                    ),
+                                  );
+                                }
                               },
                               child: Container(
                                 width: double.infinity,

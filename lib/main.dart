@@ -15,7 +15,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_)=>LoginScreenProvider()),
+     //  ChangeNotifierProvider(create: (_)=>LoginScreenProvider()),
        ChangeNotifierProvider(create: (_)=>SignUpScreenProvider())
       ],
       child: MaterialApp(
@@ -25,8 +25,8 @@ class MyApp extends StatelessWidget {
           
           colorScheme: .fromSeed(seedColor: Colors.deepPurple),
         ),
-        home: LoginScreen()
-             // SignUpScreen()
+        home:// LoginScreen()
+              SignUpScreen()
             
       ),
     );

@@ -41,16 +41,17 @@ class _SignUpScreenState extends State<SignUpScreen> {
             child: SizedBox(
               height: MediaQuery.of(context).size.height,
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(35, 150, 35, 0),
+                padding: const EdgeInsets.fromLTRB(35, 0, 35, 0),
                 child: Column(
                   children: [
                     Center(
                       child: Form(
                         key: _formKey,
                         child: Column(
-                          mainAxisSize: MainAxisSize.min,
+                         // mainAxisAlignment: MainAxisAlignment.center,
+                        // mainAxisSize: MainAxisSize.min,
                           children: [
-                            Image.asset(ScreenImage.allLogoBr, height: 120),
+                            Image.asset(ScreenImage.allLogoBr, height: 80),
                             SizedBox(height: 20),
                             Text(
                               'Chronogram',
