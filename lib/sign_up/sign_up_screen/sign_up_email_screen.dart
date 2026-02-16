@@ -1,9 +1,13 @@
+import 'package:chronogram/buttons/buttons.dart';
+import 'package:chronogram/mask/mobile_mask/email_mask/email_mask.dart';
 import 'package:chronogram/login/login_helper/aseet_helper.dart';
 import 'package:chronogram/login/login_provider/login_screen_provider.dart';
 import 'package:chronogram/login/login_screen/login_screen.dart';
+import 'package:chronogram/sign_up/sign_up_provider/sign_up_email_otp_provider.dart';
+import 'package:chronogram/sign_up/sign_up_provider/sign_up_email_provider.dart';
 import 'package:chronogram/sign_up/sign_up_screen/sign_up_email_otp.dart';
 import 'package:chronogram/sign_up/sign_up_screen/sign_up_mobile_otp.dart';
-import 'package:chronogram/sign_up/sign_up_provider/sign_up_provider.dart';
+import 'package:chronogram/sign_up/sign_up_provider/sign_up_screen_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/svg.dart';
@@ -16,10 +20,14 @@ class SignUpEmailScreen extends StatefulWidget {
 }
 
 class _SignUpEmailScreenState extends State<SignUpEmailScreen> {
+  SignUpEmailProvider get emailScreenProvider =>
+      Provider.of<SignUpEmailProvider>(context, listen: false);
   final _formKey = GlobalKey<FormState>();
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      extendBodyBehindAppBar: true,
+      appBar: AppBar(backgroundColor: Colors.transparent),
       body: SafeArea(
         top: false,
         bottom: false,
@@ -63,8 +71,23 @@ class _SignUpEmailScreenState extends State<SignUpEmailScreen> {
                                 fontSize: 15,
                               ),
                             ),
+                            // Consumer<SignUpEmailProvider>(
+                            //   builder: (context, value, child) {
+                            //     return value.emailController.text.isEmpty
+                            //         ? SizedBox()
+                            //         : Text(
+                            //             EmailMask.maskEmail(
+                            //               value.emailController.text,
+                            //             ),
+                            //             style: TextStyle(
+                            //               color: Colors.black54,
+                            //               fontSize: 15,
+                            //             ),
+                            //           );
+                            //   },
+                            // ),
                             SizedBox(height: 15),
-                            Consumer<SignUpScreenProvider>(
+                            Consumer<SignUpEmailProvider>(
                               builder: (context, value, child) {
                                 return TextFormField(
                                   controller: value
@@ -107,44 +130,45 @@ class _SignUpEmailScreenState extends State<SignUpEmailScreen> {
                                       horizontal: 10,
                                     ),
                                   ),
+                                  onChanged: (value) {
+                                    emailScreenProvider.validateEmail();
+                                  },
                                 );
                               },
                             ),
-
                             SizedBox(height: 30),
-                            InkWell(
-                              onTap: () {
-                                final provider = context
-                                    .read<SignUpScreenProvider>();
-                                if (provider.validateEmail()) {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) =>
-                                          SignUpEmailOtpScreen(),
-                                    ),
-                                  );
-                                }
+                            Consumer<SignUpEmailProvider>(
+                              builder: (context, value, child) {
+                                return AppButton(
+                                  title: 'Continue',
+                                  onTap: value.isEmailValid
+                                      ? () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) =>
+                                                  // ChangeNotifierProvider(
+                                                  //   // create: (_) =>
+
+                                                  //   //     SignUpEmailOtpProvider(), // Provider
+                                                  //   // child: SignUpEmailOtpScreen(
+                                                  //   //   email: context
+                                                  //   //       .read<
+                                                  //   //         SignUpEmailProvider
+                                                  //   //       >()
+                                                  //   //       .emailController
+                                                  //   //       .text,
+                                                  //   // ),
+                                                  // ),
+                                              ChangeNotifierProvider.value(value:context.read<SignUpEmailProvider>(),
+                                              child:  SignUpEmailOtpScreen(),
+                                              )
+                                            ),
+                                          );
+                                        }
+                                      : null,
+                                );
                               },
-                              child: Container(
-                                width: double.infinity,
-                                decoration: BoxDecoration(
-                                  color: Color(0XFF1D61E7),
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: Padding(
-                                  padding: const EdgeInsets.all(16.0),
-                                  child: Center(
-                                    child: Text(
-                                      'Continue',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
                             ),
                           ],
                         ),

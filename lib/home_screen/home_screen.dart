@@ -2,7 +2,7 @@ import 'package:chronogram/login/login_helper/aseet_helper.dart';
 import 'package:chronogram/login/login_provider/login_screen_provider.dart';
 import 'package:chronogram/login/login_screen/login_screen.dart';
 import 'package:chronogram/sign_up/sign_up_screen/sign_up_email_screen.dart';
-import 'package:chronogram/sign_up/sign_up_provider/sign_up_provider.dart';
+import 'package:chronogram/sign_up/sign_up_provider/sign_up_screen_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/svg.dart';

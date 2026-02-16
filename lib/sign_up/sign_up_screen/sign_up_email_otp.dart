@@ -1,18 +1,23 @@
 import 'dart:math';
-
+import 'package:chronogram/buttons/buttons.dart';
+import 'package:chronogram/mask/mobile_mask/email_mask/email_mask.dart';
 import 'package:chronogram/home_screen/home_screen.dart';
 import 'package:chronogram/login/login_helper/aseet_helper.dart';
 import 'package:chronogram/login/login_provider/login_screen_provider.dart';
 import 'package:chronogram/login/login_screen/login_screen.dart';
+import 'package:chronogram/sign_up/sign_up_provider/sign_up_email_otp_provider.dart';
+import 'package:chronogram/sign_up/sign_up_provider/sign_up_email_provider.dart';
 import 'package:chronogram/sign_up/sign_up_screen/sign_up_email_screen.dart';
-import 'package:chronogram/sign_up/sign_up_provider/sign_up_provider.dart';
+import 'package:chronogram/sign_up/sign_up_provider/sign_up_screen_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_otp_text_field/flutter_otp_text_field.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:provider/provider.dart';
 
 class SignUpEmailOtpScreen extends StatefulWidget {
-  const SignUpEmailOtpScreen({super.key});
+  const SignUpEmailOtpScreen({super.key, });
+ 
   @override
   State<SignUpEmailOtpScreen> createState() => _SignUpEmailOtpScreenState();
 }
@@ -22,11 +27,13 @@ class _SignUpEmailOtpScreenState extends State<SignUpEmailOtpScreen> {
     6,
     (index) => TextEditingController(),
   );
-
   final _formKey = GlobalKey<FormState>();
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      extendBodyBehindAppBar: true,
+      appBar: AppBar(backgroundColor: Colors.transparent),
       body: SafeArea(
         top: false,
         bottom: false,
@@ -43,107 +50,107 @@ class _SignUpEmailOtpScreenState extends State<SignUpEmailOtpScreen> {
             child: SizedBox(
               height: MediaQuery.of(context).size.height,
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(35, 150, 35, 0),
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
                 child: Column(
                   children: [
+                    SizedBox(height: 300),
                     Center(
                       child: Form(
                         key: _formKey,
+
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Text(
-                              'Enter the OTP sent to your email id',
+                              'Enter the OTP sent to your email',
                               style: TextStyle(
                                 color: Colors.black54,
                                 fontSize: 15,
                               ),
                             ),
+                           
                             SizedBox(height: 15),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: List.generate(6, (index) {
-                                return SizedBox(
-                                  width: 45,
-                                  child: TextFormField(
-                                    controller:
-                                        otpControllers[index], //// important line
-                                    keyboardType: TextInputType.number,
-                                    textAlign: TextAlign.center,
-                                    maxLength: 1,
-                                    inputFormatters: [
-                                      FilteringTextInputFormatter.digitsOnly,
-                                    ],
-                                    style: const TextStyle(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                    decoration: InputDecoration(
-                                      counterText: "",
+                            Consumer<SignUpEmailOtpProvider>(
+                              builder: (context, provider, child) {
+                                return Column(
+                                  children: [
+                                     Text(EmailMask.maskEmail(context.read<SignUpEmailProvider>().emailController.text)),
+                                   
+                                    SizedBox(height: 20),
+                                    OtpTextField(
+                                      numberOfFields: 6,
+                                      fieldWidth: 50,
+                                      fieldHeight: 60,
+                                      borderRadius: BorderRadius.circular(12),
+                                      showFieldAsBox: true,
                                       filled: true,
                                       fillColor: Colors.white38,
-                                      border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                        borderSide: BorderSide.none,
+                                      // border colors
+                                      borderColor: Colors.grey.shade300,
+                                      focusedBorderColor: const Color(
+                                        0xFF1D61E7,
                                       ),
-                                      enabledBorder: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                        borderSide: BorderSide.none,
+                                      enabledBorderColor: Colors.grey.shade300,
+                                      // cursor
+                                      cursorColor: const Color(0xFF1D61E7),
+                                      // spacing
+                                      margin: const EdgeInsets.symmetric(
+                                        horizontal: 6,
                                       ),
-                                      focusedBorder: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                        borderSide: const BorderSide(
-                                          color: Color(0xff1D61E7),
-                                          width: 2,
+                                      // text style
+                                      textStyle: const TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                      // typing time
+                                      onCodeChanged: (code) {
+                                        provider.emailOtpController.text = code;
+                                        // if (code.length == 6) {
+                                        //   provider
+                                        //       .validEmailOtp(); // final validation
+                                        // }
+                                      },
+                                      onSubmit: (verificationCode) {
+                                        provider.emailOtpController.text =
+                                            verificationCode;
+                                        provider.validEmailOtp();
+                                      },
+                                    ),
+                                    SizedBox(height: 10),
+                                    if (provider.emailOtpError != null)
+                                      Text(
+                                        provider.emailOtpError!,
+                                        style: TextStyle(
+                                          color: Colors.red,
+                                          fontSize: 13,
                                         ),
                                       ),
-                                    ),
-                                    onChanged: (value) {
-                                      if (value.isNotEmpty && index < 5) {
-                                        FocusScope.of(context).nextFocus();
-                                      }
-                                    },
-                                  ),
-                                );
-                              }),
+                                  ],
+                                ); // Mask Numbe Showe Here
+                              },
                             ),
                             SizedBox(height: 30),
-                            InkWell(
-                              onTap: () {
-                                String otp = otpControllers
-                                    .map((e) => e.text)
-                                    .join(); /////
-                                final provider = context
-                                    .read<SignUpScreenProvider>();
-                                provider.otpController.text = otp;
-                                if (provider.validateOtp()) {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => HomeScreen(),
-                                    ),
-                                  );
-                                }
+                            Consumer<SignUpEmailOtpProvider>(
+                              builder: (context, value, child) {
+                                return AppButton(
+                                  title: 'Continue',
+                                  onTap:
+                                      value
+                                          .isEmailOtpValid // only bool check
+                                      ? () {
+                                          if (value.validEmailOtp()) {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (context) =>
+                                                    HomeScreen(),
+                                              ),
+                                            );
+                                          }
+                                        }
+                                      : null,
+                                );
                               },
-                              child: Container(
-                                width: double.infinity,
-                                decoration: BoxDecoration(
-                                  color: Color(0XFF1D61E7),
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: Padding(
-                                  padding: const EdgeInsets.all(16.0),
-                                  child: Center(
-                                    child: Text(
-                                      'Continue',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
                             ),
                           ],
                         ),
@@ -158,4 +165,22 @@ class _SignUpEmailOtpScreenState extends State<SignUpEmailOtpScreen> {
       ),
     );
   }
+
+  // String maskEmail(String email) {
+  //   if (email.isEmpty) return "";
+
+  //   List parts = email.split("@");
+
+  //   if (parts.length != 2) return email;
+
+  //   String name = parts[0];
+  //   String domain = parts[1];
+
+  //   if (name.length <= 2) {
+  //     return "$name****@$domain";
+  //   }
+
+  //   String firstTwo = name.substring(0, 2);
+  //   return "$firstTwo****@$domain";
+  // }
 }

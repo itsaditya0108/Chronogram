@@ -1,12 +1,17 @@
 import 'dart:math';
-
+import 'package:chronogram/mask/mobile_mask/mobile_mask.dart';
+import 'package:chronogram/sign_up/sign_up_provider/sign_up_screen_provider.dart';
+import 'package:chronogram/buttons/buttons.dart';
 import 'package:chronogram/login/login_helper/aseet_helper.dart';
 import 'package:chronogram/login/login_provider/login_screen_provider.dart';
 import 'package:chronogram/login/login_screen/login_screen.dart';
+import 'package:chronogram/sign_up/sign_up_provider/sign_up_email_provider.dart';
+import 'package:chronogram/sign_up/sign_up_provider/sign_up_mobile_otp_provider.dart';
 import 'package:chronogram/sign_up/sign_up_screen/sign_up_email_screen.dart';
-import 'package:chronogram/sign_up/sign_up_provider/sign_up_provider.dart';
+import 'package:chronogram/sign_up/sign_up_provider/sign_up_screen_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_otp_text_field/flutter_otp_text_field.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:provider/provider.dart';
 
@@ -15,6 +20,7 @@ class SignUpMobileOtpScreen extends StatefulWidget {
   @override
   State<SignUpMobileOtpScreen> createState() => _SignUpMobileOtpScreenState();
 }
+
 class _SignUpMobileOtpScreenState extends State<SignUpMobileOtpScreen> {
   List<TextEditingController> otpControllers = List.generate(
     6,
@@ -24,6 +30,8 @@ class _SignUpMobileOtpScreenState extends State<SignUpMobileOtpScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      extendBodyBehindAppBar: true,
+      appBar: AppBar(backgroundColor: Colors.transparent),
       body: SafeArea(
         top: false,
         bottom: false,
@@ -40,12 +48,14 @@ class _SignUpMobileOtpScreenState extends State<SignUpMobileOtpScreen> {
             child: SizedBox(
               height: MediaQuery.of(context).size.height,
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(35, 150, 35, 0),
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
                 child: Column(
                   children: [
+                    SizedBox(height: 300),
                     Center(
                       child: Form(
                         key: _formKey,
+
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
@@ -57,93 +67,94 @@ class _SignUpMobileOtpScreenState extends State<SignUpMobileOtpScreen> {
                               ),
                             ),
                             SizedBox(height: 15),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: List.generate(6, (index) {
-                                return SizedBox(
-                                  width: 45,
-                                  child: TextFormField(
-                                    controller: otpControllers[index], // t
-                                    keyboardType: TextInputType.number,
-                                    textAlign: TextAlign.center,
-                                    maxLength: 1,
-                                    inputFormatters: [
-                                      FilteringTextInputFormatter.digitsOnly,
-                                    ],
-                                    style: const TextStyle(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.bold,
+                            Consumer<SignUpMobileOtpProvider>(
+                              builder: (context, provider, child) {
+                                return Column(
+                                  children: [
+                                    Text(
+                                      MobileMask().maskNumber(
+                                        context.read<SignUpScreenProvider>().mobileController.text
+                                      ),
                                     ),
-                                    decoration: InputDecoration(
-                                      counterText: "",
+                                    SizedBox(height: 20),
+                                    OtpTextField(
+                                      numberOfFields: 6,
+                                      fieldWidth: 50,
+                                      fieldHeight: 60,
+                                      borderRadius: BorderRadius.circular(12),
+                                      showFieldAsBox: true,
                                       filled: true,
                                       fillColor: Colors.white38,
-
-                                      border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                        borderSide: BorderSide.none,
+                                      borderColor: Colors.grey.shade300,
+                                      focusedBorderColor: const Color(
+                                        0xFF1D61E7,
                                       ),
 
-                                      enabledBorder: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                        borderSide: BorderSide.none,
+                                      enabledBorderColor: Colors.grey.shade300,
+                                      cursorColor: const Color(0xFF1D61E7),
+                                      margin: const EdgeInsets.symmetric(
+                                        horizontal: 6,
                                       ),
+                                      textStyle: const TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                      keyboardType: TextInputType.number,
+                                      // ❌ typing pe validation mat lagao
+                                      onCodeChanged: (code) {
+                                        provider.mobileOtpController.text =
+                                            code;
+                                        // provider.validMobileOtp();
+                                      },
 
-                                      focusedBorder: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                        borderSide: const BorderSide(
-                                          color: Color(0xff1D61E7),
-                                          width: 2,
+                                      // ✅ complete hone pe validation
+                                      onSubmit: (verificationCode) {
+                                        provider.mobileOtpController.text =
+                                            verificationCode;
+
+                                        provider.validMobileOtp();
+                                      },
+                                    ),
+
+                                    SizedBox(height: 10),
+                                    if (provider.mobileOtpError != null)
+                                      Text(
+                                        provider.mobileOtpError!,
+                                        style: TextStyle(
+                                          color: Colors.red,
+                                          fontSize: 13,
                                         ),
                                       ),
-                                    ),
-
-                                    onChanged: (value) {
-                                      if (value.isNotEmpty && index < 5) {
-                                        FocusScope.of(context).nextFocus();
-                                      }
-                                    },
-                                  ),
-                                );
-                              }),
+                                  ],
+                                ); // Mask Numbe Showe Here
+                              },
                             ),
                             SizedBox(height: 30),
-                            InkWell(
-                              onTap: () {
-                                String otp = otpControllers
-                                    .map((e) => e.text)
-                                    .join();
-                                final provider = context
-                                    .read<SignUpScreenProvider>();
-                                provider.otpController.text = otp;
-                                if (provider.validateOtp()) {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => SignUpEmailScreen(),
-                                    ),
-                                  );
-                                }
+                            Consumer<SignUpMobileOtpProvider>(
+                              builder: (context, value, child) {
+                                return AppButton(
+                                  title: 'Continue',
+                                  onTap: value.isMobileOtpValid
+                                      ? // provider regex validation bool
+                                        () {
+                                          if (value.validMobileOtp()) {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (context) =>
+                                                    ChangeNotifierProvider(
+                                                      create: (_) =>
+                                                          SignUpEmailProvider(),
+                                                      child:
+                                                          SignUpEmailScreen(),
+                                                    ),
+                                              ),
+                                            );
+                                          }
+                                        }
+                                      : null,
+                                );
                               },
-                              child: Container(
-                                width: double.infinity,
-                                decoration: BoxDecoration(
-                                  color: Color(0XFF1D61E7),
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: Padding(
-                                  padding: const EdgeInsets.all(16.0),
-                                  child: Center(
-                                    child: Text(
-                                      'Continue',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
                             ),
                           ],
                         ),
@@ -158,4 +169,6 @@ class _SignUpMobileOtpScreenState extends State<SignUpMobileOtpScreen> {
       ),
     );
   }
+
+ 
 }
