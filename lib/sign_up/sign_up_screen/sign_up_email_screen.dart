@@ -15,7 +15,6 @@ import 'package:provider/provider.dart';
 
 class SignUpEmailScreen extends StatefulWidget {
   const SignUpEmailScreen({super.key});
-  
   @override
   State<SignUpEmailScreen> createState() => _SignUpEmailScreenState();
 }
@@ -143,33 +142,37 @@ class _SignUpEmailScreenState extends State<SignUpEmailScreen> {
                                 return AppButton(
                                   title: 'Continue',
                                   onTap: value.isEmailValid
-                                      ? () {
-                                          Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (context) =>
-                                                  // ChangeNotifierProvider(
-                                                  //   // create: (_) =>
-                                                  //   //     SignUpEmailOtpProvider(), // Provider
-                                                  //   // child: SignUpEmailOtpScreen(
-                                                  //   //   email: context
-                                                  //   //       .read<
-                                                  //   //         SignUpEmailProvider
-                                                  //   //       >()
-                                                  //   //       .emailController
-                                                  //   //       .text,
-                                                  //   // ),
-                                                  // ),
-                                                  ChangeNotifierProvider.value(
-                                                    value: context
-                                                        .read<
-                                                          SignUpEmailProvider
-                                                        >(),
-                                                    child:
-                                                        SignUpEmailOtpScreen(email: value.emailController.text,),
-                                                  ),
-                                            ),
-                                          );
+                                      ? () async {
+                                          bool success = await value
+                                              .linkEmailApi(context);
+                                          if (success) {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (context) =>
+                                                    ChangeNotifierProvider(
+                                                      create: (_) =>
+                                                          SignUpEmailOtpProvider(),
+                                                      child:
+                                                          SignUpEmailOtpScreen(
+                                                            email: value
+                                                                .emailController
+                                                                .text,
+                                                          ),
+                                                    ),
+                                              ),
+                                            );
+                                          } else {
+                                            ScaffoldMessenger.of(
+                                              context,
+                                            ).showSnackBar(
+                                              SnackBar(
+                                                content: Text(
+                                                  "Email link failed",
+                                                ),
+                                              ),
+                                            );
+                                          }
                                         }
                                       : null,
                                 );

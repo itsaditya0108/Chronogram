@@ -10,4 +10,15 @@ class TokenHelper {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString("token");
   }
+
+  static Future<void> saveRegistrationToken(String token) async {
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.setString("reg_token", token);
+}
+
+static Future<String?> getRegistrationToken() async {
+  final prefs = await SharedPreferences.getInstance();
+  return prefs.getString("reg_token");
+}
+
 }

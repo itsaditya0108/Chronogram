@@ -160,10 +160,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                         if (value.validateMobile()) {
                                           String mobile =
                                               value.mobileController.text;
-
                                           bool success =
                                               await value.sendOtp(mobile);
-
                                           if (success) {
                                             print("OTP SENT SUCCESS");
 

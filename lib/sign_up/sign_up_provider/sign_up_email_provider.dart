@@ -1,4 +1,7 @@
+import 'package:chronogram/service/api_service.dart';
+import 'package:chronogram/sign_up/sign_up_provider/sign_up_screen_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class SignUpEmailProvider extends ChangeNotifier{
 
@@ -32,5 +35,28 @@ SignUpEmailProvider(){
     notifyListeners();
     return emailError == null;
   } 
+Future<bool> linkEmailApi(BuildContext context) async {
+  if (!validateEmail()) return false;
+
+  String mobile = context
+      .read<SignUpScreenProvider>()
+      .mobileController
+      .text;
+
+  String email = emailController.text.trim();
+
+  bool success = await ApiService.linkEmail(
+    mobile: mobile,
+    email: email,
+  );
+
+  if (success) {
+    print("EMAIL LINK SUCCESS");
+    return true;
+  } else {
+    print("EMAIL LINK FAIL");
+    return false;
+  }
+}
 
 }

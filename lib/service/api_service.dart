@@ -56,5 +56,69 @@ class ApiService {
       return null;
     }
   }
+
+
+  /// LINK EMAIL API
+static Future<bool> linkEmail({
+  required String mobile,
+  required String email,
+}) async {
+  try {
+    const url = "http://192.168.1.4:8086/api/auth/link-email";
+
+    final response = await http.post(
+      Uri.parse(url),
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode({
+        "mobileNumber": mobile,
+        "email": email,
+      }),
+    );
+
+    print("LINK EMAIL STATUS: ${response.statusCode}");
+    print("LINK EMAIL BODY: ${response.body}");
+
+    return response.statusCode == 200;
+  } catch (e) {
+    print("LINK EMAIL ERROR: $e");
+    return false;
+  }
+}
+
+/// VERIFY EMAIL OTP FINAL SIGNUP
+static Future<Map<String, dynamic>?> verifyEmailOtp({
+  required String email,
+  required String otp,
+  required String registrationToken,
+}) async {
+  try {
+    const url =
+        "http://192.168.1.4:8086/api/auth/verify-email-registration-otp";
+
+    final response = await http.post(
+      Uri.parse(url),
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode({
+        "email": email,
+        "otpCode": otp,
+        "registrationToken": registrationToken,
+      }),
+    );
+
+    print("EMAIL OTP STATUS: ${response.statusCode}");
+    print("EMAIL OTP BODY: ${response.body}");
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      return null;
+    }
+  } catch (e) {
+    print("EMAIL OTP ERROR: $e");
+    return null;
+  }
+}
+
+
   
 }

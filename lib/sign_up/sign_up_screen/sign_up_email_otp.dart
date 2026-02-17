@@ -1,6 +1,5 @@
 import 'dart:math';
 import 'package:chronogram/buttons/buttons.dart';
-
 import 'package:chronogram/home_screen/home_screen.dart';
 import 'package:chronogram/login/login_helper/aseet_helper.dart';
 import 'package:chronogram/login/login_provider/login_screen_provider.dart';
@@ -17,8 +16,8 @@ import 'package:flutter_svg/svg.dart';
 import 'package:provider/provider.dart';
 
 class SignUpEmailOtpScreen extends StatefulWidget {
-  const SignUpEmailOtpScreen({super.key, required this.email, });
- final String email; 
+  const SignUpEmailOtpScreen({super.key, required this.email});
+  final String email;
   @override
   State<SignUpEmailOtpScreen> createState() => _SignUpEmailOtpScreenState();
 }
@@ -69,14 +68,14 @@ class _SignUpEmailOtpScreenState extends State<SignUpEmailOtpScreen> {
                                 fontSize: 15,
                               ),
                             ),
-                           
+
                             SizedBox(height: 10),
                             Consumer<SignUpEmailOtpProvider>(
                               builder: (context, provider, child) {
                                 return Column(
                                   children: [
-                                     Text(EmailMask.maskEmail(widget.email)),
-                                   
+                                    Text(EmailMask.maskEmail(widget.email)),
+
                                     SizedBox(height: 20),
                                     OtpTextField(
                                       numberOfFields: 6,
@@ -114,7 +113,6 @@ class _SignUpEmailOtpScreenState extends State<SignUpEmailOtpScreen> {
                                       // typing time
                                       onCodeChanged: (code) {
                                         provider.emailOtpController.text = code;
-                                        
                                       },
                                       onSubmit: (verificationCode) {
                                         provider.emailOtpController.text =
@@ -137,38 +135,68 @@ class _SignUpEmailOtpScreenState extends State<SignUpEmailOtpScreen> {
                             ),
                             SizedBox(height: 30),
                             Align(
-                                alignment: Alignment.centerRight,
-                                child: InkWell(
-                                  onTap: () {},
-                                  child: Text(
-                                    ' Resend OTP',
-                                    style: TextStyle(
-                                      color: Colors.blue,
-                                      fontWeight: FontWeight.w500,
-                                    ),
+                              alignment: Alignment.centerRight,
+                              child: InkWell(
+                                onTap: () {},
+                                child: Text(
+                                  ' Resend OTP',
+                                  style: TextStyle(
+                                    color: Colors.blue,
+                                    fontWeight: FontWeight.w500,
                                   ),
                                 ),
                               ),
+                            ),
                             SizedBox(height: 30),
+                            // Consumer<SignUpEmailOtpProvider>(
+                            //   builder: (context, value, child) {
+                            //     return AppButton(
+                            //       title: 'Continue',
+                            //       onTap:
+                            //           value
+                            //               .isEmailOtpValid // only bool check
+                            //           ? () {
+                            //               if (value.validEmailOtp()) {
+                            //                 Navigator.push(
+                            //                   context,
+                            //                   MaterialPageRoute(
+                            //                     builder: (context) =>
+                            //                         HomeScreen(),
+                            //                   ),
+                            //                 );
+                            //               }
+                            //             }
+                            //           : null,
+                            //     );
+                            //   },
+                            // ),
                             Consumer<SignUpEmailOtpProvider>(
                               builder: (context, value, child) {
                                 return AppButton(
-                                  title: 'Continue',
-                                  onTap:
-                                      value
-                                          .isEmailOtpValid // only bool check
-                                      ? () {
-                                          if (value.validEmailOtp()) {
-                                            Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                builder: (context) =>
-                                                    HomeScreen(),
-                                              ),
-                                            );
-                                          }
-                                        }
-                                      : null,
+                                  title: value.isLoading
+                                      ? "Please wait..."
+                                      : "Continue",
+                                  onTap: value.isLoading
+                                      ? null
+                                      : (value.isEmailOtpValid
+                                            ? () async {
+                                                bool success = await value
+                                                    .verifyEmailOtpApi(
+                                                      widget.email,
+                                                    );
+
+                                                if (success) {
+                                                  Navigator.pushAndRemoveUntil(
+                                                    context,
+                                                    MaterialPageRoute(
+                                                      builder: (_) =>
+                                                          HomeScreen(),
+                                                    ),
+                                                    (route) => false,
+                                                  );
+                                                }
+                                              }
+                                            : null),
                                 );
                               },
                             ),
@@ -203,5 +231,4 @@ class _SignUpEmailOtpScreenState extends State<SignUpEmailOtpScreen> {
   //   String firstTwo = name.substring(0, 2);
   //   return "$firstTwo****@$domain";
   // }
-  
 }
