@@ -18,9 +18,8 @@ class AppButton extends StatelessWidget {
       width: double.infinity,
       child: ElevatedButton(
         onPressed: isEnabled ? onTap : null,
-
         style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0XFF1D61E7),
+          backgroundColor: const Color(0XFFD97706),
           disabledBackgroundColor: Colors.grey.shade400,
           padding: const EdgeInsets.symmetric(vertical: 16),
           shape: RoundedRectangleBorder(

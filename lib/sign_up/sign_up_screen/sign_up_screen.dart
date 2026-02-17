@@ -2,6 +2,7 @@ import 'package:chronogram/buttons/buttons.dart';
 import 'package:chronogram/login/login_helper/aseet_helper.dart';
 import 'package:chronogram/login/login_provider/login_screen_provider.dart';
 import 'package:chronogram/login/login_screen/login_screen.dart';
+import 'package:chronogram/service/api_service.dart';
 import 'package:chronogram/sign_up/sign_up_provider/sign_up_screen_provider.dart';
 import 'package:chronogram/sign_up/sign_up_screen/sign_up_mobile_otp.dart';
 import 'package:chronogram/sign_up/sign_up_provider/sign_up_screen_provider.dart';
@@ -61,10 +62,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           ),
                           SizedBox(height: 15),
                           Text(
-                            'Enter your mobile number for verification',
+                            'Continue with phone number verification',
                             style: TextStyle(
                               color: Colors.black54,
-                              fontSize: 17,
+                              fontSize: 18,
                             ),
                           ),
                           SizedBox(height: 15),
@@ -126,30 +127,112 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             builder: (context, value, child) {
                               return AppButton(
                                 title: 'Continue',
+                                // onTap: value.isMobileValid
+                                //     ? // provoder regex validation
+                                //       ()async {
+                                //         if (value.validateMobile()) {
+                                //           String mobile = value.mobileController.text.trim();
+                                //           bool success = await ApiService.sendOtp(mobile);
+                                //           if(success){
+                                //             print("OTP Sent Successfully");
+                                //             Navigator.push(
+                                //             context,
+                                //             MaterialPageRoute(
+                                //               builder: (context) =>
+                                //                   ChangeNotifierProvider.value(
+                                //                     value: context
+                                //                         .read<
+                                //                           SignUpScreenProvider
+                                //                         >(),
+                                //                     child:
+                                //                         SignUpMobileOtpScreen(),
+                                //                   ),
+                                //             ),
+                                //           );
+                                //           }else{
+                                //             ScaffoldMessenger.of(context).showSnackBar( SnackBar(content: Text("OTP send faild")) );
+                                //           }
+                                //         }
+                                //       }
+                                //     : null,
                                 onTap: value.isMobileValid
-                                    ? // provoder regex validation
-                                      () {
+                                    ? () async {
                                         if (value.validateMobile()) {
-                                          Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (context) =>
-                                                  ChangeNotifierProvider.value(
-                                                    value: context
-                                                        .read<
-                                                          SignUpScreenProvider
-                                                        >(),
-                                                    child:
-                                                        SignUpMobileOtpScreen(),
-                                                  ), // mobile provider pass
-                                              // SignUpMobileOtpScreen(),
-                                            ),
-                                          );
+                                          String mobile =
+                                              value.mobileController.text;
+
+                                          bool success =
+                                              await value.sendOtp(mobile);
+
+                                          if (success) {
+                                            print("OTP SENT SUCCESS");
+
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (context) =>
+                                                    ChangeNotifierProvider.value(
+                                                      value: context
+                                                          .read<
+                                                            SignUpScreenProvider
+                                                          >(),
+                                                      child:
+                                                          SignUpMobileOtpScreen(),
+                                                    ),
+                                              ),
+                                            );
+                                          } else {
+                                            print("OTP FAIL");
+                                            ScaffoldMessenger.of(
+                                              context,
+                                            ).showSnackBar(
+                                              SnackBar(
+                                                content: Text(
+                                                  "OTP send failed",
+                                                ),
+                                              ),
+                                            );
+                                          }
                                         }
                                       }
                                     : null,
                               );
                             },
+                          ),
+                          SizedBox(height: 20),
+                          Center(
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  'You have an account?',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w500,
+                                    color: Colors.black54,
+                                  ),
+                                ),
+                                SizedBox(width: 8),
+                                InkWell(
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => LoginScreen(),
+                                      ),
+                                    );
+                                  },
+                                  child: Text(
+                                    'Login',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.black,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ],
                       ),

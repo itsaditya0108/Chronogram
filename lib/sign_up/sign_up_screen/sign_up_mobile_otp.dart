@@ -1,5 +1,5 @@
 import 'dart:math';
-import 'package:chronogram/mask/mobile_mask/mobile_mask.dart';
+import 'package:chronogram/mobile_mask/mobile_mask.dart';
 import 'package:chronogram/sign_up/sign_up_provider/sign_up_screen_provider.dart';
 import 'package:chronogram/buttons/buttons.dart';
 import 'package:chronogram/login/login_helper/aseet_helper.dart';
@@ -73,7 +73,10 @@ class _SignUpMobileOtpScreenState extends State<SignUpMobileOtpScreen> {
                                   children: [
                                     Text(
                                       MobileMask().maskNumber(
-                                        context.read<SignUpScreenProvider>().mobileController.text
+                                        context
+                                            .read<SignUpScreenProvider>()
+                                            .mobileController
+                                            .text,
                                       ),
                                     ),
                                     SizedBox(height: 20),
@@ -85,6 +88,7 @@ class _SignUpMobileOtpScreenState extends State<SignUpMobileOtpScreen> {
                                       showFieldAsBox: true,
                                       filled: true,
                                       fillColor: Colors.white38,
+
                                       borderColor: Colors.grey.shade300,
                                       focusedBorderColor: const Color(
                                         0xFF1D61E7,
@@ -100,6 +104,11 @@ class _SignUpMobileOtpScreenState extends State<SignUpMobileOtpScreen> {
                                         fontWeight: FontWeight.bold,
                                       ),
                                       keyboardType: TextInputType.number,
+
+                                      //Only Digits Allowed
+                                      inputFormatters: [
+                                        FilteringTextInputFormatter.digitsOnly,
+                                      ],
                                       // ❌ typing pe validation mat lagao
                                       onCodeChanged: (code) {
                                         provider.mobileOtpController.text =
@@ -129,6 +138,20 @@ class _SignUpMobileOtpScreenState extends State<SignUpMobileOtpScreen> {
                                 ); // Mask Numbe Showe Here
                               },
                             ),
+                            SizedBox(height: 30),
+                            Align(
+                                alignment: Alignment.centerRight,
+                                child: InkWell(
+                                  onTap: () {},
+                                  child: Text(
+                                    ' Resend OTP',
+                                    style: TextStyle(
+                                      color: Colors.blue,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                              ),
                             SizedBox(height: 30),
                             Consumer<SignUpMobileOtpProvider>(
                               builder: (context, value, child) {
@@ -169,6 +192,4 @@ class _SignUpMobileOtpScreenState extends State<SignUpMobileOtpScreen> {
       ),
     );
   }
-
- 
 }

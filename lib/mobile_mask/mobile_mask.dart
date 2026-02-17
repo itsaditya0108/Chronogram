@@ -11,6 +11,9 @@ class MobileMask {
     }
 
     // 10 digit complete → mask
-    return "+91 ${number.substring(0, 5)}*****";
+    String firstThree = number.substring(0, 3);
+    String lastThree = number.substring(number.length - 3);
+    return 
+    "+91 $firstThree****$lastThree ";
   }
 }

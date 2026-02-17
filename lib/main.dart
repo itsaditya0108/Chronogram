@@ -1,3 +1,4 @@
+import 'package:chronogram/home_screen/home_screen.dart';
 import 'package:chronogram/login/login_provider/login_screen_provider.dart';
 import 'package:chronogram/login/login_screen/login_screen.dart';
 import 'package:chronogram/sign_up/sign_up_provider/sign_up_email_otp_provider.dart';
@@ -24,6 +25,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => SignUpEmailProvider()),//
         ChangeNotifierProvider(create: (_) => SignUpMobileOtpProvider()),//
         ChangeNotifierProvider(create: (_) => SignUpEmailOtpProvider()),//
+        ChangeNotifierProvider(create: (_) => LoginScreenProvider()),//
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
@@ -31,6 +33,7 @@ class MyApp extends StatelessWidget {
         theme: ThemeData(colorScheme: .fromSeed(seedColor: Colors.deepPurple)),
         home: // LoginScreen()
             SignUpScreen(),
+          // HomeScreen(),
       ),
     );
   }

@@ -1,10 +1,11 @@
 import 'dart:math';
 import 'package:chronogram/buttons/buttons.dart';
-import 'package:chronogram/mask/mobile_mask/email_mask/email_mask.dart';
+
 import 'package:chronogram/home_screen/home_screen.dart';
 import 'package:chronogram/login/login_helper/aseet_helper.dart';
 import 'package:chronogram/login/login_provider/login_screen_provider.dart';
 import 'package:chronogram/login/login_screen/login_screen.dart';
+import 'package:chronogram/mask/email_mask/email_mask.dart';
 import 'package:chronogram/sign_up/sign_up_provider/sign_up_email_otp_provider.dart';
 import 'package:chronogram/sign_up/sign_up_provider/sign_up_email_provider.dart';
 import 'package:chronogram/sign_up/sign_up_screen/sign_up_email_screen.dart';
@@ -16,8 +17,8 @@ import 'package:flutter_svg/svg.dart';
 import 'package:provider/provider.dart';
 
 class SignUpEmailOtpScreen extends StatefulWidget {
-  const SignUpEmailOtpScreen({super.key, });
- 
+  const SignUpEmailOtpScreen({super.key, required this.email, });
+ final String email; 
   @override
   State<SignUpEmailOtpScreen> createState() => _SignUpEmailOtpScreenState();
 }
@@ -62,19 +63,19 @@ class _SignUpEmailOtpScreenState extends State<SignUpEmailOtpScreen> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Text(
-                              'Enter the OTP sent to your email',
+                              'We’ve sent a verification code to your email',
                               style: TextStyle(
                                 color: Colors.black54,
                                 fontSize: 15,
                               ),
                             ),
                            
-                            SizedBox(height: 15),
+                            SizedBox(height: 10),
                             Consumer<SignUpEmailOtpProvider>(
                               builder: (context, provider, child) {
                                 return Column(
                                   children: [
-                                     Text(EmailMask.maskEmail(context.read<SignUpEmailProvider>().emailController.text)),
+                                     Text(EmailMask.maskEmail(widget.email)),
                                    
                                     SizedBox(height: 20),
                                     OtpTextField(
@@ -85,6 +86,14 @@ class _SignUpEmailOtpScreenState extends State<SignUpEmailOtpScreen> {
                                       showFieldAsBox: true,
                                       filled: true,
                                       fillColor: Colors.white38,
+
+                                      // Sirf Number KeyBoard
+                                      keyboardType: TextInputType.number,
+
+                                      //Only Digits Allowed
+                                      inputFormatters: [
+                                        FilteringTextInputFormatter.digitsOnly,
+                                      ],
                                       // border colors
                                       borderColor: Colors.grey.shade300,
                                       focusedBorderColor: const Color(
@@ -105,10 +114,7 @@ class _SignUpEmailOtpScreenState extends State<SignUpEmailOtpScreen> {
                                       // typing time
                                       onCodeChanged: (code) {
                                         provider.emailOtpController.text = code;
-                                        // if (code.length == 6) {
-                                        //   provider
-                                        //       .validEmailOtp(); // final validation
-                                        // }
+                                        
                                       },
                                       onSubmit: (verificationCode) {
                                         provider.emailOtpController.text =
@@ -129,6 +135,20 @@ class _SignUpEmailOtpScreenState extends State<SignUpEmailOtpScreen> {
                                 ); // Mask Numbe Showe Here
                               },
                             ),
+                            SizedBox(height: 30),
+                            Align(
+                                alignment: Alignment.centerRight,
+                                child: InkWell(
+                                  onTap: () {},
+                                  child: Text(
+                                    ' Resend OTP',
+                                    style: TextStyle(
+                                      color: Colors.blue,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                              ),
                             SizedBox(height: 30),
                             Consumer<SignUpEmailOtpProvider>(
                               builder: (context, value, child) {
@@ -183,4 +203,5 @@ class _SignUpEmailOtpScreenState extends State<SignUpEmailOtpScreen> {
   //   String firstTwo = name.substring(0, 2);
   //   return "$firstTwo****@$domain";
   // }
+  
 }

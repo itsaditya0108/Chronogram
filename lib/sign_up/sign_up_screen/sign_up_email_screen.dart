@@ -1,5 +1,5 @@
 import 'package:chronogram/buttons/buttons.dart';
-import 'package:chronogram/mask/mobile_mask/email_mask/email_mask.dart';
+
 import 'package:chronogram/login/login_helper/aseet_helper.dart';
 import 'package:chronogram/login/login_provider/login_screen_provider.dart';
 import 'package:chronogram/login/login_screen/login_screen.dart';
@@ -15,6 +15,7 @@ import 'package:provider/provider.dart';
 
 class SignUpEmailScreen extends StatefulWidget {
   const SignUpEmailScreen({super.key});
+  
   @override
   State<SignUpEmailScreen> createState() => _SignUpEmailScreenState();
 }
@@ -149,7 +150,6 @@ class _SignUpEmailScreenState extends State<SignUpEmailScreen> {
                                               builder: (context) =>
                                                   // ChangeNotifierProvider(
                                                   //   // create: (_) =>
-
                                                   //   //     SignUpEmailOtpProvider(), // Provider
                                                   //   // child: SignUpEmailOtpScreen(
                                                   //   //   email: context
@@ -160,9 +160,14 @@ class _SignUpEmailScreenState extends State<SignUpEmailScreen> {
                                                   //   //       .text,
                                                   //   // ),
                                                   // ),
-                                              ChangeNotifierProvider.value(value:context.read<SignUpEmailProvider>(),
-                                              child:  SignUpEmailOtpScreen(),
-                                              )
+                                                  ChangeNotifierProvider.value(
+                                                    value: context
+                                                        .read<
+                                                          SignUpEmailProvider
+                                                        >(),
+                                                    child:
+                                                        SignUpEmailOtpScreen(email: value.emailController.text,),
+                                                  ),
                                             ),
                                           );
                                         }

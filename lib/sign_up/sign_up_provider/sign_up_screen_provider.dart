@@ -1,3 +1,4 @@
+import 'package:chronogram/service/api_service.dart';
 import 'package:flutter/material.dart';
 
 class SignUpScreenProvider extends ChangeNotifier {
@@ -25,6 +26,11 @@ void checkMobileValid() {
     }
     notifyListeners();
     return mobileError == null;
+  }
+
+  Future<bool> sendOtp(String mobile) async {
+     bool success = await ApiService.sendOtp(mobile);
+     return success;
   }
 
 
