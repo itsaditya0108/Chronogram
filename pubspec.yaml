@@ -39,6 +39,9 @@ dependencies:
   flutter_otp_text_field: ^1.5.1+1
   video_player: ^2.10.1
   http: ^1.6.0
+  device_info_plus: ^12.3.0
+  shared_preferences: ^2.5.4
+  package_info_plus: ^9.0.0
 
 dev_dependencies:
   flutter_test:

@@ -82,7 +82,7 @@ class _SignUpMobileOtpScreenState extends State<SignUpMobileOtpScreen> {
                                     SizedBox(height: 20),
                                     OtpTextField(
                                       numberOfFields: 6,
-                                      fieldWidth: 50,
+                                      fieldWidth: 40,
                                       fieldHeight: 60,
                                       borderRadius: BorderRadius.circular(12),
                                       showFieldAsBox: true,
@@ -157,20 +157,22 @@ class _SignUpMobileOtpScreenState extends State<SignUpMobileOtpScreen> {
                               builder: (context, value, child) {
                                 return AppButton(
                                   title: 'Continue',
-                                  onTap: value.isMobileOtpValid
+                              //    onTap: value.isMobileOtpValid
+                                    onTap: value.isMobileOtpValid
                                       ? // provider regex validation bool
-                                        () {
-                                          if (value.validMobileOtp()) {
+                                        () async{
+                                          bool success = await value.verifyMobileOtp(context);  
+                                          if (success) {
                                             Navigator.push(
                                               context,
                                               MaterialPageRoute(
-                                                builder: (context) =>
-                                                    ChangeNotifierProvider(
-                                                      create: (_) =>
-                                                          SignUpEmailProvider(),
-                                                      child:
-                                                          SignUpEmailScreen(),
-                                                    ),
+                                                builder: (_) => SignUpEmailScreen()
+                                                    // ChangeNotifierProvider(
+                                                    //   create: (_) =>
+                                                    //       SignUpEmailProvider(),
+                                                    //   child:
+                                                    //       SignUpEmailScreen(),
+                                                    // ),
                                               ),
                                             );
                                           }

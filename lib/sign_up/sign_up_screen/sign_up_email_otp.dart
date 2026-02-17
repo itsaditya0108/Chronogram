@@ -80,7 +80,7 @@ class _SignUpEmailOtpScreenState extends State<SignUpEmailOtpScreen> {
                                     SizedBox(height: 20),
                                     OtpTextField(
                                       numberOfFields: 6,
-                                      fieldWidth: 50,
+                                      fieldWidth: 40,
                                       fieldHeight: 60,
                                       borderRadius: BorderRadius.circular(12),
                                       showFieldAsBox: true,
