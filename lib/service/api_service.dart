@@ -1,12 +1,14 @@
 // import 'dart:convert';
 import 'dart:convert';
 import 'package:chronogram/device_helper/device_helper.dart';
+import 'package:chronogram/token_saver_helper/token_saver_helper.dart';
 import 'package:http/http.dart' as http;
 
 class ApiService {
+static const String baseUrl = "http://192.168.1.4:8086/api";
   static Future<bool> sendOtp(String mobile) async {
     try {
-      const String sendOtpUrl = "http://192.168.1.4:8086/api/auth/send-otp";
+      const String sendOtpUrl = "$baseUrl/auth/send-otp";
       print("API HIT START");
       final response = await http.post(
         Uri.parse(sendOtpUrl),
@@ -33,7 +35,7 @@ class ApiService {
     required String otp,
   }) async {
     try {
-      const url = "http://192.168.1.4:8086/api/auth/verify-otp";
+      const url = "$baseUrl/auth/verify-otp";
 
       final device = await DeviceHelper.getDeviceData();
 
@@ -58,32 +60,37 @@ class ApiService {
   }
 
 
-  /// LINK EMAIL API
-static Future<bool> linkEmail({
-  required String mobile,
+
+static Future<bool> sendEmailOtp({
   required String email,
 }) async {
   try {
-    const url = "http://192.168.1.4:8086/api/auth/link-email";
+    const url = "$baseUrl/auth/send-email-otp";
+
+    String? regToken = await TokenHelper.getRegistrationToken();
+    print("SEND EMAIL OTP REG TOKEN: $regToken");
 
     final response = await http.post(
       Uri.parse(url),
       headers: {"Content-Type": "application/json"},
       body: jsonEncode({
-        "mobileNumber": mobile,
         "email": email,
+        "registrationToken": regToken,
       }),
     );
 
-    print("LINK EMAIL STATUS: ${response.statusCode}");
-    print("LINK EMAIL BODY: ${response.body}");
+    print("SEND EMAIL OTP STATUS: ${response.statusCode}");
+    print("SEND EMAIL OTP BODY: ${response.body}");
 
     return response.statusCode == 200;
   } catch (e) {
-    print("LINK EMAIL ERROR: $e");
+    print("SEND EMAIL OTP ERROR: $e");
     return false;
   }
 }
+
+
+
 
 /// VERIFY EMAIL OTP FINAL SIGNUP
 static Future<Map<String, dynamic>?> verifyEmailOtp({
@@ -92,9 +99,7 @@ static Future<Map<String, dynamic>?> verifyEmailOtp({
   required String registrationToken,
 }) async {
   try {
-    const url =
-        "http://192.168.1.4:8086/api/auth/verify-email-registration-otp";
-
+    const url = "$baseUrl/auth/verify-email-registration-otp";
     final response = await http.post(
       Uri.parse(url),
       headers: {"Content-Type": "application/json"},
@@ -113,6 +118,7 @@ static Future<Map<String, dynamic>?> verifyEmailOtp({
     } else {
       return null;
     }
+
   } catch (e) {
     print("EMAIL OTP ERROR: $e");
     return null;
@@ -120,5 +126,41 @@ static Future<Map<String, dynamic>?> verifyEmailOtp({
 }
 
 
-  
+static Future<Map<String, dynamic>?> completeProfile({
+  required String name,
+  required String dob,
+  required String mobile,
+}) async {
+  try {
+    const url = "$baseUrl/auth/complete-profile";
+
+    String? regToken = await TokenHelper.getRegistrationToken();
+    print("PROFILE USING TOKEN: $regToken");
+
+    final device = await DeviceHelper.getDeviceData();
+
+    final response = await http.post(
+      Uri.parse(url),
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode({
+        "name": name,
+        "dob": dob,
+        "mobileNumber": mobile, // 🔥 IMPORTANT ADD
+        "registrationToken": regToken,
+        ...device
+      }),
+    );
+    print("PROFILE STATUS: ${response.statusCode}");
+    print("PROFILE BODY: ${response.body}");
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      return null;
+    }
+  } catch (e) {
+    print("PROFILE ERROR: $e");
+    return null;
+  }
+}
+
 }

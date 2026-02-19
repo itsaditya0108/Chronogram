@@ -35,28 +35,23 @@ SignUpEmailProvider(){
     notifyListeners();
     return emailError == null;
   } 
+
 Future<bool> linkEmailApi(BuildContext context) async {
   if (!validateEmail()) return false;
 
-  String mobile = context
-      .read<SignUpScreenProvider>()
-      .mobileController
-      .text;
-
   String email = emailController.text.trim();
 
-  bool success = await ApiService.linkEmail(
-    mobile: mobile,
+  bool success = await ApiService.sendEmailOtp(
     email: email,
   );
-
   if (success) {
-    print("EMAIL LINK SUCCESS");
+    print("EMAIL OTP SENT SUCCESS");
     return true;
   } else {
-    print("EMAIL LINK FAIL");
+    print("EMAIL OTP FAILED");
     return false;
   }
 }
+
 
 }

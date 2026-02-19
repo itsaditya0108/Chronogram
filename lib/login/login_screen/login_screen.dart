@@ -1,236 +1,198 @@
-import 'package:chronogram/home_screen/home_screen.dart';
-import 'package:chronogram/login/login_helper/aseet_helper.dart';
 import 'package:chronogram/login/login_provider/login_screen_provider.dart';
-import 'package:chronogram/sign_up/sign_up_screen/sign_up_screen.dart';
+import 'package:chronogram/login/login_screen/login_otp_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_svg/svg.dart';
 import 'package:provider/provider.dart';
 
-class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
-  @override
-  State<LoginScreen> createState() => _LoginScreenState();
-}
 
-class _LoginScreenState extends State<LoginScreen> {
-  final _formKey = GlobalKey<FormState>();
-  LoginScreenProvider get loginScreenProviver =>
-      Provider.of<LoginScreenProvider>(
-        context,
-        listen: false,
-      ); ////This Use For Provider
+class LoginMobileScreen extends StatelessWidget {
+  const LoginMobileScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
-        top: false,
-        bottom: false,
-        child: Container(
-          height: double.maxFinite,
-          width: double.maxFinite,
-          decoration: BoxDecoration(
-            image: DecorationImage(
-              image: AssetImage(ScreenImage.loginBg),
-              fit: BoxFit.cover,
-            ),
-          ),
-          child: SingleChildScrollView(
-            child: SizedBox(
-              height: MediaQuery.of(context).size.height,
-              child: Padding(
-                padding: const EdgeInsets.all(18.0),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  mainAxisSize: MainAxisSize.max,
-                  children: [
-                    Center(
-                      child: Container(
-                        padding: EdgeInsets.all(20),
+    return ChangeNotifierProvider(
+      create: (_) => LoginMobileScreenProvider(),
+      child: Scaffold(
+        backgroundColor: Colors.black,
+        resizeToAvoidBottomInset: true,
+        body: SafeArea(
+          child: Consumer<LoginMobileScreenProvider>(
+            builder: (context, provider, child) {
+              return SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 25),
+                  child: Column(
+                    children: [
+                      SizedBox(height: MediaQuery.of(context).size.height * 0.18),
+
+                      /// 🔶 LOGO
+                      Container(
+                        height: 90,
+                        width: 90,
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.7),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.white30),
+                          color: const Color(0xff1C1C1E),
+                          borderRadius: BorderRadius.circular(20),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black12,
-                              blurRadius: 15,
-                              offset: Offset(0, 5),
+                              color: Colors.orange.withOpacity(0.5),
+                              blurRadius: 40,
+                              spreadRadius: 5,
                             ),
                           ],
                         ),
-                        child: Form(
-                          key: _formKey,
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              //  SvgPicture.asset(LoginScreenSvg.appIcon),
-                              ClipRRect(
-                                borderRadius: BorderRadiusGeometry.circular(15),
-                                child: Image.asset(
-                                  ScreenImage.allLogoBr,
-                                  height: 100,
-                                ),
-                              ),
-                              SizedBox(height: 5),
-                              Text(
-                                'Chronogram',
+                        child: const Icon(
+                          Icons.lock,
+                          color: Colors.orange,
+                          size: 40,
+                        ),
+                      ),
+
+                      const SizedBox(height: 35),
+
+                      const Text(
+                        "Login with Mobile",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 26,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+
+                      const SizedBox(height: 10),
+
+                      const Text(
+                        "Enter your registered mobile number",
+                        style: TextStyle(color: Colors.white60, fontSize: 15),
+                      ),
+
+                      const SizedBox(height: 35),
+
+                      /// 📱 MOBILE FIELD
+                      Container(
+                        decoration: BoxDecoration(
+                          color: const Color(0xff1C1C1E),
+                          borderRadius: BorderRadius.circular(15),
+                        ),
+                        child: TextFormField(
+                          controller: provider.mobileController,
+                          keyboardType: TextInputType.phone,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly,
+                            LengthLimitingTextInputFormatter(10),
+                          ],
+                          style: const TextStyle(color: Colors.white),
+                          decoration: InputDecoration(
+                            errorText: provider.mobileError,
+                            prefixIcon: const Padding(
+                              padding: EdgeInsets.all(12),
+                              child: Text(
+                                "+91  ",
                                 style: TextStyle(
-                                  color: Colors.black,
-                                  fontSize: 27,
-                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                  fontSize: 16,
                                 ),
                               ),
-                              SizedBox(height: 5),
-                              Text(
-                                'Enter your email and password to log in',
-                                style: TextStyle(
-                                  color: Colors.black54,
-                                  fontSize: 14,
-                                ),
-                              ),
-                              ListView.separated(
-                                itemCount: 2,
-                                shrinkWrap: true,
-                                physics: NeverScrollableScrollPhysics(),
-                                separatorBuilder: (context, index) =>
-                                    SizedBox(height: 12),
-                                itemBuilder: (context, index) {
-                                  return getLoginScreenMethod(
-                                    title: loginScreenProviver
-                                        .loginScreenList[index]['title'],
-                                    icons: loginScreenProviver
-                                        .loginScreenList[index]['icon'],
-                                    controller: loginScreenProviver
-                                        .loginScreenList[index]['controller'],
-                                  );
-                                },
-                              ),
-                              SizedBox(height: 10),
-                              Align(
-                                alignment: Alignment.centerRight,
-                                child: InkWell(
-                                  onTap: () {},
-                                  child: Text(
-                                    'Forgot Password',
-                                    style: TextStyle(
-                                      color: Colors.blue,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              SizedBox(height: 20),
-                              InkWell(
-                                onTap: () {
-                                  if (_formKey.currentState!.validate()) {
-                                    loginScreenProviver.clearLogin();
-                                    // Validation success
-                                    Navigator.pushReplacement(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => HomeScreen(),
-                                      ),
-                                    );
-                                  }
-                                },
-                                child: Container(
-                                  width: double.infinity,
-                                  decoration: BoxDecoration(
-                                    color: Color(0XFF1D61E7),
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(16.0),
-                                    child: Center(
-                                      child: Text(
-                                        'Login',
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              SizedBox(height: 17),
-                              Center(
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Text(
-                                      'Don’t have an account?',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.w500,
-                                        color: Colors.black54,
-                                      ),
-                                    ),
-                                    SizedBox(width: 8),
-                                    InkWell(
-                                      onTap: () {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (context) =>
-                                                SignUpScreen(),
-                                          ),
-                                        );
-                                      },
-                                      child: Text(
-                                        'Sign Up',
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.black,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
+                            ),
+                            hintText: "Enter mobile number",
+                            hintStyle:
+                                const TextStyle(color: Colors.white38),
+                            border: InputBorder.none,
+                            contentPadding:
+                                const EdgeInsets.symmetric(vertical: 18),
                           ),
                         ),
                       ),
-                    ),
-                  ],
+
+                      const SizedBox(height: 30),
+
+                      /// 🔘 LOGIN BUTTON
+                      InkWell(
+                        onTap: provider.isMobileValid
+                            ? () {
+                                if (provider.validateMobile()) {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          const LoginOtpScreen(),
+                                    ),
+                                  );
+                                }
+                              }
+                            : null,
+                        child: Container(
+                          height: 55,
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(15),
+                            gradient: provider.isMobileValid
+                                ? const LinearGradient(
+                                    colors: [
+                                      Color(0xffFF8C00),
+                                      Color(0xffFF5E00),
+                                    ],
+                                  )
+                                : null,
+                            color: provider.isMobileValid
+                                ? null
+                                : Colors.grey.shade800,
+                          ),
+                          child: const Center(
+                            child: Text(
+                              "Send OTP",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 25),
+
+                      /// 🔁 SIGNUP TEXT
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Text(
+                            "Don't have an account?",
+                            style: TextStyle(color: Colors.white54),
+                          ),
+                          const SizedBox(width: 6),
+                          InkWell(
+                            onTap: () {
+                              Navigator.pop(context);
+                            },
+                            child: const Text(
+                              "Sign Up",
+                              style: TextStyle(
+                                color: Colors.orange,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 50),
+
+                      const Text(
+                        "Secure login powered by OTP verification.",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Colors.white38,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ),
+              );
+            },
           ),
         ),
-      ),
-    );
-  }
-
-  TextFormField getLoginScreenMethod({
-    required String title,
-    required Icon icons,
-    required TextEditingController controller,
-  }) {
-    final loginScreenProvider = Provider.of<LoginScreenProvider>(
-      context,
-      listen: false,
-    );
-    return TextFormField(
-      controller: controller,
-      autovalidateMode: AutovalidateMode.onUserInteraction,
-      validator: (value) {
-        return loginScreenProvider.loginValidator(title, value);
-      },
-      decoration: InputDecoration(
-        hintText: title,
-        prefixIcon: icons,
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: Colors.white10),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: Colors.blue),
-        ),
-        filled: true,
-        fillColor: Colors.white70,
       ),
     );
   }
