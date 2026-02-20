@@ -1,3 +1,4 @@
+import 'package:chronogram/auth_progress_indicator/auth_progress_indicator.dart';
 import 'package:chronogram/buttons/buttons.dart';
 import 'package:chronogram/login/login_helper/aseet_helper.dart';
 import 'package:chronogram/login/login_provider/login_screen_provider.dart';
@@ -414,80 +415,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   ],
                 ),
                 SizedBox(height: 50), /////
-                /// 🔥 PREMIUM STEP PROGRESS
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(18.0, 0, 18.0, 0),
-                  child: TweenAnimationBuilder<double>(
-                    tween: Tween(begin: 0, end: 1 / 5),
-                    duration: const Duration(milliseconds: 500),
-                    builder: (context, value, child) {
-                      return Column(
-                        children: [
-                          /// 🔥 Progress Bar Section
-                          SizedBox(
-                            height: 28,
-                            child: Stack(
-                              alignment: Alignment.center,
-                              children: [
-                                /// Background Bar
-                                Container(
-                                  height: 6,
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(50),
-                                    color: Colors.white10,
-                                  ),
-                                ),
-
-                                /// Animated Fill
-                                Align(
-                                  alignment: Alignment.centerLeft,
-                                  child: FractionallySizedBox(
-                                    widthFactor: value,
-                                    child: Container(
-                                      height: 6,
-                                      decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(50),
-                                        gradient: const LinearGradient(
-                                          colors: [
-                                            Color(0xffFF8C00),
-                                            Color(0xffFF5E00),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-
-                                /// Step Text
-                                const Positioned(
-                                  right: 8,
-                                  child: Text(
-                                    "1 / 5",
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          /// ✨ Premium Message
-                          const Text(
-                            "Continue to complete your registration.",
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: Colors.white70,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w400,
-                            ),
-                          ),
-                        ],
-                      );
-                    },
-                  ),
+                const AuthProgressIndicator(
+                  currentStep: 1,
+                  totalSteps: 5,
+                  message: "Enter mobile number to get started",
                 ),
               ],
             ),

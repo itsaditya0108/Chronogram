@@ -78,7 +78,6 @@ static Future<bool> sendEmailOtp({
         "registrationToken": regToken,
       }),
     );
-
     print("SEND EMAIL OTP STATUS: ${response.statusCode}");
     print("SEND EMAIL OTP BODY: ${response.body}");
 
@@ -88,9 +87,6 @@ static Future<bool> sendEmailOtp({
     return false;
   }
 }
-
-
-
 
 /// VERIFY EMAIL OTP FINAL SIGNUP
 static Future<Map<String, dynamic>?> verifyEmailOtp({

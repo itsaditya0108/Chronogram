@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'package:chronogram/auth_progress_indicator/auth_progress_indicator.dart';
 import 'package:chronogram/mobile_mask/mobile_mask.dart';
 import 'package:chronogram/sign_up/sign_up_provider/sign_up_screen_provider.dart';
 import 'package:chronogram/buttons/buttons.dart';
@@ -190,309 +191,305 @@ class _SignUpMobileOtpScreenState extends State<SignUpMobileOtpScreen> {
   //   );
   // }
 
-//   @override
-//   Widget build(BuildContext context) {
-//     final mobile = context.read<SignUpScreenProvider>().mobileController.text;
+  //   @override
+  //   Widget build(BuildContext context) {
+  //     final mobile = context.read<SignUpScreenProvider>().mobileController.text;
 
-//     return Scaffold(
-//       backgroundColor: Colors.black,
-//       body: SafeArea(
-//         child: SingleChildScrollView(
-//           child: Padding(
-//             padding: const EdgeInsets.symmetric(horizontal: 25),
-//             child: Column(
-//               children: [
-//                 SizedBox(height: MediaQuery.of(context).size.height * 0.15),
+  //     return Scaffold(
+  //       backgroundColor: Colors.black,
+  //       body: SafeArea(
+  //         child: SingleChildScrollView(
+  //           child: Padding(
+  //             padding: const EdgeInsets.symmetric(horizontal: 25),
+  //             child: Column(
+  //               children: [
+  //                 SizedBox(height: MediaQuery.of(context).size.height * 0.15),
 
-//                 /// 🔶 LOGO WITH GLOW
-//                 Container(
-//                   height: 90,
-//                   width: 90,
-//                   decoration: BoxDecoration(
-//                     color: const Color(0xff1C1C1E),
-//                     borderRadius: BorderRadius.circular(20),
-//                     boxShadow: [
-//                       BoxShadow(
-//                         color: Colors.orange.withOpacity(0.5),
-//                         blurRadius: 40,
-//                         spreadRadius: 5,
-//                       ),
-//                     ],
-//                   ),
-//                   child: Center(
-//                     child: Image.asset(ScreenImage.allLogoBr, height: 45),
-//                   ),
-//                 ),
+  //                 /// 🔶 LOGO WITH GLOW
+  //                 Container(
+  //                   height: 90,
+  //                   width: 90,
+  //                   decoration: BoxDecoration(
+  //                     color: const Color(0xff1C1C1E),
+  //                     borderRadius: BorderRadius.circular(20),
+  //                     boxShadow: [
+  //                       BoxShadow(
+  //                         color: Colors.orange.withOpacity(0.5),
+  //                         blurRadius: 40,
+  //                         spreadRadius: 5,
+  //                       ),
+  //                     ],
+  //                   ),
+  //                   child: Center(
+  //                     child: Image.asset(ScreenImage.allLogoBr, height: 45),
+  //                   ),
+  //                 ),
 
-//                 const SizedBox(height: 35),
+  //                 const SizedBox(height: 35),
 
-//                 const Text(
-//                   "Verify OTP",
-//                   style: TextStyle(
-//                     color: Colors.white,
-//                     fontSize: 26,
-//                     fontWeight: FontWeight.bold,
-//                   ),
-//                 ),
+  //                 const Text(
+  //                   "Verify OTP",
+  //                   style: TextStyle(
+  //                     color: Colors.white,
+  //                     fontSize: 26,
+  //                     fontWeight: FontWeight.bold,
+  //                   ),
+  //                 ),
 
-//                 const SizedBox(height: 10),
+  //                 const SizedBox(height: 10),
 
-//                 Text(
-//                   "OTP sent to +91 ${MobileMask().maskNumber(mobile)}",
-//                   style: const TextStyle(color: Colors.white60, fontSize: 15),
-//                 ),
+  //                 Text(
+  //                   "OTP sent to +91 ${MobileMask().maskNumber(mobile)}",
+  //                   style: const TextStyle(color: Colors.white60, fontSize: 15),
+  //                 ),
 
-//                 const SizedBox(height: 25),
+  //                 const SizedBox(height: 25),
 
-//                 /// ✅ SIM DETECTED PILL
-//                 Container(
-//                   padding: const EdgeInsets.symmetric(
-//                     horizontal: 20,
-//                     vertical: 12,
-//                   ),
-//                   decoration: BoxDecoration(
-//                     color: const Color(0xff1C1C1E),
-//                     borderRadius: BorderRadius.circular(15),
-//                     border: Border.all(color: Colors.white12),
-//                   ),
-//                   child: Row(
-//                     mainAxisSize: MainAxisSize.min,
-//                     children: const [
-//                       Icon(Icons.check_circle, color: Colors.green, size: 20),
-//                       SizedBox(width: 8),
-//                       Text(
-//                         "SIM Detected",
-//                         style: TextStyle(
-//                           color: Colors.green,
-//                           fontWeight: FontWeight.w500,
-//                         ),
-//                       ),
-//                     ],
-//                   ),
-//                 ),
+  //                 /// ✅ SIM DETECTED PILL
+  //                 Container(
+  //                   padding: const EdgeInsets.symmetric(
+  //                     horizontal: 20,
+  //                     vertical: 12,
+  //                   ),
+  //                   decoration: BoxDecoration(
+  //                     color: const Color(0xff1C1C1E),
+  //                     borderRadius: BorderRadius.circular(15),
+  //                     border: Border.all(color: Colors.white12),
+  //                   ),
+  //                   child: Row(
+  //                     mainAxisSize: MainAxisSize.min,
+  //                     children: const [
+  //                       Icon(Icons.check_circle, color: Colors.green, size: 20),
+  //                       SizedBox(width: 8),
+  //                       Text(
+  //                         "SIM Detected",
+  //                         style: TextStyle(
+  //                           color: Colors.green,
+  //                           fontWeight: FontWeight.w500,
+  //                         ),
+  //                       ),
+  //                     ],
+  //                   ),
+  //                 ),
 
-//                 const SizedBox(height: 35),
+  //                 const SizedBox(height: 35),
 
-//                 /// 🔢 OTP FIELD
-//                 Consumer<SignUpMobileOtpProvider>(
-//                   builder: (context, provider, child) {
-//                     return Column(
-//                       children: [
-//                         OtpTextField(
-//                           numberOfFields: 6,
-//                           fieldWidth: 45,
-//                           fieldHeight: 60,
-//                           borderRadius: BorderRadius.circular(14),
-//                           showFieldAsBox: true,
-//                           filled: true,
-//                           fillColor: const Color(0xff1C1C1E),
-//                           borderColor: Colors.white12,
-//                           focusedBorderColor: Colors.orange,
-//                           enabledBorderColor: Colors.white12,
-//                           cursorColor: Colors.orange,
-//                           margin: const EdgeInsets.symmetric(horizontal: 6),
-//                           textStyle: const TextStyle(
-//                             fontSize: 20,
-//                             fontWeight: FontWeight.bold,
-//                             color: Colors.white,
-//                           ),
-//                           keyboardType: TextInputType.number,
-//                           inputFormatters: [
-//                             FilteringTextInputFormatter.digitsOnly,
-//                           ],
-//                           onCodeChanged: (code) {
-//                             provider.mobileOtpController.text = code;
-//                           },
-//                           onSubmit: (verificationCode) {
-//                             provider.mobileOtpController.text =
-//                                 verificationCode;
-//                             provider.validMobileOtp();
-//                           },
-//                         ),
+  //                 /// 🔢 OTP FIELD
+  //                 Consumer<SignUpMobileOtpProvider>(
+  //                   builder: (context, provider, child) {
+  //                     return Column(
+  //                       children: [
+  //                         OtpTextField(
+  //                           numberOfFields: 6,
+  //                           fieldWidth: 45,
+  //                           fieldHeight: 60,
+  //                           borderRadius: BorderRadius.circular(14),
+  //                           showFieldAsBox: true,
+  //                           filled: true,
+  //                           fillColor: const Color(0xff1C1C1E),
+  //                           borderColor: Colors.white12,
+  //                           focusedBorderColor: Colors.orange,
+  //                           enabledBorderColor: Colors.white12,
+  //                           cursorColor: Colors.orange,
+  //                           margin: const EdgeInsets.symmetric(horizontal: 6),
+  //                           textStyle: const TextStyle(
+  //                             fontSize: 20,
+  //                             fontWeight: FontWeight.bold,
+  //                             color: Colors.white,
+  //                           ),
+  //                           keyboardType: TextInputType.number,
+  //                           inputFormatters: [
+  //                             FilteringTextInputFormatter.digitsOnly,
+  //                           ],
+  //                           onCodeChanged: (code) {
+  //                             provider.mobileOtpController.text = code;
+  //                           },
+  //                           onSubmit: (verificationCode) {
+  //                             provider.mobileOtpController.text =
+  //                                 verificationCode;
+  //                             provider.validMobileOtp();
+  //                           },
+  //                         ),
 
-//                         const SizedBox(height: 12),
+  //                         const SizedBox(height: 12),
 
-//                         if (provider.mobileOtpError != null)
-//                           Text(
-//                             provider.mobileOtpError!,
-//                             style: const TextStyle(
-//                               color: Colors.red,
-//                               fontSize: 13,
-//                             ),
-//                           ),
-//                       ],
-//                     );
-//                   },
-//                 ),
+  //                         if (provider.mobileOtpError != null)
+  //                           Text(
+  //                             provider.mobileOtpError!,
+  //                             style: const TextStyle(
+  //                               color: Colors.red,
+  //                               fontSize: 13,
+  //                             ),
+  //                           ),
+  //                       ],
+  //                     );
+  //                   },
+  //                 ),
 
-//                 const SizedBox(height: 25),
+  //                 const SizedBox(height: 25),
 
-//                 /// ⏳ RESEND TEXT STYLE
-//                 RichText(
-//                   text: const TextSpan(
-//                     text: "Resend OTP in ",
-//                     style: TextStyle(color: Colors.white60),
-//                     children: [
-//                       TextSpan(
-//                         text: "58s",
-//                         style: TextStyle(
-//                           color: Colors.orange,
-//                           fontWeight: FontWeight.bold,
-//                         ),
-//                       ),
-//                     ],
-//                   ),
-//                 ),
+  //                 /// ⏳ RESEND TEXT STYLE
+  //                 RichText(
+  //                   text: const TextSpan(
+  //                     text: "Resend OTP in ",
+  //                     style: TextStyle(color: Colors.white60),
+  //                     children: [
+  //                       TextSpan(
+  //                         text: "58s",
+  //                         style: TextStyle(
+  //                           color: Colors.orange,
+  //                           fontWeight: FontWeight.bold,
+  //                         ),
+  //                       ),
+  //                     ],
+  //                   ),
+  //                 ),
 
-//                 const SizedBox(height: 30),
+  //                 const SizedBox(height: 30),
 
-//                 /// 🔘 CONTINUE BUTTON
-//                 Consumer<SignUpMobileOtpProvider>(
-//                   builder: (context, value, child) {
-//                     return GestureDetector(
-//                       onTap: value.isMobileOtpValid
-//                           ? () async {
-//                               bool success = await value.verifyMobileOtp(
-//                                 context,
-//                               );
-//                               if (success) {
-//                                 Navigator.push(
-//                                   context,
-//                                   MaterialPageRoute(
-//                                     builder: (_) => SignUpEmailScreen(),
-//                                   ),
-//                                 );
-//                               }
-//                             }
-//                           : null,
-//                       child: Container(
-//                         height: 55,
-//                         width: double.infinity,
-//                         decoration: BoxDecoration(
-//                           borderRadius: BorderRadius.circular(15),
-//                           gradient: value.isMobileOtpValid
-//                               ? const LinearGradient(
-//                                   colors: [
-//                                     Color(0xffFF8C00),
-//                                     Color(0xffFF5E00),
-//                                   ],
-//                                 )
-//                               : LinearGradient(
-//                                   colors: [
-//                                     Colors.grey.shade800,
-//                                     Colors.grey.shade900,
-//                                   ],
-//                                 ),
-//                         ),
-//                         child: const Center(
-//                           child: Text(
-//                             "Continue",
-//                             style: TextStyle(
-//                               color: Colors.white,
-//                               fontSize: 16,
-//                               fontWeight: FontWeight.bold,
-//                             ),
-//                           ),
-//                         ),
-//                       ),
-//                     );
-//                   },
-//                 ),
+  //                 /// 🔘 CONTINUE BUTTON
+  //                 Consumer<SignUpMobileOtpProvider>(
+  //                   builder: (context, value, child) {
+  //                     return GestureDetector(
+  //                       onTap: value.isMobileOtpValid
+  //                           ? () async {
+  //                               bool success = await value.verifyMobileOtp(
+  //                                 context,
+  //                               );
+  //                               if (success) {
+  //                                 Navigator.push(
+  //                                   context,
+  //                                   MaterialPageRoute(
+  //                                     builder: (_) => SignUpEmailScreen(),
+  //                                   ),
+  //                                 );
+  //                               }
+  //                             }
+  //                           : null,
+  //                       child: Container(
+  //                         height: 55,
+  //                         width: double.infinity,
+  //                         decoration: BoxDecoration(
+  //                           borderRadius: BorderRadius.circular(15),
+  //                           gradient: value.isMobileOtpValid
+  //                               ? const LinearGradient(
+  //                                   colors: [
+  //                                     Color(0xffFF8C00),
+  //                                     Color(0xffFF5E00),
+  //                                   ],
+  //                                 )
+  //                               : LinearGradient(
+  //                                   colors: [
+  //                                     Colors.grey.shade800,
+  //                                     Colors.grey.shade900,
+  //                                   ],
+  //                                 ),
+  //                         ),
+  //                         child: const Center(
+  //                           child: Text(
+  //                             "Continue",
+  //                             style: TextStyle(
+  //                               color: Colors.white,
+  //                               fontSize: 16,
+  //                               fontWeight: FontWeight.bold,
+  //                             ),
+  //                           ),
+  //                         ),
+  //                       ),
+  //                     );
+  //                   },
+  //                 ),
 
-//                 SizedBox(height: 50),
+  //                 SizedBox(height: 50),
 
-//                 /// 🔢 STEP PROGRESS TEXT (1/5)
-//                 Padding(
-//                   padding: const EdgeInsets.fromLTRB(18.0, 0, 18.0, 0),
-//                   child: TweenAnimationBuilder<double>(
-//                     tween: Tween(begin: 0, end: 1 / 5),
-//                     duration: const Duration(milliseconds: 500),
-//                     builder: (context, value, child) {
-//                       return Column(
-//                         children: [
-//                           /// 🔥 Progress Bar Section
-//                           SizedBox(
-//                             height: 28,
-//                             child: Stack(
-//                               alignment: Alignment.center,
-//                               children: [
-//                                 /// Background Bar
-//                                 Container(
-//                                   height: 6,
-//                                   decoration: BoxDecoration(
-//                                     borderRadius: BorderRadius.circular(50),
-//                                     color: Colors.white10,
-//                                   ),
-//                                 ),
+  //                 /// 🔢 STEP PROGRESS TEXT (1/5)
+  //                 Padding(
+  //                   padding: const EdgeInsets.fromLTRB(18.0, 0, 18.0, 0),
+  //                   child: TweenAnimationBuilder<double>(
+  //                     tween: Tween(begin: 0, end: 1 / 5),
+  //                     duration: const Duration(milliseconds: 500),
+  //                     builder: (context, value, child) {
+  //                       return Column(
+  //                         children: [
+  //                           /// 🔥 Progress Bar Section
+  //                           SizedBox(
+  //                             height: 28,
+  //                             child: Stack(
+  //                               alignment: Alignment.center,
+  //                               children: [
+  //                                 /// Background Bar
+  //                                 Container(
+  //                                   height: 6,
+  //                                   decoration: BoxDecoration(
+  //                                     borderRadius: BorderRadius.circular(50),
+  //                                     color: Colors.white10,
+  //                                   ),
+  //                                 ),
 
-//                                 /// Animated Fill
-//                                 Align(
-//                                   alignment: Alignment.centerLeft,
-//                                   child: FractionallySizedBox(
-//                                     widthFactor: value,
-//                                     child: Container(
-//                                       height: 6,
-//                                       decoration: BoxDecoration(
-//                                         borderRadius: BorderRadius.circular(50),
-//                                         gradient: const LinearGradient(
-//                                           colors: [
-//                                             Color(0xffFF8C00),
-//                                             Color(0xffFF5E00),
-//                                           ],
-//                                         ),
-//                                       ),
-//                                     ),
-//                                   ),
-//                                 ),
+  //                                 /// Animated Fill
+  //                                 Align(
+  //                                   alignment: Alignment.centerLeft,
+  //                                   child: FractionallySizedBox(
+  //                                     widthFactor: value,
+  //                                     child: Container(
+  //                                       height: 6,
+  //                                       decoration: BoxDecoration(
+  //                                         borderRadius: BorderRadius.circular(50),
+  //                                         gradient: const LinearGradient(
+  //                                           colors: [
+  //                                             Color(0xffFF8C00),
+  //                                             Color(0xffFF5E00),
+  //                                           ],
+  //                                         ),
+  //                                       ),
+  //                                     ),
+  //                                   ),
+  //                                 ),
 
-//                                 /// Step Text
-//                                 const Positioned(
-//                                   right: 8,
-//                                   child: Text(
-//                                     "2 / 5",
-//                                     style: TextStyle(
-//                                       color: Colors.white,
-//                                       fontSize: 11,
-//                                       fontWeight: FontWeight.w600,
-//                                     ),
-//                                   ),
-//                                 ),
-//                               ],
-//                             ),
-//                           ),
-//                           const SizedBox(height: 12),
+  //                                 /// Step Text
+  //                                 const Positioned(
+  //                                   right: 8,
+  //                                   child: Text(
+  //                                     "2 / 5",
+  //                                     style: TextStyle(
+  //                                       color: Colors.white,
+  //                                       fontSize: 11,
+  //                                       fontWeight: FontWeight.w600,
+  //                                     ),
+  //                                   ),
+  //                                 ),
+  //                               ],
+  //                             ),
+  //                           ),
+  //                           const SizedBox(height: 12),
 
-//                           /// ✨ Premium Message
-//                           const Text(
-//                             "Continue to complete your registration.",
-//                             textAlign: TextAlign.center,
-//                             style: TextStyle(
-//                               color: Colors.white70,
-//                               fontSize: 13,
-//                               fontWeight: FontWeight.w400,
-//                             ),
-//                           ),
-//                         ],
-//                       );
-//                     },
-//                   ),
-//                 ),
-//               ],
-//             ),
-//           ),
-//         ),
-//       ),
-//     );
-//   }
-// }
-
-
-
+  //                           /// ✨ Premium Message
+  //                           const Text(
+  //                             "Continue to complete your registration.",
+  //                             textAlign: TextAlign.center,
+  //                             style: TextStyle(
+  //                               color: Colors.white70,
+  //                               fontSize: 13,
+  //                               fontWeight: FontWeight.w400,
+  //                             ),
+  //                           ),
+  //                         ],
+  //                       );
+  //                     },
+  //                   ),
+  //                 ),
+  //               ],
+  //             ),
+  //           ),
+  //         ),
+  //       ),
+  //     );
+  //   }
+  // }
 
   @override
   Widget build(BuildContext context) {
-    final mobile =
-        context.read<SignUpScreenProvider>().mobileController.text;
+    final mobile = context.read<SignUpScreenProvider>().mobileController.text;
 
     return Scaffold(
       backgroundColor: Colors.black,
@@ -501,19 +498,19 @@ class _SignUpMobileOtpScreenState extends State<SignUpMobileOtpScreen> {
         child: LayoutBuilder(
           builder: (context, constraints) {
             return SingleChildScrollView(
-              keyboardDismissBehavior:
-                  ScrollViewKeyboardDismissBehavior.onDrag,
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
               child: ConstrainedBox(
-                constraints: BoxConstraints(
-                  minHeight: constraints.maxHeight,
-                ),
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
                 child: IntrinsicHeight(
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 25),
+                    padding: const EdgeInsets.symmetric(horizontal: 25),
                     child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Spacer(),
+                        // const Spacer(),
+                        SizedBox(
+                          height: MediaQuery.of(context).size.height * 0.12,
+                        ),
 
                         /// 🔶 LOGO
                         Container(
@@ -521,12 +518,10 @@ class _SignUpMobileOtpScreenState extends State<SignUpMobileOtpScreen> {
                           width: 90,
                           decoration: BoxDecoration(
                             color: const Color(0xff1C1C1E),
-                            borderRadius:
-                                BorderRadius.circular(20),
+                            borderRadius: BorderRadius.circular(20),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.orange
-                                    .withOpacity(0.5),
+                                color: Colors.orange.withOpacity(0.5),
                                 blurRadius: 40,
                                 spreadRadius: 5,
                               ),
@@ -556,39 +551,38 @@ class _SignUpMobileOtpScreenState extends State<SignUpMobileOtpScreen> {
                         Text(
                           "OTP sent to +91 ${MobileMask().maskNumber(mobile)}",
                           style: const TextStyle(
-                              color: Colors.white60,
-                              fontSize: 15),
+                            color: Colors.white60,
+                            fontSize: 15,
+                          ),
                         ),
 
                         const SizedBox(height: 25),
 
                         /// SIM DETECTED
                         Container(
-                          padding:
-                              const EdgeInsets.symmetric(
+                          padding: const EdgeInsets.symmetric(
                             horizontal: 20,
                             vertical: 12,
                           ),
                           decoration: BoxDecoration(
                             color: const Color(0xff1C1C1E),
-                            borderRadius:
-                                BorderRadius.circular(15),
-                            border: Border.all(
-                                color: Colors.white12),
+                            borderRadius: BorderRadius.circular(15),
+                            border: Border.all(color: Colors.white12),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: const [
-                              Icon(Icons.check_circle,
-                                  color: Colors.green,
-                                  size: 20),
+                              Icon(
+                                Icons.check_circle,
+                                color: Colors.green,
+                                size: 20,
+                              ),
                               SizedBox(width: 8),
                               Text(
                                 "SIM Detected",
                                 style: TextStyle(
                                   color: Colors.green,
-                                  fontWeight:
-                                      FontWeight.w500,
+                                  fontWeight: FontWeight.w500,
                                 ),
                               ),
                             ],
@@ -599,75 +593,49 @@ class _SignUpMobileOtpScreenState extends State<SignUpMobileOtpScreen> {
 
                         /// OTP FIELD
                         Consumer<SignUpMobileOtpProvider>(
-                          builder:
-                              (context, provider, child) {
+                          builder: (context, provider, child) {
                             return Column(
                               children: [
                                 OtpTextField(
                                   numberOfFields: 6,
                                   fieldWidth: 45,
                                   fieldHeight: 60,
-                                  borderRadius:
-                                      BorderRadius.circular(
-                                          14),
+                                  borderRadius: BorderRadius.circular(14),
                                   showFieldAsBox: true,
                                   filled: true,
-                                  fillColor:
-                                      const Color(
-                                          0xff1C1C1E),
-                                  borderColor:
-                                      Colors.white12,
-                                  focusedBorderColor:
-                                      Colors.orange,
-                                  enabledBorderColor:
-                                      Colors.white12,
-                                  cursorColor:
-                                      Colors.orange,
-                                  margin:
-                                      const EdgeInsets
-                                          .symmetric(
-                                              horizontal: 6),
-                                  textStyle:
-                                      const TextStyle(
+                                  fillColor: const Color(0xff1C1C1E),
+                                  borderColor: Colors.white12,
+                                  focusedBorderColor: Colors.orange,
+                                  enabledBorderColor: Colors.white12,
+                                  cursorColor: Colors.orange,
+                                  margin: const EdgeInsets.symmetric(
+                                    horizontal: 6,
+                                  ),
+                                  textStyle: const TextStyle(
                                     fontSize: 20,
-                                    fontWeight:
-                                        FontWeight.bold,
+                                    fontWeight: FontWeight.bold,
                                     color: Colors.white,
                                   ),
-                                  keyboardType:
-                                      TextInputType.number,
+                                  keyboardType: TextInputType.number,
                                   inputFormatters: [
-                                    FilteringTextInputFormatter
-                                        .digitsOnly,
+                                    FilteringTextInputFormatter.digitsOnly,
                                   ],
                                   onCodeChanged: (code) {
-                                    provider
-                                            .mobileOtpController
-                                            .text =
-                                        code;
+                                    provider.mobileOtpController.text = code;
                                   },
-                                  onSubmit:
-                                      (verificationCode) {
-                                    provider
-                                            .mobileOtpController
-                                            .text =
+                                  onSubmit: (verificationCode) {
+                                    provider.mobileOtpController.text =
                                         verificationCode;
-                                    provider
-                                        .validMobileOtp();
+                                    provider.validMobileOtp();
                                   },
                                 ),
 
-                                const SizedBox(
-                                    height: 12),
+                                const SizedBox(height: 12),
 
-                                if (provider
-                                        .mobileOtpError !=
-                                    null)
+                                if (provider.mobileOtpError != null)
                                   Text(
-                                    provider
-                                        .mobileOtpError!,
-                                    style:
-                                        const TextStyle(
+                                    provider.mobileOtpError!,
+                                    style: const TextStyle(
                                       color: Colors.red,
                                       fontSize: 13,
                                     ),
@@ -680,18 +648,16 @@ class _SignUpMobileOtpScreenState extends State<SignUpMobileOtpScreen> {
                         const SizedBox(height: 25),
 
                         /// RESEND
-                         RichText(
+                        RichText(
                           text: TextSpan(
                             text: "Resend OTP in ",
-                            style: TextStyle(
-                                color: Colors.white60),
+                            style: TextStyle(color: Colors.white60),
                             children: [
                               TextSpan(
                                 text: "58s",
                                 style: TextStyle(
                                   color: Colors.orange,
-                                  fontWeight:
-                                      FontWeight.bold,
+                                  fontWeight: FontWeight.bold,
                                 ),
                               ),
                             ],
@@ -701,53 +667,40 @@ class _SignUpMobileOtpScreenState extends State<SignUpMobileOtpScreen> {
                         const SizedBox(height: 30),
 
                         /// CONTINUE BUTTON
-                        Consumer<
-                            SignUpMobileOtpProvider>(
-                          builder:
-                              (context, value, child) {
+                        Consumer<SignUpMobileOtpProvider>(
+                          builder: (context, value, child) {
                             return GestureDetector(
-                              onTap:
-                                  value.isMobileOtpValid
-                                      ? () async {
-                                          bool success =
-                                              await value
-                                                  .verifyMobileOtp(
-                                                      context);
-                                          if (success) {
-                                            Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                builder: (_) =>
-                                                    const SignUpEmailScreen(),
-                                              ),
-                                            );
-                                          }
-                                        }
-                                      : null,
+                              onTap: value.isMobileOtpValid
+                                  ? () async {
+                                      bool success = await value
+                                          .verifyMobileOtp(context);
+                                      if (success) {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (_) =>
+                                                const SignUpEmailScreen(),
+                                          ),
+                                        );
+                                      }
+                                    }
+                                  : null,
                               child: Container(
                                 height: 55,
                                 width: double.infinity,
-                                decoration:
-                                    BoxDecoration(
-                                  borderRadius:
-                                      BorderRadius
-                                          .circular(15),
-                                  gradient: value
-                                          .isMobileOtpValid
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(15),
+                                  gradient: value.isMobileOtpValid
                                       ? const LinearGradient(
                                           colors: [
-                                            Color(
-                                                0xffFF8C00),
-                                            Color(
-                                                0xffFF5E00),
+                                            Color(0xffFF8C00),
+                                            Color(0xffFF5E00),
                                           ],
                                         )
                                       : LinearGradient(
                                           colors: [
-                                            Colors.grey
-                                                .shade800,
-                                            Colors.grey
-                                                .shade900,
+                                            Colors.grey.shade800,
+                                            Colors.grey.shade900,
                                           ],
                                         ),
                                 ),
@@ -755,12 +708,9 @@ class _SignUpMobileOtpScreenState extends State<SignUpMobileOtpScreen> {
                                   child: Text(
                                     "Continue",
                                     style: TextStyle(
-                                      color:
-                                          Colors.white,
+                                      color: Colors.white,
                                       fontSize: 16,
-                                      fontWeight:
-                                          FontWeight
-                                              .bold,
+                                      fontWeight: FontWeight.bold,
                                     ),
                                   ),
                                 ),
@@ -776,9 +726,7 @@ class _SignUpMobileOtpScreenState extends State<SignUpMobileOtpScreen> {
 
                         /// keyboard safe
                         SizedBox(
-                          height: MediaQuery.of(context)
-                              .viewInsets
-                              .bottom,
+                          height: MediaQuery.of(context).viewInsets.bottom,
                         ),
                       ],
                     ),
@@ -794,72 +742,10 @@ class _SignUpMobileOtpScreenState extends State<SignUpMobileOtpScreen> {
 
   /// 🔥 PROGRESS BAR METHOD
   Widget _buildProgressBar() {
-    return TweenAnimationBuilder<double>(
-      tween: Tween(begin: 0, end: 2 / 5),
-      duration: const Duration(milliseconds: 500),
-      builder: (context, value, child) {
-        return Column(
-          children: [
-            SizedBox(
-              height: 28,
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  Container(
-                    height: 6,
-                    decoration: BoxDecoration(
-                      borderRadius:
-                          BorderRadius.circular(50),
-                      color: Colors.white10,
-                    ),
-                  ),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: FractionallySizedBox(
-                      widthFactor: value,
-                      child: Container(
-                        height: 6,
-                        decoration: BoxDecoration(
-                          borderRadius:
-                              BorderRadius.circular(50),
-                          gradient:
-                              const LinearGradient(
-                            colors: [
-                              Color(0xffFF8C00),
-                              Color(0xffFF5E00),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const Positioned(
-                    right: 8,
-                    child: Text(
-                      "2 / 5",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 11,
-                        fontWeight:
-                            FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 12),
-            const Text(
-              "Continue to complete your registration.",
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Colors.white70,
-                fontSize: 13,
-              ),
-            ),
-          ],
-        );
-      },
+    return const AuthProgressIndicator(
+      currentStep: 2,
+      totalSteps: 5,
+      message: "Verify OTP sent to your mobile",
     );
   }
 }
