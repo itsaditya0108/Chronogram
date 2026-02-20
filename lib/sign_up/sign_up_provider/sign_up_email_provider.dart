@@ -7,10 +7,20 @@ class SignUpEmailProvider extends ChangeNotifier {
   String? emailError;
   bool isEmailValid = false;
 
-  SignUpEmailProvider() {
-    emailController.addListener(validateEmail);
-  }
-
+  // SignUpEmailProvider() {
+  //   emailController.addListener(validateEmail);
+  // }
+SignUpEmailProvider() {
+  emailController.addListener(() {
+    if (emailController.text.isNotEmpty) {
+      validateEmail();
+    } else {
+      emailError = null;
+      isEmailValid = false;
+      notifyListeners();
+    }
+  });
+}
   bool validateEmail() {
     String input = emailController.text.trim();
 

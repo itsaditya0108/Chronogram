@@ -304,7 +304,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                               ),
                             ),
                           ),
-                          hintText: "Enter mobile number",
+                          hintText: "Enter 10-digits mobile number",
                           hintStyle: const TextStyle(color: Colors.white38),
                           border: InputBorder.none,
                           errorText: value.mobileError,

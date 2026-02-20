@@ -212,20 +212,24 @@ class _ProfileView extends StatelessWidget {
 
               const SizedBox(height: 40),
 
-              const Text(
-                "Complete Profile",
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 26,
-                  fontWeight: FontWeight.bold,
+              Center(
+                child: const Text(
+                  "Complete Profile",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 26,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
 
               const SizedBox(height: 8),
 
-              const Text(
-                "Enter your details to continue",
-                style: TextStyle(color: Colors.white60, fontSize: 14),
+              Center(
+                child: const Text(
+                  "Enter your details to continue",
+                  style: TextStyle(color: Colors.white60, fontSize: 14),
+                ),
               ),
 
               const SizedBox(height: 35),

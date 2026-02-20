@@ -1,9 +1,19 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../service/api_service.dart';
 import '../../token_saver_helper/token_saver_helper.dart';
 
 class SignUpEmailOtpProvider extends ChangeNotifier {
+
+bool canResend = false;
+bool isResending = false;
+
+//Varivable add
+int seconds = 120;
+Timer? _timer;
+
 
   // ================= EMAIL CONTROLLER =================
   TextEditingController emailController = TextEditingController();
@@ -19,6 +29,7 @@ class SignUpEmailOtpProvider extends ChangeNotifier {
   SignUpEmailOtpProvider(){
     emailController.addListener(checkEmailValidation);
     emailOtpController.addListener(checkEmailOtpFill);
+    startTimer();
   }
   
   // ================= INDUSTRIAL EMAIL REGEX =================
@@ -109,4 +120,64 @@ class SignUpEmailOtpProvider extends ChangeNotifier {
     }
   }
 
+void startTimer() {
+  seconds = 120;
+  canResend = false;
+  _timer?.cancel();
+
+  _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+    if (seconds > 0) {
+      seconds--;
+      notifyListeners();
+    } else {
+      timer.cancel();
+      canResend = true;
+      notifyListeners();
+    }
+  });
+}
+
+///TEXT FORMAT getter (important)
+
+String get timerText {
+  int minutes = seconds ~/ 60;
+  int remainingSeconds = seconds % 60;
+
+  if (minutes > 0) {
+    if (remainingSeconds == 0) {
+      return "$minutes mint";
+    }
+    return "$minutes mint $remainingSeconds sec";
+  } else {
+    return "$remainingSeconds sec";
+  }
+}
+
+// Resend Function
+Future<void> resendOtp(String email) async {
+  if (isResending) return;
+
+  isResending = true;
+  notifyListeners();
+
+  bool success = await ApiService.resendOtp(
+    email: email,
+  );
+
+  isResending = false;
+
+  if (success) {
+    startTimer(); // restart timer
+  }
+
+  notifyListeners();
+}
+
+@override
+void dispose() {
+  _timer?.cancel();
+  emailController.dispose();
+  emailOtpController.dispose();
+  super.dispose();
+}
 }

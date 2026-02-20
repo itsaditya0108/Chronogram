@@ -159,4 +159,40 @@ static Future<Map<String, dynamic>?> completeProfile({
   }
 }
 
+/// 🔄 RESEND OTP (mobile + email)
+static Future<bool> resendOtp({
+  String? mobile,
+  String? email,
+}) async {
+  try {
+    const url = "$baseUrl/auth/resend-otp";
+
+    Map<String, dynamic> body = {};
+
+    if (mobile != null) {
+      body["mobileNumber"] = mobile;
+    }
+
+    if (email != null) {
+      String? regToken = await TokenHelper.getRegistrationToken();
+      body["email"] = email;
+      body["registrationToken"] = regToken;
+    }
+
+    final response = await http.post(
+      Uri.parse(url),
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode(body),
+    );
+
+    print("RESEND OTP STATUS: ${response.statusCode}");
+    print("RESEND OTP BODY: ${response.body}");
+
+    return response.statusCode == 200;
+  } catch (e) {
+    print("RESEND OTP ERROR: $e");
+    return false;
+  }
+}
+
 }
