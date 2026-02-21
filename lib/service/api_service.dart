@@ -220,10 +220,102 @@ static Future<bool> sendLoginOtp(String mobile) async {
   }
 }
 
-static Future<Map<String, dynamic>?> verifyLoginOtp({
+// static Future<Map<String, dynamic>?> verifyLoginOtp({
+//   required String mobile,
+//   required String otp,
+// }) async {
+//   try {
+//     const url = "$baseUrl/auth/verify-login-otp";
+
+//     final device = await DeviceHelper.getDeviceData();
+
+//     final response = await http.post(
+//       Uri.parse(url),
+//       headers: {"Content-Type": "application/json"},
+//       body: jsonEncode({
+//         "mobileNumber": mobile,
+//         "otpCode": otp,
+//         ...device
+//       }),
+//     );
+
+//     print("LOGIN VERIFY STATUS: ${response.statusCode}");
+//     print("LOGIN VERIFY BODY: ${response.body}");
+
+//     if (response.statusCode == 200) {
+//       return jsonDecode(response.body);
+//     } else {
+//       return null;
+//     }
+//   } catch (e) {
+//     print("LOGIN VERIFY ERROR: $e");
+//     return null;
+//   }
+// }
+
+// static Future<Map<String,dynamic>> verifyLoginOtp({
+//   required String mobile,
+//   required String otp,
+// }) async {
+
+//   try{
+//     const url = "$baseUrl/auth/verify-login-otp";
+
+//     final device = await DeviceHelper.getDeviceData();
+
+//     final response = await http.post(
+//       Uri.parse(url),
+//       headers: {"Content-Type":"application/json"},
+//       body: jsonEncode({
+//         "mobileNumber": mobile,
+//         "otpCode": otp,
+//         ...device
+//       }),
+//     );
+
+//     print("LOGIN VERIFY STATUS: ${response.statusCode}");
+//     print("LOGIN VERIFY BODY: ${response.body}");
+
+//     /// SUCCESS LOGIN
+//     if(response.statusCode == 200){
+//       final data = jsonDecode(response.body);
+//       return {
+//         "status":"success",
+//         "token": data["accessToken"]
+//       };
+//     }
+
+//     /// UNTRUSTED DEVICE
+//     else if(response.statusCode == 401){
+//       final data = jsonDecode(response.body);
+//       return {
+//         "status":"untrusted",
+//         "maskedEmail": data["maskedEmail"]
+//       };
+//     }
+
+//     /// USER NOT FOUND
+//     else if(response.statusCode == 404){
+//       return {
+//         "status":"not_registered"
+//       };
+//     }
+
+//     else{
+//       return {"status":"error"};
+//     }
+
+//   }catch(e){
+//     print(e);
+//     return {"status":"error"};
+//   }
+// }
+
+static Future<Map<String, dynamic>> verifyLoginOtp({
   required String mobile,
   required String otp,
 }) async {
+
   try {
     const url = "$baseUrl/auth/verify-login-otp";
 
@@ -242,14 +334,42 @@ static Future<Map<String, dynamic>?> verifyLoginOtp({
     print("LOGIN VERIFY STATUS: ${response.statusCode}");
     print("LOGIN VERIFY BODY: ${response.body}");
 
+    final data = jsonDecode(response.body);
+
+    /// 🟢 SUCCESS LOGIN
     if (response.statusCode == 200) {
-      return jsonDecode(response.body);
-    } else {
-      return null;
+      return {
+        "status": "success",
+        "token": data["accessToken"]
+      };
     }
+
+    /// 🟠 NEW DEVICE
+    else if (response.statusCode == 401) {
+      return {
+        "status": "untrusted",
+        "maskedEmail": data["maskedEmail"]
+      };
+    }
+
+    /// 🔴 USER NOT FOUND (IMPORTANT)
+    else if (response.statusCode == 400 ||
+             data["message"].toString().contains("User not found")) {
+      return {
+        "status": "not_found"
+      };
+    }
+
+    /// ❌ INVALID OTP
+    else {
+      return {
+        "status": "invalid"
+      };
+    }
+
   } catch (e) {
     print("LOGIN VERIFY ERROR: $e");
-    return null;
+    return {"status": "error"};
   }
 }
 

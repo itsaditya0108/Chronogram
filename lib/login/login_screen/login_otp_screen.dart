@@ -1,6 +1,8 @@
 import 'package:chronogram/home_screen/home_screen.dart';
 import 'package:chronogram/login/login_provider/login_otp_provider.dart';
+import 'package:chronogram/login/login_screen/login_email.dart';
 import 'package:chronogram/mobile_mask/mobile_mask.dart';
+import 'package:chronogram/sign_up/sign_up_screen/sign_up_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_otp_text_field/flutter_otp_text_field.dart';
@@ -27,15 +29,14 @@ class LoginOtpScreen extends StatelessWidget {
                     keyboardDismissBehavior:
                         ScrollViewKeyboardDismissBehavior.onDrag,
                     child: ConstrainedBox(
-                      constraints:
-                          BoxConstraints(minHeight: constraints.maxHeight),
+                      constraints: BoxConstraints(
+                        minHeight: constraints.maxHeight,
+                      ),
                       child: Padding(
-                        padding:
-                            const EdgeInsets.symmetric(horizontal: 25),
+                        padding: const EdgeInsets.symmetric(horizontal: 25),
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-
                             SizedBox(
                               height: MediaQuery.of(context).size.height * 0.10,
                             ),
@@ -91,8 +92,7 @@ class LoginOtpScreen extends StatelessWidget {
                             LayoutBuilder(
                               builder: (context, constraints) {
                                 double totalWidth = constraints.maxWidth;
-                                double fieldWidth =
-                                    (totalWidth - 24) / 6;
+                                double fieldWidth = (totalWidth - 24) / 6;
 
                                 if (fieldWidth > 55) fieldWidth = 55;
                                 if (fieldWidth < 34) fieldWidth = 34;
@@ -101,28 +101,23 @@ class LoginOtpScreen extends StatelessWidget {
                                   numberOfFields: 6,
                                   fieldWidth: fieldWidth,
                                   fieldHeight: 60,
-                                  borderRadius:
-                                      BorderRadius.circular(14),
+                                  borderRadius: BorderRadius.circular(14),
                                   showFieldAsBox: true,
                                   filled: true,
-                                  fillColor:
-                                      const Color(0xff1C1C1E),
+                                  fillColor: const Color(0xff1C1C1E),
                                   borderColor: Colors.white12,
-                                  focusedBorderColor:
-                                      Colors.orange,
-                                  enabledBorderColor:
-                                      Colors.white12,
+                                  focusedBorderColor: Colors.orange,
+                                  enabledBorderColor: Colors.white12,
                                   cursorColor: Colors.orange,
-                                  margin:
-                                      const EdgeInsets.symmetric(horizontal: 2),
+                                  margin: const EdgeInsets.symmetric(
+                                    horizontal: 2,
+                                  ),
                                   textStyle: const TextStyle(
                                     fontSize: 20,
-                                    fontWeight:
-                                        FontWeight.bold,
+                                    fontWeight: FontWeight.bold,
                                     color: Colors.white,
                                   ),
-                                  keyboardType:
-                                      TextInputType.number,
+                                  keyboardType: TextInputType.number,
                                   inputFormatters: [
                                     FilteringTextInputFormatter.digitsOnly,
                                   ],
@@ -141,98 +136,167 @@ class LoginOtpScreen extends StatelessWidget {
                             const SizedBox(height: 12),
 
                             /// 🔴 ERROR TEXT
+                            // if (provider.mobileOtpError != null)
+                            //   Text(
+                            //     provider.mobileOtpError!,
+                            //     style: const TextStyle(
+                            //       color: Colors.red,
+                            //       fontSize: 13,
+                            //     ),
+                            //   ),
+                            /// 🔴 ERROR + ACTION BUTTONS
                             if (provider.mobileOtpError != null)
-                              Text(
-                                provider.mobileOtpError!,
-                                style: const TextStyle(
-                                  color: Colors.red,
-                                  fontSize: 13,
-                                ),
-                              ),
-
-                            const SizedBox(height: 25),
-
-                            /// ⏱ TIMER + RESEND
-                            Consumer<LoginMobileOtpScreenProvider>(
-                              builder: (context, provider, child) {
-
-                                if(provider.canResend){
-                                  return GestureDetector(
-                                    onTap: provider.isResending
-                                        ? null
-                                        : () => provider.resendOtp(mobile),
-                                    child: Text(
-                                      provider.isResending
-                                          ? "Sending..."
-                                          : "Resend OTP",
-                                      style: const TextStyle(
-                                        color: Colors.orange,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  );
-                                }
-
-                                return RichText(
-                                  text: TextSpan(
-                                    text: "Resend OTP in ",
+                              Column(
+                                children: [
+                                  Text(
+                                    provider.mobileOtpError!,
                                     style: const TextStyle(
-                                        color: Colors.white60),
-                                    children: [
-                                      TextSpan(
-                                        text: provider.timerText,
-                                        style: const TextStyle(
+                                      color: Colors.red,
+                                      fontSize: 13,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+
+                                  const SizedBox(height: 6),
+
+                                  /// 🔥 USER NOT REGISTERED → REGISTER BUTTON
+                                  if (provider.showRegisterButton)
+                                    GestureDetector(
+                                      onTap: () {
+                                        Navigator.pushReplacement(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (_) =>
+                                                const SignUpScreen(), // signup screen
+                                          ),
+                                        );
+                                      },
+                                      child: const Text(
+                                        "Register Now",
+                                        style: TextStyle(
                                           color: Colors.orange,
                                           fontWeight: FontWeight.bold,
                                         ),
                                       ),
-                                    ],
-                                  ),
-                                );
-                              },
-                            ),
+                                    ),
 
+                                  /// 🔥 NEW DEVICE → VERIFY EMAIL BUTTON
+                                  if (provider.showVerifyEmailButton)
+                                    GestureDetector(
+                                      onTap: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (_) => EmailScreen(
+                                              mobile: mobile,
+                                              maskedEmail:
+                                                  provider.maskedEmail ?? "",
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                      child: const Text(
+                                        "Verify Email",
+                                        style: TextStyle(
+                                          color: Colors.orange,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            const SizedBox(height: 25),
+
+                            /// ⏱ TIMER + RESEND
+                            // Consumer<LoginMobileOtpScreenProvider>(
+                            //   builder: (context, provider, child) {
+                            //     return RichText(
+                            //       text: TextSpan(
+                            //         text: "Resend OTP in ",
+                            //         style: const TextStyle(
+                            //           color: Colors.white60,
+                            //         ),
+                            //         children: [
+                            //           TextSpan(
+                            //             text: provider.timerText,
+                            //             style: const TextStyle(
+                            //               color: Colors.orange,
+                            //               fontWeight: FontWeight.bold,
+                            //             ),
+                            //           ),
+                            //         ],
+                            //       ),
+                            //     );
+                            //   },
+                            // ),
+                            /// ⏱ TIMER + RESEND (hide if error)
+                            if (provider.mobileOtpError == null)
+                              Consumer<LoginMobileOtpScreenProvider>(
+                                builder: (context, provider, child) {
+                                  return RichText(
+                                    text: TextSpan(
+                                      text: "Resend OTP in ",
+                                      style: const TextStyle(
+                                        color: Colors.white60,
+                                      ),
+                                      children: [
+                                        TextSpan(
+                                          text: provider.timerText,
+                                          style: const TextStyle(
+                                            color: Colors.orange,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                },
+                              ),
                             const SizedBox(height: 35),
 
                             /// 🔘 LOGIN BUTTON
                             GestureDetector(
+                              // onTap: provider.isMobileOtpValid
+                              //     ? () async {
+
+                              //         bool success =
+                              //             await provider.verifyLoginOtp(context, mobile);
+
+                              //         if(success){
+                              //           Navigator.pushAndRemoveUntil(
+                              //             context,
+                              //             MaterialPageRoute(
+                              //                 builder: (_) =>
+                              //                     const HomeScreen()),
+                              //             (route) => false,
+                              //           );
+                              //         }
+                              //       }
+                              //     : null,
                               onTap: provider.isMobileOtpValid
-                                  ? () async {
-
-                                      bool success =
-                                          await provider.verifyLoginOtp(mobile);
-
-                                      if(success){
-                                        Navigator.pushAndRemoveUntil(
-                                          context,
-                                          MaterialPageRoute(
-                                              builder: (_) =>
-                                                  const HomeScreen()),
-                                          (route) => false,
-                                        );
-                                      }
+                                  ? () {
+                                      provider.verifyLoginOtp(context, mobile);
                                     }
                                   : null,
+
                               child: Container(
                                 height: 55,
                                 width: double.infinity,
                                 decoration: BoxDecoration(
-                                  borderRadius:
-                                      BorderRadius.circular(15),
-                                  gradient:
-                                      provider.isMobileOtpValid
-                                          ? const LinearGradient(
-                                              colors: [
-                                                Color(0xffFF8C00),
-                                                Color(0xffFF5E00),
-                                              ],
-                                            )
-                                          : LinearGradient(
-                                              colors: [
-                                                Colors.grey.shade800,
-                                                Colors.grey.shade900,
-                                              ],
-                                            ),
+                                  borderRadius: BorderRadius.circular(15),
+                                  gradient: provider.isMobileOtpValid
+                                      ? const LinearGradient(
+                                          colors: [
+                                            Color(0xffFF8C00),
+                                            Color(0xffFF5E00),
+                                          ],
+                                        )
+                                      : LinearGradient(
+                                          colors: [
+                                            Colors.grey.shade800,
+                                            Colors.grey.shade900,
+                                          ],
+                                        ),
                                 ),
                                 child: Center(
                                   child: provider.isLoading
@@ -244,8 +308,7 @@ class LoginOtpScreen extends StatelessWidget {
                                           style: TextStyle(
                                             color: Colors.white,
                                             fontSize: 16,
-                                            fontWeight:
-                                                FontWeight.bold,
+                                            fontWeight: FontWeight.bold,
                                           ),
                                         ),
                                 ),
@@ -261,10 +324,8 @@ class LoginOtpScreen extends StatelessWidget {
                                 fontSize: 12,
                               ),
                             ),
-
                             SizedBox(
-                              height:
-                                  MediaQuery.of(context).viewInsets.bottom,
+                              height: MediaQuery.of(context).viewInsets.bottom,
                             ),
                           ],
                         ),
