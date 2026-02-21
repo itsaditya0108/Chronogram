@@ -195,4 +195,62 @@ static Future<bool> resendOtp({
   }
 }
 
+static Future<bool> sendLoginOtp(String mobile) async {
+  try {
+    const url = "$baseUrl/auth/send-otp";
+
+    final device = await DeviceHelper.getDeviceData();
+
+    final response = await http.post(
+      Uri.parse(url),
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode({
+        "mobileNumber": mobile,
+        ...device,
+      }),
+    );
+
+    print("SEND LOGIN OTP STATUS: ${response.statusCode}");
+    print("SEND LOGIN OTP BODY: ${response.body}");
+
+    return response.statusCode == 200;
+  } catch (e) {
+    print("LOGIN OTP ERROR: $e");
+    return false;
+  }
+}
+
+static Future<Map<String, dynamic>?> verifyLoginOtp({
+  required String mobile,
+  required String otp,
+}) async {
+  try {
+    const url = "$baseUrl/auth/verify-login-otp";
+
+    final device = await DeviceHelper.getDeviceData();
+
+    final response = await http.post(
+      Uri.parse(url),
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode({
+        "mobileNumber": mobile,
+        "otpCode": otp,
+        ...device
+      }),
+    );
+
+    print("LOGIN VERIFY STATUS: ${response.statusCode}");
+    print("LOGIN VERIFY BODY: ${response.body}");
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      return null;
+    }
+  } catch (e) {
+    print("LOGIN VERIFY ERROR: $e");
+    return null;
+  }
+}
+
 }

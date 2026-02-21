@@ -12,57 +12,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:provider/provider.dart';
 
-// class HomeScreen extends StatefulWidget {
-//   const HomeScreen({super.key});
-//   @override
-//   State<HomeScreen> createState() => _HomeScreenState();
-// }
-
-// class _HomeScreenState extends State<HomeScreen> {
-//   int currentIndex = 0; // important
-  
-//   @override
-//   Widget build(BuildContext context) {
-//     final List<Widget> pages = [
-//     PhotoScreen(),
-//     VideoScreen(),
-//     ChatScreen(),
-//     ProfileScreen(),
-//     ];
-//     return Scaffold(
-
-//       //safe body
-//       body: IndexedStack(
-//         index: currentIndex,
-//         children: pages,
-//       ), // important
-
-//       bottomNavigationBar: BottomNavigationBar(
-//         currentIndex: currentIndex,
-//         onTap: (index) {
-//           setState(() {
-//             currentIndex = index; // Tab Cahnge
-//           });
-//         },
-//         type: BottomNavigationBarType.fixed,
-//         backgroundColor: Colors.white.withOpacity(0.8),
-//         selectedItemColor: Color(0XFFd97706),
-//         unselectedItemColor: Colors.black54,
-//         showSelectedLabels: true,
-//         showUnselectedLabels: true,
-//         items: [
-//           BottomNavigationBarItem(icon: Icon(Icons.photo), label: 'Photos'),
-//           BottomNavigationBarItem(
-//             icon: Icon(Icons.video_collection),
-//             label: 'Videos',
-//           ),
-//           BottomNavigationBarItem(icon: Icon(Icons.chat), label: 'Chat'),
-//           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
-//         ],
-//       ),
-//     );
-//   }
-// }
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -262,4 +211,5 @@ class _HomeScreenState extends State<HomeScreen>
     super.dispose();
   }
 }
+
 

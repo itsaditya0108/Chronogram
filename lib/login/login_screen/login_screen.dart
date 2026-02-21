@@ -1,9 +1,9 @@
 import 'package:chronogram/login/login_provider/login_screen_provider.dart';
 import 'package:chronogram/login/login_screen/login_otp_screen.dart';
+import 'package:chronogram/service/api_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-
 
 class LoginMobileScreen extends StatelessWidget {
   const LoginMobileScreen({super.key});
@@ -23,7 +23,9 @@ class LoginMobileScreen extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 25),
                   child: Column(
                     children: [
-                      SizedBox(height: MediaQuery.of(context).size.height * 0.18),
+                      SizedBox(
+                        height: MediaQuery.of(context).size.height * 0.18,
+                      ),
 
                       /// 🔶 LOGO
                       Container(
@@ -94,11 +96,11 @@ class LoginMobileScreen extends StatelessWidget {
                               ),
                             ),
                             hintText: "Enter mobile number",
-                            hintStyle:
-                                const TextStyle(color: Colors.white38),
+                            hintStyle: const TextStyle(color: Colors.white38),
                             border: InputBorder.none,
-                            contentPadding:
-                                const EdgeInsets.symmetric(vertical: 18),
+                            contentPadding: const EdgeInsets.symmetric(
+                              vertical: 18,
+                            ),
                           ),
                         ),
                       ),
@@ -107,14 +109,45 @@ class LoginMobileScreen extends StatelessWidget {
 
                       /// 🔘 LOGIN BUTTON
                       InkWell(
+                        // onTap: provider.isMobileValid
+                        //     ? () {
+                        //         if (provider.validateMobile()) {
+                        //           Navigator.push(
+                        //             context,
+                        //             MaterialPageRoute(
+                        //               builder: (context) =>
+                        //                   const LoginOtpScreen(),
+                        //             ),
+                        //           );
+                        //         }
+                        //       }
+                        //     : null,
                         onTap: provider.isMobileValid
-                            ? () {
-                                if (provider.validateMobile()) {
+                            ? () async {
+                              print("BUTTON CLICKED");
+                                if (!provider.validateMobile()) return;
+
+                                String mobile = provider.mobileController.text
+                                    .trim();
+
+                                bool sent = await ApiService.sendLoginOtp(
+                                  mobile,
+                                );
+
+                                if (sent) {
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (context) =>
-                                          const LoginOtpScreen(),
+                                      builder: (_) =>
+                                          LoginOtpScreen(mobile: mobile),
+                                          
+                                    ),
+                                  );
+                                } else {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text("OTP send failed"),
+                                      
                                     ),
                                   );
                                 }
@@ -181,10 +214,7 @@ class LoginMobileScreen extends StatelessWidget {
                       const Text(
                         "Secure login powered by OTP verification.",
                         textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: Colors.white38,
-                          fontSize: 13,
-                        ),
+                        style: TextStyle(color: Colors.white38, fontSize: 13),
                       ),
                     ],
                   ),

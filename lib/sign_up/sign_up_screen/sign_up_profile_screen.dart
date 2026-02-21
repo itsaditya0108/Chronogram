@@ -20,161 +20,7 @@ class SignUpProfileScreen extends StatelessWidget {
 
 class _ProfileView extends StatelessWidget {
   const _ProfileView();
-
-  //   @override
-  //   Widget build(BuildContext context) {
-  //     final provider = context.read<SignUpProfileProvider>();
-
-  //     return Scaffold(
-  //       body: SafeArea(
-  //         child: Container(
-  //           width: double.infinity,
-  //           height: double.infinity,
-  //           decoration: BoxDecoration(
-  //             image: DecorationImage(
-  //               image: AssetImage(ScreenImage.loginBg),
-  //               fit: BoxFit.cover,
-  //             ),
-  //           ),
-  //           child: SingleChildScrollView(
-  //             padding: const EdgeInsets.symmetric(horizontal: 30),
-  //             child: Column(
-  //               children: [
-  //                 const SizedBox(height: 120),
-
-  //                 Image.asset(ScreenImage.allLogoBr, height: 80),
-  //                 const SizedBox(height: 20),
-
-  //                 const Text(
-  //                   "Complete Profile",
-  //                   style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
-  //                 ),
-
-  //                 const SizedBox(height: 10),
-
-  //                 const Text(
-  //                   "Enter your details to continue",
-  //                   style: TextStyle(color: Colors.black54, fontSize: 16),
-  //                 ),
-
-  //                 const SizedBox(height: 40),
-
-  //                 /// NAME
-  //                 Consumer<SignUpProfileProvider>(
-  //                   builder: (context, p, child) {
-  //                     return TextField(
-  //                       controller: p.nameController,
-  //                       onChanged: (_) => p.validateName(),
-  //                       decoration: InputDecoration(
-  //                         hintText: "Full Name",
-  //                         errorText: p.nameError,
-  //                         filled: true,
-  //                         fillColor: Colors.white38,
-  //                         border: OutlineInputBorder(
-  //                           borderRadius: BorderRadius.circular(12),
-  //                         ),
-  //                       ),
-  //                     );
-  //                   },
-  //                 ),
-
-  //                 const SizedBox(height: 20),
-
-  //                 /// DOB
-  //                 Consumer<SignUpProfileProvider>(
-  //                   builder: (context, p, child) {
-  //                     return TextField(
-  //                       controller: p.dobController,
-  //                       readOnly: true,
-  //                       onTap: () async {
-  //                         DateTime? picked = await showDatePicker(
-  //                           context: context,
-  //                           initialDate: DateTime(2000),
-  //                           firstDate: DateTime(1950),
-  //                           lastDate: DateTime.now(),
-  //                         );
-  //                         if (picked != null) {
-  //                           String month = picked.month.toString().padLeft(
-  //                             2,
-  //                             '0',
-  //                           );
-  //                           String day = picked.day.toString().padLeft(2, '0');
-
-  //                           p.dobController.text = "${picked.year}-$month-$day";
-
-  //                           p.validateDob();
-  //                         }
-  //                       },
-  //                       decoration: InputDecoration(
-  //                         hintText: "Date of Birth",
-  //                         errorText: p.dobError,
-  //                         filled: true,
-  //                         fillColor: Colors.white38,
-  //                         border: OutlineInputBorder(
-  //                           borderRadius: BorderRadius.circular(12),
-  //                         ),
-  //                         suffixIcon: const Icon(Icons.calendar_today),
-  //                       ),
-  //                     );
-  //                   },
-  //                 ),
-
-  //                 const SizedBox(height: 40),
-
-  //                 /// BUTTON
-  //                 Consumer<SignUpProfileProvider>(
-  //                   builder: (context, p, child) {
-  //                     return AppButton(
-  //                       title: p.isLoading ? "Please wait..." : "Finish",
-
-  //                       onTap: p.isLoading
-  //                           ? null
-  //                           : (p.isValid
-  //                                 ? () async {
-  //                                     // bool done = await p.completeProfileApi();
-  //                                     String mobile = context
-  //                                         .read<SignUpScreenProvider>()
-  //                                         .mobileController
-  //                                         .text;
-
-  //                                     bool done = await p.completeProfileApi(
-  //                                       mobile,
-  //                                     );
-
-  //                                     if (done) {
-  //                                       Navigator.pushAndRemoveUntil(
-  //                                         context,
-  //                                         MaterialPageRoute(
-  //                                           builder: (_) => HomeScreen(),
-  //                                         ),
-  //                                         (route) => false,
-  //                                       );
-  //                                     } else {
-  //                                       ScaffoldMessenger.of(
-  //                                         context,
-  //                                       ).showSnackBar(
-  //                                         SnackBar(
-  //                                           content: Text("Profile failed"),
-  //                                         ),
-  //                                       );
-  //                                     }
-  //                                   }
-  //                                 : null),
-  //                     );
-  //                   },
-  //                 ),
-
-  //                 const SizedBox(height: 40),
-  //               ],
-  //             ),
-  //           ),
-  //         ),
-  //       ),
-  //     );
-  //   }
-  // }
-
-  @override
+ @override
   Widget build(BuildContext context) {
     final provider = context.read<SignUpProfileProvider>();
 
@@ -187,7 +33,6 @@ class _ProfileView extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               SizedBox(height: MediaQuery.of(context).size.height * 0.15),
-
               /// 🔶 LOGO WITH GLOW
               Center(
                 child: Container(
@@ -390,9 +235,7 @@ class _ProfileView extends StatelessWidget {
                   );
                 },
               ),
-
               const SizedBox(height: 30),
-
               AuthProgressIndicator(
                 currentStep: 5,
                 totalSteps: 5,
