@@ -108,32 +108,18 @@ class LoginMobileScreen extends StatelessWidget {
                       const SizedBox(height: 30),
 
                       /// 🔘 LOGIN BUTTON
-                      InkWell(
-                        // onTap: provider.isMobileValid
-                        //     ? () {
-                        //         if (provider.validateMobile()) {
-                        //           Navigator.push(
-                        //             context,
-                        //             MaterialPageRoute(
-                        //               builder: (context) =>
-                        //                   const LoginOtpScreen(),
-                        //             ),
-                        //           );
-                        //         }
-                        //       }
-                        //     : null,
-                        onTap: provider.isMobileValid
+                      InkWell(           
+                       
+                        onTap: provider.isMobileValid 
                             ? () async {
                               print("BUTTON CLICKED");
                                 if (!provider.validateMobile()) return;
 
                                 String mobile = provider.mobileController.text
                                     .trim();
-
                                 bool sent = await ApiService.sendLoginOtp(
                                   mobile,
                                 );
-
                                 if (sent) {
                                   Navigator.push(
                                     context,
@@ -158,7 +144,7 @@ class LoginMobileScreen extends StatelessWidget {
                           width: double.infinity,
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(15),
-                            gradient: provider.isMobileValid
+                            gradient: provider.isMobileValid 
                                 ? const LinearGradient(
                                     colors: [
                                       Color(0xffFF8C00),

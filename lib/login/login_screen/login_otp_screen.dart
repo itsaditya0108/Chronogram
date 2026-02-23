@@ -1,6 +1,7 @@
 import 'package:chronogram/home_screen/home_screen.dart';
 import 'package:chronogram/login/login_provider/login_otp_provider.dart';
-import 'package:chronogram/login/login_screen/login_email.dart';
+import 'package:chronogram/login/login_screen/login_new_device_email_screen.dart';
+import 'package:chronogram/mask/email_mask/email_mask.dart';
 import 'package:chronogram/mobile_mask/mobile_mask.dart';
 import 'package:chronogram/sign_up/sign_up_screen/sign_up_screen.dart';
 import 'package:flutter/material.dart';
@@ -135,16 +136,6 @@ class LoginOtpScreen extends StatelessWidget {
 
                             const SizedBox(height: 12),
 
-                            /// 🔴 ERROR TEXT
-                            // if (provider.mobileOtpError != null)
-                            //   Text(
-                            //     provider.mobileOtpError!,
-                            //     style: const TextStyle(
-                            //       color: Colors.red,
-                            //       fontSize: 13,
-                            //     ),
-                            //   ),
-                            /// 🔴 ERROR + ACTION BUTTONS
                             if (provider.mobileOtpError != null)
                               Column(
                                 children: [
@@ -187,11 +178,13 @@ class LoginOtpScreen extends StatelessWidget {
                                         Navigator.push(
                                           context,
                                           MaterialPageRoute(
-                                            builder: (_) => EmailScreen(
-                                              mobile: mobile,
-                                              maskedEmail:
-                                                  provider.maskedEmail ?? "",
-                                            ),
+                                            builder: (_) =>
+                                                LoginNewDeviceEmailScreen(
+                                                  mobile: mobile,
+                                                  maskedEmail:
+                                                      provider.maskedEmail,
+                                                  temporaryToken: provider.temporaryToken, //
+                                                ),
                                           ),
                                         );
                                       },
@@ -207,29 +200,6 @@ class LoginOtpScreen extends StatelessWidget {
                               ),
                             const SizedBox(height: 25),
 
-                            /// ⏱ TIMER + RESEND
-                            // Consumer<LoginMobileOtpScreenProvider>(
-                            //   builder: (context, provider, child) {
-                            //     return RichText(
-                            //       text: TextSpan(
-                            //         text: "Resend OTP in ",
-                            //         style: const TextStyle(
-                            //           color: Colors.white60,
-                            //         ),
-                            //         children: [
-                            //           TextSpan(
-                            //             text: provider.timerText,
-                            //             style: const TextStyle(
-                            //               color: Colors.orange,
-                            //               fontWeight: FontWeight.bold,
-                            //             ),
-                            //           ),
-                            //         ],
-                            //       ),
-                            //     );
-                            //   },
-                            // ),
-                            /// ⏱ TIMER + RESEND (hide if error)
                             if (provider.mobileOtpError == null)
                               Consumer<LoginMobileOtpScreenProvider>(
                                 builder: (context, provider, child) {
@@ -256,23 +226,6 @@ class LoginOtpScreen extends StatelessWidget {
 
                             /// 🔘 LOGIN BUTTON
                             GestureDetector(
-                              // onTap: provider.isMobileOtpValid
-                              //     ? () async {
-
-                              //         bool success =
-                              //             await provider.verifyLoginOtp(context, mobile);
-
-                              //         if(success){
-                              //           Navigator.pushAndRemoveUntil(
-                              //             context,
-                              //             MaterialPageRoute(
-                              //                 builder: (_) =>
-                              //                     const HomeScreen()),
-                              //             (route) => false,
-                              //           );
-                              //         }
-                              //       }
-                              //     : null,
                               onTap: provider.isMobileOtpValid
                                   ? () {
                                       provider.verifyLoginOtp(context, mobile);

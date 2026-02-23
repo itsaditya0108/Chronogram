@@ -1,0 +1,116 @@
+import 'dart:async';
+import 'package:flutter/material.dart';
+import '../../service/api_service.dart';
+import '../../home_screen/home_screen.dart';
+import '../../token_saver_helper/token_saver_helper.dart';
+
+class LoginNewDeviceEmailProvider extends ChangeNotifier {
+  TextEditingController otpController = TextEditingController();
+  bool isOtpValid = false;
+  bool isLoading = false;
+  String? error;
+  String temporaryToken;
+
+  /// TIMER
+  int seconds = 120;
+  Timer? _timer;
+  bool canResend = false;
+  bool isResending = false;
+
+  LoginNewDeviceEmailProvider({required this.temporaryToken}) {
+    otpController.addListener(checkOtp);
+    startTimer();
+  }
+
+  void checkOtp() {
+    String value = otpController.text.trim();
+    isOtpValid = RegExp(r'^\d{6}$').hasMatch(value);
+    notifyListeners();
+  }
+
+  /// VERIFY NEW DEVICE EMAIL OTP
+  Future<void> verifyEmailOtp(BuildContext context, String mobile) async {
+    if (!isOtpValid) {
+      error = "Enter valid OTP";
+      notifyListeners();
+      return;
+    }
+
+    isLoading = true;
+    error = null;
+    notifyListeners();
+
+    final result = await ApiService.verifyNewDeviceEmailOtp(
+      mobile: mobile,
+      otp: otpController.text.trim(),
+      temporaryToken: temporaryToken,
+    );
+
+    isLoading = false;
+
+    if (result["status"] == "success") {
+      await TokenHelper.saveToken(result["token"]);
+
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => const HomeScreen()),
+        (route) => false,
+      );
+    } else {
+      error = "Invalid OTP";
+      notifyListeners();
+    }
+  }
+
+  /// TIMER START
+  void startTimer() {
+    seconds = 120;
+    canResend = false;
+    _timer?.cancel();
+
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (seconds > 0) {
+        seconds--;
+        notifyListeners();
+      } else {
+        canResend = true;
+        timer.cancel();
+        notifyListeners();
+      }
+    });
+  }
+
+  String get timerText {
+    int m = seconds ~/ 60;
+    int s = seconds % 60;
+    if (m > 0) return "$m:${s.toString().padLeft(2, '0')}";
+    return "$s sec";
+  }
+
+  /// RESEND
+  Future<void> resendOtp(String temporaryToken) async {
+    if (isResending) return;
+
+    isResending = true;
+    notifyListeners();
+
+    bool sent = await ApiService.resendNewDeviceOtp(temporaryToken);
+
+    isResending = false;
+
+    if (sent) {
+      startTimer();
+    } else {
+      error = "Failed to resend OTP";
+    }
+
+    notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    otpController.dispose();
+    _timer?.cancel();
+    super.dispose();
+  }
+}

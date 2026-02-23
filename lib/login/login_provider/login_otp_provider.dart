@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:chronogram/home_screen/home_screen.dart';
-import 'package:chronogram/login/login_screen/login_email.dart';
+import 'package:chronogram/login/login_screen/login_new_device_email_screen.dart';
+import 'package:chronogram/mask/email_mask/email_mask.dart';
 import 'package:chronogram/sign_up/sign_up_screen/sign_up_screen.dart';
 import 'package:flutter/material.dart';
 import '../../service/api_service.dart';
@@ -8,14 +9,16 @@ import '../../token_saver_helper/token_saver_helper.dart';
 
 class LoginMobileOtpScreenProvider extends ChangeNotifier {
   TextEditingController mobileOtpController = TextEditingController();
-
+ // EmailMask maskedEmail = EmailMask();
+ String temporaryToken = "";
+  String maskedEmail = "";
   String? mobileOtpError;
   bool isMobileOtpValid = false;
   bool isLoading = false;
 
-bool showRegisterButton = false;
-bool showVerifyEmailButton = false;
-String? maskedEmail; // for new device
+  bool showRegisterButton = false;
+  bool showVerifyEmailButton = false;
+  // String? maskedEmail; // for new device
 
   /// TIMER
   int seconds = 120;
@@ -50,181 +53,56 @@ String? maskedEmail; // for new device
     return mobileOtpError == null;
   }
 
-  /// 🔥 VERIFY LOGIN OTP
-  // Future<bool> verifyLoginOtp(String mobile) async {
-  //   if (!validMobileOtp()) return false;
+  Future<void> verifyLoginOtp(BuildContext context, String mobile) async {
+    if (!validMobileOtp()) return;
 
-  //   isLoading = true;
-  //   notifyListeners();
+    isLoading = true;
+    showRegisterButton = false;
+    showVerifyEmailButton = false;
+    mobileOtpError = null;
+    notifyListeners();
 
-  //   String otp = mobileOtpController.text.trim();
-
-  //   final result = await ApiService.verifyLoginOtp(mobile: mobile, otp: otp);
-
-  //   isLoading = false;
-  //   notifyListeners();
-
-  //   if (result != null) {
-  //     String token = result["accessToken"];
-  //     await TokenHelper.saveToken(token);
-
-  //     print("LOGIN SUCCESS TOKEN: $token");
-
-  //     return true;
-  //   } else {
-  //     mobileOtpError = "Invalid OTP";
-  //     notifyListeners();
-  //     return false;
-  //   }
-  // }
-
-//   Future<void> verifyLoginOtp(BuildContext context, String mobile) async {
-//   if(!validMobileOtp()) return;
-
-//   String otp = mobileOtpController.text.trim();
-//   final result = await ApiService.verifyLoginOtp(
-//     mobile: mobile,
-//     otp: otp,
-//   );
-
-//   /// ================= SUCCESS LOGIN =================
-  
-//   if(result["status"] == "success"){
-//     String token = result["token"];
-//     await TokenHelper.saveToken(token);
-//     Navigator.pushAndRemoveUntil(
-//       context,
-//       MaterialPageRoute(builder: (_) => const HomeScreen()),
-//       (route) => false,
-//     );
-//   }
-
-//   /// ================= USER NOT REGISTERED =================
-  
-//   else if(result["status"] == "not_registered"){
-//     mobileOtpError = "User not found. Please register";
-//     notifyListeners();
-//     showDialog(
-//       context: context,
-//       builder: (_) => AlertDialog(
-//         title: const Text("Account not found"),
-//         content: const Text("Please register first"),
-//         actions: [
-//           TextButton(
-//             onPressed: (){
-//               Navigator.pop(context);
-//               Navigator.push(context,
-//                 MaterialPageRoute(builder: (_) => const SignUpScreen()));
-//             },
-//             child: const Text("Register"),
-//           )
-//         ],
-//       ),
-//     );
-//   }
-
-//   /// ================= UNTRUSTED DEVICE =================
-//   else if(result["status"] == "untrusted"){
-//     String email = result["maskedEmail"];
-
-//     showDialog(
-//       context: context,
-//       builder: (_) => AlertDialog(
-//         title: const Text("New Device Login"),
-//         content: Text("Verify email $email to continue"),
-//         actions: [
-//           TextButton(
-//             onPressed: (){
-//               Navigator.pop(context);
-//             },
-//             child: const Text("Cancel"),
-//           ),
-//           ElevatedButton(
-//             onPressed: (){
-//               Navigator.pop(context);
-//               Navigator.push(
-//                 context,
-//                 MaterialPageRoute(
-//                   builder: (_) => EmailScreen(
-//                     mobile: mobile,
-//                     maskedEmail: email,
-//                   ),
-//                 ),
-//               );
-//             },
-//             child: const Text("Verify Email"),
-//           )
-//         ],
-//       ),
-//     );
-//   }
-
-//   /// ================= INVALID OTP =================
-//   else{
-//     mobileOtpError = "Invalid OTP";
-//     notifyListeners();
-//   }
-// }
-Future<void> verifyLoginOtp(
-  BuildContext context,
-  String mobile,
-) async {
-
-  if (!validMobileOtp()) return;
-
-  isLoading = true;
-  showRegisterButton = false;
-  showVerifyEmailButton = false;
-  mobileOtpError = null;
-  notifyListeners();
-
-  final result = await ApiService.verifyLoginOtp(
-    mobile: mobile,
-    otp: mobileOtpController.text.trim(),
-  );
-
-  isLoading = false;
-
-  /// ✅ LOGIN SUCCESS
-  if (result["status"] == "success") {
-
-    await TokenHelper.saveToken(result["token"]);
-
-    Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(builder: (_) => const HomeScreen()),
-      (route) => false,
+    final result = await ApiService.verifyLoginOtp(
+      mobile: mobile,
+      otp: mobileOtpController.text.trim(),
     );
+
+    isLoading = false;
+
+    /// ✅ LOGIN SUCCESS
+    if (result["status"] == "success") {
+      await TokenHelper.saveToken(result["token"]);
+
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => const HomeScreen()),
+        (route) => false,
+      );
+    }
+    /// 🔥 NEW DEVICE (401)
+    else if (result["status"] == "untrusted") {
+       maskedEmail = result["maskedEmail"];
+    temporaryToken = result['temporaryToken'] ?? "";
+    print('Temp Token From 401:c $temporaryToken');
+      mobileOtpError = "New device detected. Verify email to continue";
+
+      showVerifyEmailButton = true;
+      notifyListeners();
+    }
+    /// 🔴 USER NOT REGISTERED
+    else if (result["status"] == "not_found") {
+      mobileOtpError = "Mobile number is not registered. Please register first";
+
+      showRegisterButton = true;
+      notifyListeners();
+    }
+    /// ❌ INVALID OTP
+    else {
+      mobileOtpError = "Invalid OTP";
+      notifyListeners();
+    }
   }
 
-  /// 🔥 NEW DEVICE (401)
-  else if (result["status"] == "untrusted") {
-
-    maskedEmail = result["maskedEmail"];
-
-    mobileOtpError =
-        "New device detected. Verify email to continue";
-
-    showVerifyEmailButton = true;
-    notifyListeners();
-  }
-
-  /// 🔴 USER NOT REGISTERED
-  else if (result["status"] == "not_found") {
-
-    mobileOtpError =
-        "User not registered. Please register first";
-
-    showRegisterButton = true;
-    notifyListeners();
-  }
-
-  /// ❌ INVALID OTP
-  else {
-    mobileOtpError = "Invalid OTP";
-    notifyListeners();
-  }
-}
   /// TIMER START
   void startTimer() {
     seconds = 120;
@@ -281,5 +159,4 @@ Future<void> verifyLoginOtp(
     mobileOtpController.dispose();
     super.dispose();
   }
-
 }

@@ -15,7 +15,6 @@ class AuthProgressIndicator extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     double progressValue = currentStep / totalSteps;
-
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0, end: progressValue),
       duration: const Duration(milliseconds: 500),
@@ -76,9 +75,7 @@ class AuthProgressIndicator extends StatelessWidget {
                 ),
               ],
             ),
-
             const SizedBox(height: 12),
-
             Text(
               message,
               textAlign: TextAlign.center,

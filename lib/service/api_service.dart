@@ -166,28 +166,22 @@ static Future<bool> resendOtp({
 }) async {
   try {
     const url = "$baseUrl/auth/resend-otp";
-
     Map<String, dynamic> body = {};
-
     if (mobile != null) {
       body["mobileNumber"] = mobile;
     }
-
     if (email != null) {
       String? regToken = await TokenHelper.getRegistrationToken();
       body["email"] = email;
       body["registrationToken"] = regToken;
     }
-
     final response = await http.post(
       Uri.parse(url),
       headers: {"Content-Type": "application/json"},
       body: jsonEncode(body),
     );
-
     print("RESEND OTP STATUS: ${response.statusCode}");
     print("RESEND OTP BODY: ${response.body}");
-
     return response.statusCode == 200;
   } catch (e) {
     print("RESEND OTP ERROR: $e");
@@ -220,96 +214,6 @@ static Future<bool> sendLoginOtp(String mobile) async {
   }
 }
 
-// static Future<Map<String, dynamic>?> verifyLoginOtp({
-//   required String mobile,
-//   required String otp,
-// }) async {
-//   try {
-//     const url = "$baseUrl/auth/verify-login-otp";
-
-//     final device = await DeviceHelper.getDeviceData();
-
-//     final response = await http.post(
-//       Uri.parse(url),
-//       headers: {"Content-Type": "application/json"},
-//       body: jsonEncode({
-//         "mobileNumber": mobile,
-//         "otpCode": otp,
-//         ...device
-//       }),
-//     );
-
-//     print("LOGIN VERIFY STATUS: ${response.statusCode}");
-//     print("LOGIN VERIFY BODY: ${response.body}");
-
-//     if (response.statusCode == 200) {
-//       return jsonDecode(response.body);
-//     } else {
-//       return null;
-//     }
-//   } catch (e) {
-//     print("LOGIN VERIFY ERROR: $e");
-//     return null;
-//   }
-// }
-
-// static Future<Map<String,dynamic>> verifyLoginOtp({
-//   required String mobile,
-//   required String otp,
-// }) async {
-
-//   try{
-//     const url = "$baseUrl/auth/verify-login-otp";
-
-//     final device = await DeviceHelper.getDeviceData();
-
-//     final response = await http.post(
-//       Uri.parse(url),
-//       headers: {"Content-Type":"application/json"},
-//       body: jsonEncode({
-//         "mobileNumber": mobile,
-//         "otpCode": otp,
-//         ...device
-//       }),
-//     );
-
-//     print("LOGIN VERIFY STATUS: ${response.statusCode}");
-//     print("LOGIN VERIFY BODY: ${response.body}");
-
-//     /// SUCCESS LOGIN
-//     if(response.statusCode == 200){
-//       final data = jsonDecode(response.body);
-//       return {
-//         "status":"success",
-//         "token": data["accessToken"]
-//       };
-//     }
-
-//     /// UNTRUSTED DEVICE
-//     else if(response.statusCode == 401){
-//       final data = jsonDecode(response.body);
-//       return {
-//         "status":"untrusted",
-//         "maskedEmail": data["maskedEmail"]
-//       };
-//     }
-
-//     /// USER NOT FOUND
-//     else if(response.statusCode == 404){
-//       return {
-//         "status":"not_registered"
-//       };
-//     }
-
-//     else{
-//       return {"status":"error"};
-//     }
-
-//   }catch(e){
-//     print(e);
-//     return {"status":"error"};
-//   }
-// }
 
 static Future<Map<String, dynamic>> verifyLoginOtp({
   required String mobile,
@@ -348,7 +252,8 @@ static Future<Map<String, dynamic>> verifyLoginOtp({
     else if (response.statusCode == 401) {
       return {
         "status": "untrusted",
-        "maskedEmail": data["maskedEmail"]
+        "maskedEmail": data["maskedEmail"],
+         "temporaryToken": data["temporaryToken"], // 🔥 FIX HERE
       };
     }
 
@@ -372,5 +277,70 @@ static Future<Map<String, dynamic>> verifyLoginOtp({
     return {"status": "error"};
   }
 }
+
+static Future<Map<String, dynamic>> verifyNewDeviceEmailOtp({
+  required String mobile,
+  required String otp,
+  required String temporaryToken,
+}) async {
+  try {
+    const url = "$baseUrl/auth/verify-new-device";
+
+    final device = await DeviceHelper.getDeviceData();
+
+    final response = await http.post(
+      Uri.parse(url),
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode({
+        "mobileNumber": mobile,
+        "otp": otp,
+        "temporaryToken": temporaryToken, // 🔥 FIX HERE
+        ...device
+      }),
+    );
+
+    print("NEW DEVICE VERIFY STATUS: ${response.statusCode}");
+    print("NEW DEVICE VERIFY BODY: ${response.body}");
+
+    final data = jsonDecode(response.body);
+
+    if (response.statusCode == 200) {
+      return {
+        "status": "success",
+        "token": data["accessToken"]
+      };
+    } else {
+      return {"status": "error"};
+    }
+  } catch (e) {
+    print("NEW DEVICE ERROR: $e");
+    return {"status": "error"};
+  }
+}
+
+static Future<bool> resendNewDeviceOtp(String temporaryToken) async {
+  try {
+    const url = "$baseUrl/auth/resend-new-device-otp";
+
+    final response = await http.post(
+      Uri.parse(url),
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode({
+        "temporaryToken": temporaryToken,   // 🔥 FIX HERE
+      }),
+    );
+
+    print("NEW DEVICE RESEND STATUS: ${response.statusCode}");
+    print("NEW DEVICE RESEND BODY: ${response.body}");
+    print("TOKEN SENT: $temporaryToken");
+
+    return response.statusCode == 200;
+  } catch (e) {
+    print("NEW DEVICE RESEND ERROR: $e");
+    return false;
+  }
+}
+
+
 
 }

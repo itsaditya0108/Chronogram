@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:chronogram/app_helper/app_helper.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
@@ -23,10 +24,12 @@ class DeviceHelper {
       osVersion = ios.systemVersion;
     }
 
+    final uuid = await AppHelper().getDeviceUUID();
+
     return {
       "deviceId": deviceId,
       "deviceName": deviceModel,
-      "simSerial": "SIM123456",
+      "simSerial": uuid,
       "deviceModel": deviceModel,
       "osName": Platform.isAndroid ? "Android" : "iOS",
       "osVersion": osVersion,
