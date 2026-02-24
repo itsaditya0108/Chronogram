@@ -14,7 +14,6 @@ bool isResending = false;
 int seconds = 120;
 Timer? _timer;
 
-
   // ================= EMAIL CONTROLLER =================
   TextEditingController emailController = TextEditingController();
   String? emailError;

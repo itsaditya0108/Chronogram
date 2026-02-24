@@ -81,43 +81,60 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 /// 📱 MOBILE FIELD
                 Consumer<SignUpScreenProvider>(
                   builder: (context, value, child) {
-                    return Container(
-                      decoration: BoxDecoration(
-                        color: const Color(0xff1C1C1E),
-                        borderRadius: BorderRadius.circular(15),
-                      ),
-                      child: TextFormField(
-                        controller: value.mobileController,
-                        keyboardType: TextInputType.phone,
-                        inputFormatters: [
-                          FilteringTextInputFormatter.digitsOnly,
-                          LengthLimitingTextInputFormatter(10),
-                        ],
-                        onChanged: (v) {
-                          value.checkMobileValid();
-                        },
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        //Input Box
+                        Container(
+                          decoration: BoxDecoration(
+                            color: const Color(0xff1C1C1E),
+                            borderRadius: BorderRadius.circular(15),
+                          ),
+                          child: TextFormField(
+                            controller: value.mobileController,
+                            keyboardType: TextInputType.phone,
+                            inputFormatters: [
+                              FilteringTextInputFormatter.digitsOnly,
+                              LengthLimitingTextInputFormatter(10),
+                            ],
+                            onChanged: (v) {
+                              value.checkMobileValid();
+                            },
 
-                        style: const TextStyle(color: Colors.white),
-                        decoration: InputDecoration(
-                          prefixIcon: const Padding(
-                            padding: EdgeInsets.all(12),
-                            child: Text(
-                              "+91  ",
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 16,
+                            style: const TextStyle(color: Colors.white),
+                            decoration: InputDecoration(
+                              prefixIcon: const Padding(
+                                padding: EdgeInsets.all(12),
+                                child: Text(
+                                  "+91  ",
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ),
+                              hintText: "Enter 10-digits mobile number",
+                              hintStyle: const TextStyle(color: Colors.white38),
+                              border: InputBorder.none,
+                              contentPadding: const EdgeInsets.symmetric(
+                                vertical: 18,
                               ),
                             ),
                           ),
-                          hintText: "Enter 10-digits mobile number",
-                          hintStyle: const TextStyle(color: Colors.white38),
-                          border: InputBorder.none,
-                          errorText: value.mobileError,
-                          contentPadding: const EdgeInsets.symmetric(
-                            vertical: 18,
-                          ),
                         ),
-                      ),
+                        if (value.mobileError != null)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 8, left: 5),
+                            child: Text(
+                              value.mobileError!,
+                              style: const TextStyle(
+                                color: Colors.red,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                      ],
                     );
                   },
                 ),
@@ -126,13 +143,16 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 /// 🔘 CONTINUE BUTTON
                 Consumer<SignUpScreenProvider>(
                   builder: (context, value, child) {
-                    return GestureDetector(
+                    return InkWell(
                       onTap: value.isMobileValid
                           ? () async {
                               if (value.validateMobile()) {
                                 String mobile = value.mobileController.text;
-                                bool success = await value.sendOtp(mobile);
-                                if (success) {
+                                String result = await value.sendOtp(mobile);
+
+                                /// 🟢 NEW USER → OTP screen
+
+                                if (result == "success") {
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
@@ -143,13 +163,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                             child: SignUpMobileOtpScreen(),
                                           ),
                                     ),
-                                  );
-                                } else {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text("OTP send failed"),
-                                    ),
-                                  );
+                                  ).then((_) {
+                                    // back ke baad clear data
+                                    value.mobileController.clear();
+                                    value.mobileError = null;
+                                    value.isMobileValid = false;
+                                    value.notifyListeners();
+                                  });
                                 }
                               }
                             }

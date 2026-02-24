@@ -2,7 +2,6 @@ import 'package:chronogram/service/api_service.dart';
 import 'package:flutter/material.dart';
 
 class SignUpEmailProvider extends ChangeNotifier {
-
   TextEditingController emailController = TextEditingController();
   String? emailError;
   bool isEmailValid = false;
@@ -10,96 +9,91 @@ class SignUpEmailProvider extends ChangeNotifier {
   // SignUpEmailProvider() {
   //   emailController.addListener(validateEmail);
   // }
-SignUpEmailProvider() {
-  emailController.addListener(() {
-    if (emailController.text.isNotEmpty) {
-      validateEmail();
-    } else {
-      emailError = null;
-      isEmailValid = false;
-      notifyListeners();
-    }
-  });
-}
-  bool validateEmail() {
-    String input = emailController.text.trim();
+  SignUpEmailProvider() {
+    emailController.addListener(() {
+      if (emailController.text.isNotEmpty) {
+        validateEmail();
+      } else {
+        emailError = null;
+        isEmailValid = false;
+        notifyListeners();
+      }
+    });
+  }
+ bool validateEmail() {
+  String input = emailController.text.trim();
 
-    // secure gmail regex
-    final emailRegex = RegExp(
-      r'^[a-z0-9](?!.*\.\.)[a-z0-9._%+-]{2,}@[g][m][a][i][l]\.[c][o][m]$'
-    );
+  final emailRegex = RegExp(
+    r'^[a-zA-Z0-9](?!.*\.\.)[a-zA-Z0-9._%+-]{2,}@[gG][mM][aA][iI][lL]\.[cC][oO][mM]$'
+  );
 
-    if (input.isEmpty) {
-      emailError = "Email is required";
-      isEmailValid = false;
-    }
-
-    /// No spaces allowed
-    else if (input.contains(" ")) {
-      emailError = "Spaces not allowed";
-      isEmailValid = false;
-    }
-
-    /// Capital letters not allowed
-    else if (RegExp(r'[A-Z]').hasMatch(input)) {
-      emailError = "Capital letters not allowed";
-      isEmailValid = false;
-    }
-
-    /// Dot at start
-    else if (input.startsWith(".")) {
-      emailError = "Dot cannot be at beginning";
-      isEmailValid = false;
-    }
-
-    /// Dot before @
-    else if (input.contains(".@")) {
-      emailError = "Dot not allowed before @";
-      isEmailValid = false;
-    }
-
-    /// Double dot
-    else if (input.contains("..")) {
-      emailError = "Double dots not allowed";
-      isEmailValid = false;
-    }
-
-    /// Must end with gmail
-    else if (!input.endsWith("@gmail.com")) {
-      emailError = "Email must end with @gmail.com";
-      isEmailValid = false;
-    }
-
-    /// Final regex validation
-    else if (!emailRegex.hasMatch(input)) {
-      emailError = "Enter valid gmail (example: abcd123@gmail.com)";
-      isEmailValid = false;
-    } 
-    
-    else {
-      emailError = null;
-      isEmailValid = true;
-    }
-
-    notifyListeners();
-    return emailError == null;
+  if (input.isEmpty) {
+    emailError = "Email is required";
+    isEmailValid = false;
   }
 
-  Future<bool> linkEmailApi(BuildContext context) async {
-    if (!validateEmail()) return false;
+  else if (input.contains(" ")) {
+    emailError = "Spaces not allowed";
+    isEmailValid = false;
+  }
+
+  else if (input.startsWith(".")) {
+    emailError = "Dot cannot be at beginning";
+    isEmailValid = false;
+  }
+
+  else if (input.contains(".@")) {
+    emailError = "Dot not allowed before @";
+    isEmailValid = false;
+  }
+
+  else if (input.contains("..")) {
+    emailError = "Double dots not allowed";
+    isEmailValid = false;
+  }
+
+  else if (!input.toLowerCase().endsWith("@gmail.com")) {
+    emailError = "Email must end with @gmail.com";
+    isEmailValid = false;
+  }
+
+  else if (!emailRegex.hasMatch(input)) {
+    emailError = "Enter valid gmail (example: abcd123@gmail.com)";
+    isEmailValid = false;
+  }
+
+  else {
+    emailError = null;
+    isEmailValid = true;
+  }
+
+  notifyListeners();
+  return emailError == null;
+}
+  Future<String> linkEmailApi() async {
+    if (!validateEmail()) return "invalid";
 
     String email = emailController.text.trim();
+    final result = await ApiService.sendEmailOtp(email: email);
 
-    bool success = await ApiService.sendEmailOtp(
-      email: email,
-    );
-
-    if (success) {
-      print("EMAIL OTP SENT SUCCESS");
-      return true;
-    } else {
-      print("EMAIL OTP FAILED");
-      return false;
+    if (result["status"] == "success") {
+      return "success";
     }
+
+    if (result["status"] == "wait") {
+      emailError = "OTP already sent. Pleass wait 2 minutes";
+      notifyListeners();
+      return "wait";
+    }
+
+    if (result["status"] == "exists") {
+      emailError = "Email already registered";
+      notifyListeners();
+      return "exists";
+    }
+
+    emailError = "Something went wrong";
+    notifyListeners();
+    return "error";
   }
 }

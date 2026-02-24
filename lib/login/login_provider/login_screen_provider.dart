@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 
 class LoginMobileScreenProvider extends ChangeNotifier {
-
   TextEditingController mobileController = TextEditingController();
 
   String? mobileError;
   bool isMobileValid = false;
+  String? successMessage;
 
   LoginMobileScreenProvider() {
     mobileController.addListener(checkMobileValid);
@@ -28,20 +28,27 @@ class LoginMobileScreenProvider extends ChangeNotifier {
 
     if (value.isEmpty) {
       mobileError = "Mobile number is required";
-    } 
-    else if (!RegExp(r'^[0-9]+$').hasMatch(value)) {
+    } else if (!RegExp(r'^[0-9]+$').hasMatch(value)) {
       mobileError = "Only digits allowed";
-    } 
-    else if (!RegExp(r'^[6-9]\d{9}$').hasMatch(value)) {
+    } else if (!RegExp(r'^[6-9]\d{9}$').hasMatch(value)) {
       mobileError = "Please enter a valid mobile number";
-    } 
-    else {
+    } else {
       mobileError = null;
     }
 
     notifyListeners();
     return mobileError == null;
   }
+////////
+  void setError(String message) {
+  mobileError = message;
+  notifyListeners();
+
+  Future.delayed(const Duration(seconds: 4), () {
+    mobileError = null;
+    notifyListeners();
+  });
+}
 
   @override
   void dispose() {

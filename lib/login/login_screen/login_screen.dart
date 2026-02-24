@@ -64,78 +64,99 @@ class LoginMobileScreen extends StatelessWidget {
 
                       const Text(
                         "Enter your registered mobile number",
-                        style: TextStyle(color: Colors.white60, fontSize: 15),
+                        style: TextStyle(
+                          color: Colors.white60,
+                          fontSize: 15,
+                        ),
                       ),
 
                       const SizedBox(height: 35),
 
                       /// 📱 MOBILE FIELD
-                      Container(
-                        decoration: BoxDecoration(
-                          color: const Color(0xff1C1C1E),
-                          borderRadius: BorderRadius.circular(15),
-                        ),
-                        child: TextFormField(
-                          controller: provider.mobileController,
-                          keyboardType: TextInputType.phone,
-                          inputFormatters: [
-                            FilteringTextInputFormatter.digitsOnly,
-                            LengthLimitingTextInputFormatter(10),
-                          ],
-                          style: const TextStyle(color: Colors.white),
-                          decoration: InputDecoration(
-                            errorText: provider.mobileError,
-                            prefixIcon: const Padding(
-                              padding: EdgeInsets.all(12),
-                              child: Text(
-                                "+91  ",
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 16,
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            decoration: BoxDecoration(
+                              color: const Color(0xff1C1C1E),
+                              borderRadius: BorderRadius.circular(15),
+                            ),
+                            child: TextFormField(
+                              controller: provider.mobileController,
+                              keyboardType: TextInputType.phone,
+                              inputFormatters: [
+                                FilteringTextInputFormatter.digitsOnly,
+                                LengthLimitingTextInputFormatter(10),
+                              ],
+                              style: const TextStyle(color: Colors.white),
+                              decoration: const InputDecoration(
+                                prefixIcon: Padding(
+                                  padding: EdgeInsets.all(12),
+                                  child: Text(
+                                    "+91  ",
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                ),
+                                hintText: "Enter mobile number",
+                                hintStyle:
+                                    TextStyle(color: Colors.white38),
+                                border: InputBorder.none,
+                                contentPadding:
+                                    EdgeInsets.symmetric(vertical: 18),
+                              ),
+                            ),
+                          ),
+
+                          /// 🔴 ERROR BELOW TEXTFIELD
+                          if (provider.mobileError != null)
+                            Padding(
+                              padding:
+                                  const EdgeInsets.only(top: 8, left: 5),
+                              child: Center(
+                                child: Text(
+                                  provider.mobileError!,
+                                  style: const TextStyle(
+                                    color: Colors.red,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w500,
+                                  ),
                                 ),
                               ),
                             ),
-                            hintText: "Enter mobile number",
-                            hintStyle: const TextStyle(color: Colors.white38),
-                            border: InputBorder.none,
-                            contentPadding: const EdgeInsets.symmetric(
-                              vertical: 18,
-                            ),
-                          ),
-                        ),
+                        ],
                       ),
 
                       const SizedBox(height: 30),
 
-                      /// 🔘 LOGIN BUTTON
-                      InkWell(           
-                       
-                        onTap: provider.isMobileValid 
+                      /// 🔘 SEND OTP BUTTON
+                      InkWell(
+                        onTap: provider.isMobileValid
                             ? () async {
-                              print("BUTTON CLICKED");
                                 if (!provider.validateMobile()) return;
 
-                                String mobile = provider.mobileController.text
-                                    .trim();
-                                bool sent = await ApiService.sendLoginOtp(
-                                  mobile,
-                                );
+                                String mobile =
+                                    provider.mobileController.text.trim();
+
+                                bool sent =
+                                    await ApiService.sendLoginOtp(mobile);
+
+                                if (!context.mounted) return;
+
                                 if (sent) {
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
                                       builder: (_) =>
-                                          LoginOtpScreen(mobile: mobile),
-                                          
+                                          LoginOtpScreen(
+                                              mobile: mobile),
                                     ),
                                   );
                                 } else {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text("OTP send failed"),
-                                      
-                                    ),
-                                  );
+                                  provider.setError(
+                                      "User not found. Please signup");
                                 }
                               }
                             : null,
@@ -143,8 +164,9 @@ class LoginMobileScreen extends StatelessWidget {
                           height: 55,
                           width: double.infinity,
                           decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(15),
-                            gradient: provider.isMobileValid 
+                            borderRadius:
+                                BorderRadius.circular(15),
+                            gradient: provider.isMobileValid
                                 ? const LinearGradient(
                                     colors: [
                                       Color(0xffFF8C00),
@@ -171,13 +193,15 @@ class LoginMobileScreen extends StatelessWidget {
 
                       const SizedBox(height: 25),
 
-                      /// 🔁 SIGNUP TEXT
+                      /// 🔁 SIGNUP LINK
                       Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
+                        mainAxisAlignment:
+                            MainAxisAlignment.center,
                         children: [
                           const Text(
                             "Don't have an account?",
-                            style: TextStyle(color: Colors.white54),
+                            style: TextStyle(
+                                color: Colors.white54),
                           ),
                           const SizedBox(width: 6),
                           InkWell(
@@ -188,7 +212,8 @@ class LoginMobileScreen extends StatelessWidget {
                               "Sign Up",
                               style: TextStyle(
                                 color: Colors.orange,
-                                fontWeight: FontWeight.bold,
+                                fontWeight:
+                                    FontWeight.bold,
                               ),
                             ),
                           ),
@@ -200,7 +225,9 @@ class LoginMobileScreen extends StatelessWidget {
                       const Text(
                         "Secure login powered by OTP verification.",
                         textAlign: TextAlign.center,
-                        style: TextStyle(color: Colors.white38, fontSize: 13),
+                        style: TextStyle(
+                            color: Colors.white38,
+                            fontSize: 13),
                       ),
                     ],
                   ),

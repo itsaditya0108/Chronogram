@@ -20,7 +20,7 @@ class SignUpProfileScreen extends StatelessWidget {
 
 class _ProfileView extends StatelessWidget {
   const _ProfileView();
- @override
+  @override
   Widget build(BuildContext context) {
     final provider = context.read<SignUpProfileProvider>();
 
@@ -33,6 +33,7 @@ class _ProfileView extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               SizedBox(height: MediaQuery.of(context).size.height * 0.15),
+
               /// 🔶 LOGO WITH GLOW
               Center(
                 child: Container(
@@ -82,26 +83,46 @@ class _ProfileView extends StatelessWidget {
               /// NAME FIELD
               Consumer<SignUpProfileProvider>(
                 builder: (context, p, child) {
-                  return Container(
-                    decoration: BoxDecoration(
-                      color: const Color(0xff1C1C1E),
-                      borderRadius: BorderRadius.circular(15),
-                    ),
-                    child: TextField(
-                      controller: p.nameController,
-                      onChanged: (_) => p.validateName(),
-                      style: const TextStyle(color: Colors.white),
-                      decoration: InputDecoration(
-                        hintText: "Full Name",
-                        hintStyle: const TextStyle(color: Colors.white38),
-                        errorText: p.nameError,
-                        border: InputBorder.none,
-                        contentPadding: const EdgeInsets.symmetric(
-                          vertical: 18,
-                          horizontal: 15,
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Container(
+                        decoration: BoxDecoration(
+                          color: const Color(0xff1C1C1E),
+                          borderRadius: BorderRadius.circular(15),
+                        ),
+                        child: TextField(
+                          controller: p.nameController,
+                          onChanged: (_) => p.validateName(),
+                          style: const TextStyle(color: Colors.white),
+                          decoration: const InputDecoration(
+                            hintText: "Full Name",
+                            hintStyle: TextStyle(color: Colors.white38),
+                            border: InputBorder.none,
+                            contentPadding: EdgeInsets.symmetric(
+                              vertical: 18,
+                              horizontal: 15,
+                            ),
+                          ),
                         ),
                       ),
-                    ),
+
+                      /// 🔥 ERROR TEXT CENTER
+                      if (p.nameError != null)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8),
+                          child: Center(
+                            child: Text(
+                              p.nameError!,
+                              style: const TextStyle(
+                                color: Colors.red,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
                   );
                 },
               ),
@@ -111,60 +132,92 @@ class _ProfileView extends StatelessWidget {
               /// DOB FIELD
               Consumer<SignUpProfileProvider>(
                 builder: (context, p, child) {
-                  return Container(
-                    decoration: BoxDecoration(
-                      color: const Color(0xff1C1C1E),
-                      borderRadius: BorderRadius.circular(15),
-                    ),
-                    child: TextField(
-                      controller: p.dobController,
-                      readOnly: true,
-                      style: const TextStyle(color: Colors.white),
-                      onTap: () async {
-                        DateTime? picked = await showDatePicker(
-                          context: context,
-                          initialDate: DateTime(2000),
-                          firstDate: DateTime(1950),
-                          lastDate: DateTime.now(),
-                          builder: (context, child) {
-                            return Theme(
-                              data: ThemeData.dark().copyWith(
-                                colorScheme: const ColorScheme.dark(
-                                  primary: Color(0xffFF8C00),
-                                ),
-                              ),
-                              child: child!,
-                            );
-                          },
-                        );
-
-                        if (picked != null) {
-                          String month = picked.month.toString().padLeft(
-                            2,
-                            '0',
-                          );
-                          String day = picked.day.toString().padLeft(2, '0');
-
-                          p.dobController.text = "${picked.year}-$month-$day";
-
-                          p.validateDob();
-                        }
-                      },
-                      decoration: InputDecoration(
-                        hintText: "Date of Birth",
-                        hintStyle: const TextStyle(color: Colors.white38),
-                        errorText: p.dobError,
-                        border: InputBorder.none,
-                        contentPadding: const EdgeInsets.symmetric(
-                          vertical: 18,
-                          horizontal: 15,
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Container(
+                        decoration: BoxDecoration(
+                          color: const Color(0xff1C1C1E),
+                          borderRadius: BorderRadius.circular(15),
                         ),
-                        suffixIcon: const Icon(
-                          Icons.calendar_today,
-                          color: Colors.white54,
+                        child: TextField(
+                          controller: p.dobController,
+                          readOnly: true,
+                          style: const TextStyle(color: Colors.white),
+                          onTap: () async {
+                            DateTime today = DateTime.now();
+
+                            /// 🔥 Minimum allowed date (12 years old)
+                            DateTime minAllowedDate = DateTime(
+                              today.year - 12,
+                              today.month,
+                              today.day,
+                            );
+
+                            DateTime? picked = await showDatePicker(
+                              context: context,
+                              initialDate:
+                                  minAllowedDate, // 🔥 default selected
+                              firstDate: DateTime(1950),
+                              lastDate:
+                                  minAllowedDate, // 🔥 12 saal se chhota select nahi hoga
+                              builder: (context, child) {
+                                return Theme(
+                                  data: ThemeData.dark().copyWith(
+                                    colorScheme: const ColorScheme.dark(
+                                      primary: Color(0xffFF8C00),
+                                    ),
+                                  ),
+                                  child: child!,
+                                );
+                              },
+                            );
+                            if (picked != null) {
+                              String month = picked.month.toString().padLeft(
+                                2,
+                                '0',
+                              );
+                              String day = picked.day.toString().padLeft(
+                                2,
+                                '0',
+                              );
+
+                              p.dobController.text =
+                                  "${picked.year}-$month-$day";
+                              p.validateDob();
+                            }
+                          },
+                          decoration: InputDecoration(
+                            hintText: "Date of Birth",
+                            hintStyle: const TextStyle(color: Colors.white38),
+                            border: InputBorder.none,
+                            contentPadding: const EdgeInsets.symmetric(
+                              vertical: 18,
+                              horizontal: 15,
+                            ),
+                            suffixIcon: const Icon(
+                              Icons.calendar_today,
+                              color: Colors.white54,
+                            ),
+                          ),
                         ),
                       ),
-                    ),
+                      /// 🔥 ERROR TEXT CENTER
+                      if (p.dobError != null)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8),
+                          child: Center(
+                            child: Text(
+                              p.dobError!,
+                              style: const TextStyle(
+                                color: Colors.red,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
                   );
                 },
               ),

@@ -93,7 +93,7 @@ class _SignUpEmailOtpScreenState extends State<SignUpEmailOtpScreen> {
 
                       /// masked email
                       Text(
-                        EmailMask.maskEmail(widget.email),
+                        EmailMask.maskEmail(widget.email.toLowerCase()),
                         style: const TextStyle(
                           color: Colors.white38,
                           fontSize: 13,

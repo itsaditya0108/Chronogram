@@ -5,13 +5,14 @@ class SignUpScreenProvider extends ChangeNotifier {
   TextEditingController mobileController = TextEditingController();
   String? mobileError;
   bool isMobileValid = false;
-// Mobile Validation (realtime)
-void checkMobileValid() {
+  // Mobile Validation (realtime)
+  void checkMobileValid() {
     String value = mobileController.text.trim();
     final mobileRegex = RegExp(r'^[6-9]\d{9}$');
     isMobileValid = mobileRegex.hasMatch(value);
     notifyListeners();
   }
+
   bool validateMobile() {
     String value = mobileController.text.trim();
     if (value.isEmpty) {
@@ -27,11 +28,38 @@ void checkMobileValid() {
     notifyListeners();
     return mobileError == null;
   }
+void clearMobile() {
+  mobileController.clear();
+  mobileError = null;
+  isMobileValid = false;
+  notifyListeners();
+}
+  Future<String> sendOtp(String mobile) async {
+    mobileError = null;
+    notifyListeners();
 
-  Future<bool> sendOtp(String mobile) async {
-     bool success = await ApiService.sendOtp(mobile);
-     return success;
+    final result = await ApiService.sendOtp(mobile);
+
+    /// 🔴 USER EXISTS
+    if (result["status"] == "exists") {
+      showErrorTemporarily("User already exists. Pleass login");
+      return "exists";
+    }
+
+    /// ❌ OTHER ERROR
+    if (result["status"] != "success") {
+      showErrorTemporarily("Something went wrong");
+      return "error";
+    }
+    return "success";
   }
-
-
+  //auto-hide logic add karo for user already exists error after 3 seconds
+  void showErrorTemporarily(String message) {
+    mobileError = message;
+    notifyListeners();
+    Future.delayed(const Duration(seconds: 7), () {
+      mobileError = null;
+      notifyListeners();
+    });
+  }
 }

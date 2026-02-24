@@ -9,8 +9,8 @@ import '../../token_saver_helper/token_saver_helper.dart';
 
 class LoginMobileOtpScreenProvider extends ChangeNotifier {
   TextEditingController mobileOtpController = TextEditingController();
- // EmailMask maskedEmail = EmailMask();
- String temporaryToken = "";
+  // EmailMask maskedEmail = EmailMask();
+  String temporaryToken = "";
   String maskedEmail = "";
   String? mobileOtpError;
   bool isMobileOtpValid = false;
@@ -55,7 +55,6 @@ class LoginMobileOtpScreenProvider extends ChangeNotifier {
 
   Future<void> verifyLoginOtp(BuildContext context, String mobile) async {
     if (!validMobileOtp()) return;
-
     isLoading = true;
     showRegisterButton = false;
     showVerifyEmailButton = false;
@@ -81,9 +80,9 @@ class LoginMobileOtpScreenProvider extends ChangeNotifier {
     }
     /// 🔥 NEW DEVICE (401)
     else if (result["status"] == "untrusted") {
-       maskedEmail = result["maskedEmail"];
-    temporaryToken = result['temporaryToken'] ?? "";
-    print('Temp Token From 401:c $temporaryToken');
+      maskedEmail = result["maskedEmail"];
+      temporaryToken = result['temporaryToken'] ?? "";
+      print('Temp Token From 401:c $temporaryToken');
       mobileOtpError = "New device detected. Verify email to continue";
 
       showVerifyEmailButton = true;
@@ -136,13 +135,13 @@ class LoginMobileOtpScreenProvider extends ChangeNotifier {
   }
 
   /// 🔥 RESEND OTP
-  Future<void> resendOtp(String mobile) async {
+  Future<void> resendLoginOtp(String mobile) async {
     if (isResending) return;
 
     isResending = true;
     notifyListeners();
 
-    bool sent = await ApiService.resendOtp(mobile: mobile);
+    bool sent = await ApiService.resendLoginOtp(mobile: mobile);
 
     isResending = false;
 

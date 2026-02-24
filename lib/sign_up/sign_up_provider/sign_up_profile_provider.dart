@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import '../../service/api_service.dart';
 import '../../token_saver_helper/token_saver_helper.dart';
@@ -13,18 +12,23 @@ class SignUpProfileProvider extends ChangeNotifier {
   bool isValid = false;
   bool isLoading = false;
 
+//// Name Validation
   void validateName() {
-    String name = nameController.text.trim();
+  String name = nameController.text.trim();
 
-    if (name.isEmpty) {
-      nameError = "Enter full name";
-    } else {
-      nameError = null;
-    }
+  RegExp nameRegex = RegExp(r"^[a-zA-Z ]{2,25}$");
 
-    checkAllValid();
-    notifyListeners();
+  if (name.isEmpty) {
+    nameError = "Enter full name";
+  } else if (!nameRegex.hasMatch(name)) {
+    nameError = "Enter valid name (only letters)";
+  } else {
+    nameError = null;
   }
+
+  checkAllValid();
+  notifyListeners();
+}
 
   void validateDob() {
     String dob = dobController.text.trim();
@@ -32,7 +36,21 @@ class SignUpProfileProvider extends ChangeNotifier {
     if (dob.isEmpty) {
       dobError = "Select DOB";
     } else {
-      dobError = null;
+      DateTime selectedDate = DateTime.parse(dob);
+      DateTime today = DateTime.now();
+
+      int age = today.year - selectedDate.year;
+
+      if (today.month < selectedDate.month ||
+          (today.month == selectedDate.month && today.day < selectedDate.day)) {
+        age--;
+      }
+
+      if (age < 12) {
+        dobError = "You must be at least 12 years old";
+      } else {
+        dobError = null;
+      }
     }
 
     checkAllValid();
@@ -47,7 +65,6 @@ class SignUpProfileProvider extends ChangeNotifier {
         dobController.text.isNotEmpty;
   }
 
-  /// 🔥 FINAL COMPLETE PROFILE API
   Future<bool> completeProfileApi(String mobile) async {
     validateName();
     validateDob();
@@ -57,46 +74,45 @@ class SignUpProfileProvider extends ChangeNotifier {
     isLoading = true;
     notifyListeners();
 
-    String name = nameController.text.trim();
-    String dob = dobController.text.trim();
-
     final result = await ApiService.completeProfile(
-      name: name,
-      dob: dob,
+      name: nameController.text.trim(),
+      dob: dobController.text.trim(),
       mobile: mobile,
     );
 
     isLoading = false;
-    notifyListeners();
 
-   
-    if (result != null) {
-      print("FULL RESPONSE: $result");
-
-      String finalToken = result["accessToken"];
-      await TokenHelper.saveToken(finalToken);
-
-      print("FINAL LOGIN TOKEN: $finalToken");
-
-      /// USER DATA PRINT (safe parsing)
-      if (result.containsKey("user")) {
-        var user = result["user"];
-
-        print("USER NAME: ${user["name"]}");
-        print("USER EMAIL: ${user["email"]}");
-        print("USER MOBILE: ${user["mobileNumber"]}");
-      } else {
-        // agar direct response me aaye
-        print("USER NAME: ${result["name"]}");
-        print("USER EMAIL: ${result["email"]}");
-        print("USER MOBILE: ${result["mobileNumber"]}");
-      }
-
-      return true;
-    } else {
-      print("PROFILE API FAILED");
+    if (result == null) {
+      dobError = "Something went wrong";
+      notifyListeners();
       return false;
     }
+
+    int statusCode = result["statusCode"];
+    var data = result["data"];
+
+    if (statusCode == 200) {
+      String finalToken = data["accessToken"];
+      await TokenHelper.saveToken(finalToken);
+      notifyListeners();
+      return true;
+    }
+
+    if (statusCode == 400) {
+      dobError = data["message"] ?? "You must be at least 12 years old";
+      notifyListeners();
+      return false;
+    }
+
+    if (statusCode == 429) {
+      dobError = "Too many attempts. Please try again later.";
+      notifyListeners();
+      return false;
+    }
+
+    dobError = "Server error. Try again.";
+    notifyListeners();
+    return false;
   }
 
   @override

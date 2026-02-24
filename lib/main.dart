@@ -38,7 +38,8 @@ class MyApp extends StatelessWidget {
         home: 
            SignUpScreen(),
           // HomeScreen(),   
-         //  LoginMobileScreen()      
+         //  LoginMobileScreen()  
+       //  SignUpProfileScreen()    
       ),
     );
   }
