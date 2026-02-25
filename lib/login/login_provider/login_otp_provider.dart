@@ -148,7 +148,6 @@ class LoginMobileOtpScreenProvider extends ChangeNotifier {
     if (sent) {
       startTimer();
     }
-
     notifyListeners();
   }
 

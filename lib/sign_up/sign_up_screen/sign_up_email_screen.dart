@@ -29,8 +29,8 @@ class _SignUpEmailScreenState extends State<SignUpEmailScreen> {
   Widget build(BuildContext context) {
     return PopScope(
       canPop: false,
-      onPopInvoked: (didPop) async{
-        showDialog(context: context, builder:(context) => ExitUser(),);
+      onPopInvoked: (didPop) async {
+        showDialog(context: context, builder: (context) => ExitUser());
       },
       child: Scaffold(
         backgroundColor: Colors.black,
@@ -39,7 +39,8 @@ class _SignUpEmailScreenState extends State<SignUpEmailScreen> {
           child: LayoutBuilder(
             builder: (context, constraints) {
               return SingleChildScrollView(
-                keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+                keyboardDismissBehavior:
+                    ScrollViewKeyboardDismissBehavior.onDrag,
                 child: ConstrainedBox(
                   constraints: BoxConstraints(minHeight: constraints.maxHeight),
                   child: Padding(
@@ -50,7 +51,7 @@ class _SignUpEmailScreenState extends State<SignUpEmailScreen> {
                         SizedBox(
                           height: MediaQuery.of(context).size.height * 0.12,
                         ),
-      
+
                         /// 🔶 LOGO
                         Center(
                           child: Container(
@@ -75,9 +76,9 @@ class _SignUpEmailScreenState extends State<SignUpEmailScreen> {
                             ),
                           ),
                         ),
-      
+
                         const SizedBox(height: 40),
-      
+
                         /// TITLE
                         Center(
                           child: const Text(
@@ -89,18 +90,21 @@ class _SignUpEmailScreenState extends State<SignUpEmailScreen> {
                             ),
                           ),
                         ),
-      
+
                         const SizedBox(height: 6),
-      
+
                         Center(
                           child: const Text(
                             "We'll send a verification code to this email",
-                            style: TextStyle(color: Colors.white60, fontSize: 14),
+                            style: TextStyle(
+                              color: Colors.white60,
+                              fontSize: 14,
+                            ),
                           ),
                         ),
-      
+
                         const SizedBox(height: 35),
-      
+
                         /// 📧 EMAIL FIELD
                         Consumer<SignUpEmailProvider>(
                           builder: (context, value, child) {
@@ -112,7 +116,10 @@ class _SignUpEmailScreenState extends State<SignUpEmailScreen> {
                                     color: const Color(0xff1C1C1E),
                                     borderRadius: BorderRadius.circular(15),
                                     border: value.emailError != null
-                                        ? Border.all(color: Colors.red, width: 1)
+                                        ? Border.all(
+                                            color: Colors.red,
+                                            width: 1,
+                                          )
                                         : Border.all(color: Colors.white12),
                                   ),
                                   child: TextFormField(
@@ -129,7 +136,9 @@ class _SignUpEmailScreenState extends State<SignUpEmailScreen> {
                                         color: Colors.white54,
                                       ),
                                       hintText: "abcd123@gmail.com",
-                                      hintStyle: TextStyle(color: Colors.white38),
+                                      hintStyle: TextStyle(
+                                        color: Colors.white38,
+                                      ),
                                       border: InputBorder.none,
                                       contentPadding: EdgeInsets.symmetric(
                                         vertical: 18,
@@ -137,7 +146,7 @@ class _SignUpEmailScreenState extends State<SignUpEmailScreen> {
                                     ),
                                   ),
                                 ),
-      
+
                                 if (value.emailError != null)
                                   Padding(
                                     padding: const EdgeInsets.only(
@@ -157,16 +166,18 @@ class _SignUpEmailScreenState extends State<SignUpEmailScreen> {
                           },
                         ),
                         const SizedBox(height: 40),
+
                         /// 🔘 CONTINUE BUTTON
                         Consumer<SignUpEmailProvider>(
                           builder: (context, value, child) {
                             return GestureDetector(
                               onTap: value.isEmailValid
                                   ? () async {
-                                      String result = await value.linkEmailApi();
-      
+                                      String result = await value
+                                          .linkEmailApi();
+
                                       if (!context.mounted) return;
-      
+
                                       if (result == "success") {
                                         Navigator.push(
                                           context,
@@ -182,7 +193,12 @@ class _SignUpEmailScreenState extends State<SignUpEmailScreen> {
                                                   ),
                                                 ),
                                           ),
-                                        );
+                                        ).then((_) {
+                                          value.emailController.clear();
+                                          value.emailError = null;
+                                          value.isEmailValid = false;
+                                          value.notifyListeners();
+                                        });
                                       }
                                     }
                                   : null,
@@ -219,15 +235,15 @@ class _SignUpEmailScreenState extends State<SignUpEmailScreen> {
                             );
                           },
                         ),
-      
+
                         const SizedBox(height: 35),
-      
+
                         const AuthProgressIndicator(
                           currentStep: 3,
                           totalSteps: 5,
                           message: "Add your email address",
                         ),
-      
+
                         SizedBox(
                           height: MediaQuery.of(context).viewInsets.bottom,
                         ),

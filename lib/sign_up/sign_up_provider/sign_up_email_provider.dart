@@ -92,8 +92,17 @@ class SignUpEmailProvider extends ChangeNotifier {
       return "exists";
     }
 
+
     emailError = "Something went wrong";
     notifyListeners();
     return "error";
   }
+
+////// For Email Edit 
+  void clearEmail() {
+  emailController.clear();
+  emailError = null;
+  isEmailValid = false;
+  notifyListeners();
+}
 }

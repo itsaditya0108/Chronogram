@@ -48,7 +48,7 @@ void clearMobile() {
 
     /// ❌ OTHER ERROR
     if (result["status"] != "success") {
-      showErrorTemporarily("Something went wrong");
+      showErrorTemporarily("Already sent. Retry in 2 min");
       return "error";
     }
     return "success";

@@ -1,5 +1,5 @@
 import 'dart:math';
-import 'package:chronogram/app_helper/change_mobile_number.dart';
+import 'package:chronogram/app_helper/sign_up_change_mobile_number.dart';
 import 'package:chronogram/app_helper/exit_user_dilog.dart';
 import 'package:chronogram/auth_progress_indicator/auth_progress_indicator.dart';
 import 'package:chronogram/mobile_mask/mobile_mask.dart';
@@ -93,9 +93,7 @@ class _SignUpMobileOtpScreenState extends State<SignUpMobileOtpScreen> {
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-
                         const SizedBox(height: 10),
-
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [

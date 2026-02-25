@@ -204,6 +204,7 @@ class ApiService {
       return false;
     }
   }
+  
 ////LOGIN Resend Otp
 static Future<bool> resendLoginOtp({String? mobile, String? email}) async {
     try {
@@ -230,6 +231,7 @@ static Future<bool> resendLoginOtp({String? mobile, String? email}) async {
       return false;
     }
   }
+
   ////////
   static Future<bool> sendLoginOtp(String mobile) async {
     try {

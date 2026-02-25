@@ -93,6 +93,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           child: TextFormField(
                             controller: value.mobileController,
                             keyboardType: TextInputType.phone,
+                            
                             inputFormatters: [
                               FilteringTextInputFormatter.digitsOnly,
                               LengthLimitingTextInputFormatter(10),
