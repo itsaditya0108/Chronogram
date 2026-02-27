@@ -2,8 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../service/api_service.dart';
-import '../../token_saver_helper/token_saver_helper.dart';
+import '../../../service/api_service.dart';
+import '../../../app_helper/token_saver_helper/token_saver_helper.dart';
 
 class SignUpEmailOtpProvider extends ChangeNotifier {
 
@@ -87,14 +87,12 @@ Timer? _timer;
     notifyListeners();
 
     String otp = emailOtpController.text.trim();
-    String? regToken = await TokenHelper.getRegistrationToken();
 
-    print("VERIFY EMAIL REG TOKEN: $regToken");
+    
 
     final result = await ApiService.verifyEmailOtp(
       email: email,
       otp: otp,
-      registrationToken: regToken ?? "",
     );
 
     isLoading = false;

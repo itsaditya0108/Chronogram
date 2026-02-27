@@ -2,16 +2,16 @@ import 'dart:math';
 import 'package:chronogram/app_helper/sign_up_change_mobile_number.dart';
 import 'package:chronogram/app_helper/exit_user_dilog.dart';
 import 'package:chronogram/auth_progress_indicator/auth_progress_indicator.dart';
-import 'package:chronogram/mobile_mask/mobile_mask.dart';
-import 'package:chronogram/sign_up/sign_up_provider/sign_up_screen_provider.dart';
+import 'package:chronogram/app_helper/mobile_mask/mobile_mask.dart';
+import 'package:chronogram/screens/sign_up/sign_up_provider/sign_up_screen_provider.dart';
 import 'package:chronogram/buttons/buttons.dart';
-import 'package:chronogram/login/login_helper/aseet_helper.dart';
-import 'package:chronogram/login/login_provider/login_screen_provider.dart';
-import 'package:chronogram/login/login_screen/login_screen.dart';
-import 'package:chronogram/sign_up/sign_up_provider/sign_up_email_provider.dart';
-import 'package:chronogram/sign_up/sign_up_provider/sign_up_mobile_otp_provider.dart';
-import 'package:chronogram/sign_up/sign_up_screen/sign_up_email_screen.dart';
-import 'package:chronogram/sign_up/sign_up_provider/sign_up_screen_provider.dart';
+import 'package:chronogram/screens/login/login_helper/aseet_helper.dart';
+import 'package:chronogram/screens/login/login_provider/login_screen_provider.dart';
+import 'package:chronogram/screens/login/login_screen/login_screen.dart';
+import 'package:chronogram/screens/sign_up/sign_up_provider/sign_up_email_provider.dart';
+import 'package:chronogram/screens/sign_up/sign_up_provider/sign_up_mobile_otp_provider.dart';
+import 'package:chronogram/screens/sign_up/sign_up_screen/sign_up_email_screen.dart';
+import 'package:chronogram/screens/sign_up/sign_up_provider/sign_up_screen_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_otp_text_field/flutter_otp_text_field.dart';
@@ -30,6 +30,16 @@ class _SignUpMobileOtpScreenState extends State<SignUpMobileOtpScreen> {
     (index) => TextEditingController(),
   );
   final _formKey = GlobalKey<FormState>();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((value){
+      context.read<SignUpMobileOtpProvider>().init();
+    });
+    
+  }
+
   @override
   Widget build(BuildContext context) {
     final mobile = context.read<SignUpScreenProvider>().mobileController.text;

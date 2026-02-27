@@ -1,11 +1,11 @@
 import 'package:chronogram/app_helper/edit_login_mobile_dialog.dart';
 import 'package:chronogram/app_helper/exit_user_dilog.dart';
-import 'package:chronogram/home_screen/home_screen.dart';
-import 'package:chronogram/login/login_provider/login_otp_provider.dart';
-import 'package:chronogram/login/login_screen/login_new_device_email_screen.dart';
-import 'package:chronogram/mask/email_mask/email_mask.dart';
-import 'package:chronogram/mobile_mask/mobile_mask.dart';
-import 'package:chronogram/sign_up/sign_up_screen/sign_up_screen.dart';
+import 'package:chronogram/screens/home_screen/home_screen.dart';
+import 'package:chronogram/screens/login/login_provider/login_otp_provider.dart';
+import 'package:chronogram/screens/login/login_screen/login_new_device_email_screen.dart';
+import 'package:chronogram/app_helper/mask/email_mask/email_mask.dart';
+import 'package:chronogram/app_helper/mobile_mask/mobile_mask.dart';
+import 'package:chronogram/screens/sign_up/sign_up_screen/sign_up_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_otp_text_field/flutter_otp_text_field.dart';

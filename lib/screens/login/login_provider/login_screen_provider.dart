@@ -1,7 +1,12 @@
+import 'package:chronogram/service/api_service.dart';
 import 'package:flutter/material.dart';
 
 class LoginMobileScreenProvider extends ChangeNotifier {
   TextEditingController mobileController = TextEditingController();
+
+DateTime? lastOtpSentTime;
+String? lastOtpMobile;
+static const int otpCooldown = 120; // 2 min
 
   String? mobileError;
   bool isMobileValid = false;
@@ -14,10 +19,8 @@ class LoginMobileScreenProvider extends ChangeNotifier {
   // ================= REAL-TIME MOBILE VALIDATION =================
   void checkMobileValid() {
     String value = mobileController.text.trim();
-
     // Indian industrial mobile regex (6-9 start + 10 digits)
     final mobileRegex = RegExp(r'^[6-9]\d{9}$');
-
     isMobileValid = mobileRegex.hasMatch(value);
     notifyListeners();
   }
@@ -50,9 +53,43 @@ class LoginMobileScreenProvider extends ChangeNotifier {
   });
 }
 
+bool isCooldownActive(String mobile) {
+  if (lastOtpSentTime == null) return false;
+  if (lastOtpMobile != mobile) return false;
+  final diff = DateTime.now().difference(lastOtpSentTime!).inSeconds;
+  return diff < otpCooldown;
+}
+
+int remainingSeconds() {
+  if (lastOtpSentTime == null) return 0;
+  final diff = DateTime.now().difference(lastOtpSentTime!).inSeconds;
+  return otpCooldown - diff;
+}
+
+////Api Method
+Future<String>sendLoginOtp(String mobile)async{
+  mobileError = null;
+  notifyListeners();
+  final result = await ApiService.sendLoginOtp(mobile);
+  if(result['status']!='success'){
+    showErrorTemporarily(result['error']);
+    return 'error';
+  }
+  return 'success';
+}
+
+
   @override
   void dispose() {
     mobileController.dispose();
     super.dispose();
+  }
+  void showErrorTemporarily(String message) {
+    mobileError = message;
+    notifyListeners();
+    Future.delayed(const Duration(seconds: 7), () {
+      mobileError = null;
+      notifyListeners();
+    });
   }
 }

@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import '../../service/api_service.dart';
+import '../../../service/api_service.dart';
 import '../../home_screen/home_screen.dart';
-import '../../token_saver_helper/token_saver_helper.dart';
+import '../../../app_helper/token_saver_helper/token_saver_helper.dart';
 
 class LoginNewDeviceEmailProvider extends ChangeNotifier {
   TextEditingController otpController = TextEditingController();
@@ -57,7 +57,7 @@ class LoginNewDeviceEmailProvider extends ChangeNotifier {
         (route) => false,
       );
     } else {
-      error = "Invalid OTP";
+      error = result['error'];
       notifyListeners();
     }
   }
@@ -90,14 +90,10 @@ class LoginNewDeviceEmailProvider extends ChangeNotifier {
   /// RESEND
   Future<void> resendOtp(String temporaryToken) async {
     if (isResending) return;
-
     isResending = true;
     notifyListeners();
-
     bool sent = await ApiService.resendNewDeviceOtp(temporaryToken);
-
     isResending = false;
-
     if (sent) {
       startTimer();
     } else {

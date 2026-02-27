@@ -37,22 +37,15 @@ void clearMobile() {
   Future<String> sendOtp(String mobile) async {
     mobileError = null;
     notifyListeners();
-
     final result = await ApiService.sendOtp(mobile);
-
-    /// 🔴 USER EXISTS
-    if (result["status"] == "exists") {
-      showErrorTemporarily("User already exists. Pleass login");
-      return "exists";
-    }
-
     /// ❌ OTHER ERROR
     if (result["status"] != "success") {
-      showErrorTemporarily("Already sent. Retry in 2 min");
+      showErrorTemporarily(result['error']);
       return "error";
     }
     return "success";
   }
+
   //auto-hide logic add karo for user already exists error after 3 seconds
   void showErrorTemporarily(String message) {
     mobileError = message;

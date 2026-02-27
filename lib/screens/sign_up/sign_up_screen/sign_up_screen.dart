@@ -1,12 +1,12 @@
 import 'package:chronogram/auth_progress_indicator/auth_progress_indicator.dart';
 import 'package:chronogram/buttons/buttons.dart';
-import 'package:chronogram/login/login_helper/aseet_helper.dart';
-import 'package:chronogram/login/login_provider/login_screen_provider.dart';
-import 'package:chronogram/login/login_screen/login_screen.dart';
+import 'package:chronogram/screens/login/login_helper/aseet_helper.dart';
+import 'package:chronogram/screens/login/login_provider/login_screen_provider.dart';
+import 'package:chronogram/screens/login/login_screen/login_screen.dart';
 import 'package:chronogram/service/api_service.dart';
-import 'package:chronogram/sign_up/sign_up_provider/sign_up_screen_provider.dart';
-import 'package:chronogram/sign_up/sign_up_screen/sign_up_mobile_otp.dart';
-import 'package:chronogram/sign_up/sign_up_provider/sign_up_screen_provider.dart';
+import 'package:chronogram/screens/sign_up/sign_up_provider/sign_up_screen_provider.dart';
+import 'package:chronogram/screens/sign_up/sign_up_screen/sign_up_mobile_otp.dart';
+import 'package:chronogram/screens/sign_up/sign_up_provider/sign_up_screen_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/svg.dart';
@@ -93,7 +93,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           child: TextFormField(
                             controller: value.mobileController,
                             keyboardType: TextInputType.phone,
-                            
+
                             inputFormatters: [
                               FilteringTextInputFormatter.digitsOnly,
                               LengthLimitingTextInputFormatter(10),
@@ -158,11 +158,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                     context,
                                     MaterialPageRoute(
                                       builder: (context) =>
-                                          ChangeNotifierProvider.value(
-                                            value: context
-                                                .read<SignUpScreenProvider>(),
-                                            child: SignUpMobileOtpScreen(),
-                                          ),
+                                          SignUpMobileOtpScreen(),
                                     ),
                                   ).then((_) {
                                     // back ke baad clear data

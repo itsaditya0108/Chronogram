@@ -1,11 +1,11 @@
 import 'dart:async';
-import 'package:chronogram/home_screen/home_screen.dart';
-import 'package:chronogram/login/login_screen/login_new_device_email_screen.dart';
-import 'package:chronogram/mask/email_mask/email_mask.dart';
-import 'package:chronogram/sign_up/sign_up_screen/sign_up_screen.dart';
+import 'package:chronogram/screens/home_screen/home_screen.dart';
+import 'package:chronogram/screens/login/login_screen/login_new_device_email_screen.dart';
+import 'package:chronogram/app_helper/mask/email_mask/email_mask.dart';
+import 'package:chronogram/screens/sign_up/sign_up_screen/sign_up_screen.dart';
 import 'package:flutter/material.dart';
-import '../../service/api_service.dart';
-import '../../token_saver_helper/token_saver_helper.dart';
+import '../../../service/api_service.dart';
+import '../../../app_helper/token_saver_helper/token_saver_helper.dart';
 
 class LoginMobileOtpScreenProvider extends ChangeNotifier {
   TextEditingController mobileOtpController = TextEditingController();
@@ -100,6 +100,22 @@ class LoginMobileOtpScreenProvider extends ChangeNotifier {
       mobileOtpError = "Invalid OTP";
       notifyListeners();
     }
+  }
+
+  void init() {
+    temporaryToken = "";
+    maskedEmail = "";
+    mobileOtpError;
+    isMobileOtpValid = false;
+    isLoading = false;
+
+    showRegisterButton = false;
+    showVerifyEmailButton = false;
+    // String? maskedEmail; // for new device
+
+    canResend = false;
+    isResending = false;
+    startTimer();
   }
 
   /// TIMER START

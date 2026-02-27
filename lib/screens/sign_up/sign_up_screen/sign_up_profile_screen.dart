@@ -1,10 +1,10 @@
 import 'package:chronogram/app_helper/exit_user_dilog.dart';
 import 'package:chronogram/auth_progress_indicator/auth_progress_indicator.dart';
 import 'package:chronogram/buttons/buttons.dart';
-import 'package:chronogram/home_screen/home_screen.dart';
-import 'package:chronogram/login/login_helper/aseet_helper.dart';
-import 'package:chronogram/sign_up/sign_up_provider/sign_up_profile_provider.dart';
-import 'package:chronogram/sign_up/sign_up_provider/sign_up_screen_provider.dart';
+import 'package:chronogram/screens/home_screen/home_screen.dart';
+import 'package:chronogram/screens/login/login_helper/aseet_helper.dart';
+import 'package:chronogram/screens/sign_up/sign_up_provider/sign_up_profile_provider.dart';
+import 'package:chronogram/screens/sign_up/sign_up_provider/sign_up_screen_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -102,10 +102,12 @@ class _ProfileView extends StatelessWidget {
                             controller: p.nameController,
                             onChanged: (_) => p.validateName(),
                             style: const TextStyle(color: Colors.white),
+                            maxLength: 25,
                             decoration: const InputDecoration(
                               hintText: "Full Name",
                               hintStyle: TextStyle(color: Colors.white38),
                               border: InputBorder.none,
+                              counterText: '',
                               contentPadding: EdgeInsets.symmetric(
                                 vertical: 18,
                                 horizontal: 15,

@@ -1,4 +1,4 @@
-import 'package:chronogram/sign_up/sign_up_provider/sign_up_screen_provider.dart';
+import 'package:chronogram/screens/sign_up/sign_up_provider/sign_up_screen_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 

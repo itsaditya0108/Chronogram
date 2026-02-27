@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../service/api_service.dart';
-import '../../token_saver_helper/token_saver_helper.dart';
+import '../../../service/api_service.dart';
+import '../../../app_helper/token_saver_helper/token_saver_helper.dart';
 
 class SignUpProfileProvider extends ChangeNotifier {
   TextEditingController nameController = TextEditingController();
@@ -12,23 +12,23 @@ class SignUpProfileProvider extends ChangeNotifier {
   bool isValid = false;
   bool isLoading = false;
 
-//// Name Validation
+  //// Name Validation
   void validateName() {
-  String name = nameController.text.trim();
+    String name = nameController.text.trim();
 
-  RegExp nameRegex = RegExp(r"^[a-zA-Z ]{2,25}$");
+    RegExp nameRegex = RegExp(r"^[a-zA-Z ]{2,25}$");
 
-  if (name.isEmpty) {
-    nameError = "Enter full name";
-  } else if (!nameRegex.hasMatch(name)) {
-    nameError = "Enter valid name (only letters)";
-  } else {
-    nameError = null;
+    if (name.isEmpty) {
+      nameError = null;
+    } else if (!nameRegex.hasMatch(name)) {
+      nameError = "Enter valid name (only letters)";
+    } else {
+      nameError = null;
+    }
+
+    checkAllValid();
+    notifyListeners();
   }
-
-  checkAllValid();
-  notifyListeners();
-}
 
   void validateDob() {
     String dob = dobController.text.trim();
@@ -82,37 +82,16 @@ class SignUpProfileProvider extends ChangeNotifier {
 
     isLoading = false;
 
-    if (result == null) {
-      dobError = "Something went wrong";
+    if (result?['accessToken'] == null) {
+      dobError = result?['error'];
       notifyListeners();
       return false;
     }
 
-    int statusCode = result["statusCode"];
-    var data = result["data"];
-
-    if (statusCode == 200) {
-      String finalToken = data["accessToken"];
-      await TokenHelper.saveToken(finalToken);
-      notifyListeners();
-      return true;
-    }
-
-    if (statusCode == 400) {
-      dobError = data["message"] ?? "You must be at least 12 years old";
-      notifyListeners();
-      return false;
-    }
-
-    if (statusCode == 429) {
-      dobError = "Too many attempts. Please try again later.";
-      notifyListeners();
-      return false;
-    }
-
-    dobError = "Server error. Try again.";
+    String finalToken = result?["accessToken"];
+    await TokenHelper.saveToken(finalToken);
     notifyListeners();
-    return false;
+    return true;
   }
 
   @override

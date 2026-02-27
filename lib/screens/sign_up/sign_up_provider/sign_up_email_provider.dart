@@ -1,3 +1,4 @@
+import 'package:chronogram/app_helper/token_saver_helper/token_saver_helper.dart';
 import 'package:chronogram/service/api_service.dart';
 import 'package:flutter/material.dart';
 
@@ -6,9 +7,6 @@ class SignUpEmailProvider extends ChangeNotifier {
   String? emailError;
   bool isEmailValid = false;
 
-  // SignUpEmailProvider() {
-  //   emailController.addListener(validateEmail);
-  // }
   SignUpEmailProvider() {
     emailController.addListener(() {
       if (emailController.text.isNotEmpty) {
@@ -20,6 +18,7 @@ class SignUpEmailProvider extends ChangeNotifier {
       }
     });
   }
+
  bool validateEmail() {
   String input = emailController.text.trim();
 
@@ -28,7 +27,7 @@ class SignUpEmailProvider extends ChangeNotifier {
   );
 
   if (input.isEmpty) {
-    emailError = "Email is required";
+    emailError = null;
     isEmailValid = false;
   }
 
@@ -70,34 +69,22 @@ class SignUpEmailProvider extends ChangeNotifier {
   notifyListeners();
   return emailError == null;
 }
-  Future<String> linkEmailApi() async {
-    if (!validateEmail()) return "invalid";
+  
+Future<String> linkEmailApi() async {
+  if (!validateEmail()) return "invalid";
+  String email = emailController.text.trim();
+  final result = await ApiService.sendEmailOtp(email: email);
 
-    String email = emailController.text.trim();
-    final result = await ApiService.sendEmailOtp(email: email);
-
-    if (result["status"] == "success") {
-      return "success";
-    }
-
-    if (result["status"] == "wait") {
-      emailError = "OTP already sent. Pleass wait 2 minutes";
-      notifyListeners();
-      return "wait";
-    }
-
-    if (result["status"] == "exists") {
-      emailError = "Email already registered";
-      notifyListeners();
-      return "exists";
-    }
-
-
-    emailError = "Something went wrong";
-    notifyListeners();
-    return "error";
+  /// 🟢 SUCCESS
+  if (result["accessToken"] != null) {
+      final token = result['accessToken'];
+      TokenHelper.saveRegistrationToken(token);
+      return 'success';
   }
-
+  emailError = result['message'];
+  notifyListeners();
+  return "message";
+}
 ////// For Email Edit 
   void clearEmail() {
   emailController.clear();

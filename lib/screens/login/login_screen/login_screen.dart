@@ -1,5 +1,5 @@
-import 'package:chronogram/login/login_provider/login_screen_provider.dart';
-import 'package:chronogram/login/login_screen/login_otp_screen.dart';
+import 'package:chronogram/screens/login/login_provider/login_screen_provider.dart';
+import 'package:chronogram/screens/login/login_screen/login_otp_screen.dart';
 import 'package:chronogram/service/api_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -64,10 +64,7 @@ class LoginMobileScreen extends StatelessWidget {
 
                       const Text(
                         "Enter your registered mobile number",
-                        style: TextStyle(
-                          color: Colors.white60,
-                          fontSize: 15,
-                        ),
+                        style: TextStyle(color: Colors.white60, fontSize: 15),
                       ),
 
                       const SizedBox(height: 35),
@@ -101,11 +98,11 @@ class LoginMobileScreen extends StatelessWidget {
                                   ),
                                 ),
                                 hintText: "Enter mobile number",
-                                hintStyle:
-                                    TextStyle(color: Colors.white38),
+                                hintStyle: TextStyle(color: Colors.white38),
                                 border: InputBorder.none,
-                                contentPadding:
-                                    EdgeInsets.symmetric(vertical: 18),
+                                contentPadding: EdgeInsets.symmetric(
+                                  vertical: 18,
+                                ),
                               ),
                             ),
                           ),
@@ -113,8 +110,7 @@ class LoginMobileScreen extends StatelessWidget {
                           /// 🔴 ERROR BELOW TEXTFIELD
                           if (provider.mobileError != null)
                             Padding(
-                              padding:
-                                  const EdgeInsets.only(top: 8, left: 5),
+                              padding: const EdgeInsets.only(top: 8, left: 5),
                               child: Center(
                                 child: Text(
                                   provider.mobileError!,
@@ -133,39 +129,37 @@ class LoginMobileScreen extends StatelessWidget {
 
                       /// 🔘 SEND OTP BUTTON
                       InkWell(
+               
                         onTap: provider.isMobileValid
                             ? () async {
                                 if (!provider.validateMobile()) return;
 
-                                String mobile =
-                                    provider.mobileController.text.trim();
-
-                                bool sent =
-                                    await ApiService.sendLoginOtp(mobile);
-
+                                String mobile = provider.mobileController.text
+                                    .trim();
+                                final result = await provider.sendLoginOtp(
+                                  mobile,
+                                );
                                 if (!context.mounted) return;
+                                if (result == 'success') {
+                                  /// 🔥 SAVE TIME + MOBILE
+                                  provider.lastOtpSentTime = DateTime.now();
+                                  provider.lastOtpMobile = mobile;
 
-                                if (sent) {
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
                                       builder: (_) =>
-                                          LoginOtpScreen(
-                                              mobile: mobile),
+                                          LoginOtpScreen(mobile: mobile),
                                     ),
                                   );
-                                } else {
-                                  provider.setError(
-                                      "User not found. Please signup");
-                                }
+                                } 
                               }
                             : null,
                         child: Container(
                           height: 55,
                           width: double.infinity,
                           decoration: BoxDecoration(
-                            borderRadius:
-                                BorderRadius.circular(15),
+                            borderRadius: BorderRadius.circular(15),
                             gradient: provider.isMobileValid
                                 ? const LinearGradient(
                                     colors: [
@@ -195,13 +189,11 @@ class LoginMobileScreen extends StatelessWidget {
 
                       /// 🔁 SIGNUP LINK
                       Row(
-                        mainAxisAlignment:
-                            MainAxisAlignment.center,
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           const Text(
                             "Don't have an account?",
-                            style: TextStyle(
-                                color: Colors.white54),
+                            style: TextStyle(color: Colors.white54),
                           ),
                           const SizedBox(width: 6),
                           InkWell(
@@ -212,8 +204,7 @@ class LoginMobileScreen extends StatelessWidget {
                               "Sign Up",
                               style: TextStyle(
                                 color: Colors.orange,
-                                fontWeight:
-                                    FontWeight.bold,
+                                fontWeight: FontWeight.bold,
                               ),
                             ),
                           ),
@@ -225,9 +216,7 @@ class LoginMobileScreen extends StatelessWidget {
                       const Text(
                         "Secure login powered by OTP verification.",
                         textAlign: TextAlign.center,
-                        style: TextStyle(
-                            color: Colors.white38,
-                            fontSize: 13),
+                        style: TextStyle(color: Colors.white38, fontSize: 13),
                       ),
                     ],
                   ),

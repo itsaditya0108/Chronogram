@@ -1,45 +1,39 @@
 // import 'dart:convert';
 import 'dart:convert';
-import 'package:chronogram/device_helper/device_helper.dart';
-import 'package:chronogram/token_saver_helper/token_saver_helper.dart';
-import 'package:http/http.dart' as http;
+import 'package:chronogram/app_helper/constent.dart';
+import 'package:chronogram/app_helper/device_helper/device_helper.dart';
+import 'package:chronogram/modal/user_detail_modal.dart';
+import 'package:chronogram/app_helper/token_saver_helper/token_saver_helper.dart';
+import 'package:chronogram/service/api_client.dart';
 
 class ApiService {
-  static const String baseUrl = "http://192.168.1.4:8086/api";
+  // static const String baseUrl = "http://192.168.1.4:8086/api";
 
+  static final api = ApiClient();
+
+  // static const String baseUrl =
+  //     "https://glayds-unpainful-torri.ngrok-free.dev/api";
   static Future<Map<String, dynamic>> sendOtp(String mobile) async {
     try {
-      const String sendOtpUrl = "$baseUrl/auth/register/send-otp";
-
+      const String sendOtpUrl = "auth/register/send-otp";
       final device = await DeviceHelper.getDeviceData();
-
-      final response = await http.post(
-        Uri.parse(sendOtpUrl),
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({
-          "mobileNumber": mobile,
-          "deviceId": device["deviceId"],
-        }),
+      final response = await api.post(
+        sendOtpUrl,
+        data: {"mobileNumber": mobile, "deviceId": device["deviceId"]},
       );
-
       print("STATUS CODE: ${response.statusCode}");
-      print("BODY: ${response.body}");
+      print("BODY: ${response.data}");
 
       /// 🟢 SUCCESS
       if (response.statusCode == 200) {
         return {"status": "success"};
       }
 
-      /// 🔴 USER EXISTS
-      if (response.statusCode == 409) {
-        return {"status": "exists"};
-      }
-
       /// ❌ OTHER ERROR
-      return {"status": "error"};
+      return response.data; //Response Error
     } catch (e) {
       print("API ERROR: $e");
-      return {"status": "error"};
+      return {"error": Constent.sometingWntWrong};
     }
   }
 
@@ -49,27 +43,22 @@ class ApiService {
     required String otp,
   }) async {
     try {
-      const url = "$baseUrl/auth/verify-otp";
+      const url = "auth/verify-otp";
 
       final device = await DeviceHelper.getDeviceData();
 
-      final response = await http.post(
-        Uri.parse(url),
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({"mobileNumber": mobile, "otpCode": otp, ...device}),
+      final response = await api.post(
+        url,
+        data: jsonEncode({"mobileNumber": mobile, "otpCode": otp, ...device}),
       );
 
       print("VERIFY STATUS: ${response.statusCode}");
-      print("VERIFY BODY: ${response.body}");
+      print("VERIFY BODY: ${response.data}");
 
-      if (response.statusCode == 200) {
-        return jsonDecode(response.body);
-      } else {
-        return null;
-      }
+      return response.data;
     } catch (e) {
       print("VERIFY ERROR: $e");
-      return null;
+      return {"error": Constent.sometingWntWrong};
     }
   }
 
@@ -77,40 +66,25 @@ class ApiService {
     required String email,
   }) async {
     try {
-      const url = "$baseUrl/auth/send-email-otp";
-
+      const url = "auth/send-email-otp";
       String? regToken = await TokenHelper.getRegistrationToken();
       print("SEND EMAIL OTP REG TOKEN: $regToken");
-
-      final response = await http.post(
-        Uri.parse(url),
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({"email": email, "registrationToken": regToken}),
+      final response = await api.post(
+        url,
+        data: jsonEncode({"email": email, "registrationToken": regToken}),
       );
-
       print("SEND EMAIL OTP STATUS: ${response.statusCode}");
-      print("SEND EMAIL OTP BODY: ${response.body}");
+      print("SEND EMAIL OTP BODY: ${response.data}");
 
       /// 🟢 SUCCESS (NO JSON PARSE)
       if (response.statusCode == 200) {
-        return {"status": "success"};
+        return response.data;
       }
 
-      /// 🔴 OTP ALREADY ACTIVE
-      if (response.statusCode == 400 &&
-          response.body.contains("active OTP already exists")) {
-        return {"status": "wait"};
-      }
-
-      /// 🔴 EMAIL EXISTS
-      if (response.statusCode == 400 && response.body.contains("already")) {
-        return {"status": "exists"};
-      }
-
-      return {"status": "error"};
+      return response.data; //Response Error
     } catch (e) {
       print("SEND EMAIL OTP ERROR: $e");
-      return {"status": "error"};
+      return {"error": Constent.sometingWntWrong};
     }
   }
 
@@ -118,14 +92,14 @@ class ApiService {
   static Future<Map<String, dynamic>?> verifyEmailOtp({
     required String email,
     required String otp,
-    required String registrationToken,
   }) async {
     try {
-      const url = "$baseUrl/auth/verify-email-registration-otp";
-      final response = await http.post(
-        Uri.parse(url),
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({
+      String? registrationToken = await TokenHelper.getRegistrationToken();
+      print("VERIFY EMAIL REG TOKEN: $registrationToken");
+      const url = "auth/verify-email-registration-otp";
+      final response = await api.post(
+        url,
+        data: jsonEncode({
           "email": email,
           "otpCode": otp,
           "registrationToken": registrationToken,
@@ -133,16 +107,12 @@ class ApiService {
       );
 
       print("EMAIL OTP STATUS: ${response.statusCode}");
-      print("EMAIL OTP BODY: ${response.body}");
+      print("EMAIL OTP BODY: ${response.data}");
 
-      if (response.statusCode == 200) {
-        return jsonDecode(response.body);
-      } else {
-        return null;
-      }
+      return response.data;
     } catch (e) {
       print("EMAIL OTP ERROR: $e");
-      return null;
+      return {"error": Constent.sometingWntWrong};
     }
   }
 
@@ -152,14 +122,13 @@ class ApiService {
     required String mobile,
   }) async {
     try {
-      const url = "$baseUrl/auth/complete-profile";
+      const url = "auth/complete-profile";
       String? regToken = await TokenHelper.getRegistrationToken();
       print("PROFILE USING TOKEN: $regToken");
       final device = await DeviceHelper.getDeviceData();
-      final response = await http.post(
-        Uri.parse(url),
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({
+      final response = await api.post(
+        url,
+        data: jsonEncode({
           "name": name,
           "dob": dob,
           "mobileNumber": mobile,
@@ -168,20 +137,21 @@ class ApiService {
         }),
       );
       print("PROFILE STATUS: ${response.statusCode}");
-      print("PROFILE BODY: ${response.body}");
-      final decoded = response.body.isNotEmpty ? jsonDecode(response.body) : {};
-      return {"statusCode": response.statusCode, "data": decoded};
+      print("PROFILE BODY: ${response.data}");
+      if (response.statusCode == 200) {
+        return response.data;
+      }
+      return response.data;
     } catch (e) {
       print("PROFILE ERROR: $e");
-      return {"statusCode": 500, "data": null};
+      return {"error": Constent.sometingWntWrong};
     }
   }
-
 
   /// 🔄 RESEND OTP (mobile + email)
   static Future<bool> resendOtp({String? mobile, String? email}) async {
     try {
-      const url = "$baseUrl/auth/register/resend-otp";
+      const url = "auth/register/resend-otp";
       Map<String, dynamic> body = {};
       if (mobile != null) {
         body["mobileNumber"] = mobile;
@@ -191,24 +161,20 @@ class ApiService {
         body["email"] = email;
         body["registrationToken"] = regToken;
       }
-      final response = await http.post(
-        Uri.parse(url),
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode(body),
-      );
+      final response = await api.post(url, data: jsonEncode(body));
       print("RESEND OTP STATUS: ${response.statusCode}");
-      print("RESEND OTP BODY: ${response.body}");
+      print("RESEND OTP BODY: ${response.data}");
       return response.statusCode == 200;
     } catch (e) {
       print("RESEND OTP ERROR: $e");
       return false;
     }
   }
-  
-////LOGIN Resend Otp
-static Future<bool> resendLoginOtp({String? mobile, String? email}) async {
+
+  ////LOGIN Resend Otp
+  static Future<bool> resendLoginOtp({String? mobile, String? email}) async {
     try {
-      const url = "$baseUrl/auth/login/resend-otp";
+      const url = "auth/login/resend-otp";
       Map<String, dynamic> body = {};
       if (mobile != null) {
         body["mobileNumber"] = mobile;
@@ -218,13 +184,9 @@ static Future<bool> resendLoginOtp({String? mobile, String? email}) async {
         body["email"] = email;
         body["registrationToken"] = regToken;
       }
-      final response = await http.post(
-        Uri.parse(url),
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode(body),
-      );
+      final response = await api.post(url, data: jsonEncode(body));
       print("RESEND OTP STATUS: ${response.statusCode}");
-      print("RESEND OTP BODY: ${response.body}");
+      print("RESEND OTP BODY: ${response.data}");
       return response.statusCode == 200;
     } catch (e) {
       print("RESEND OTP ERROR: $e");
@@ -233,28 +195,30 @@ static Future<bool> resendLoginOtp({String? mobile, String? email}) async {
   }
 
   ////////
-  static Future<bool> sendLoginOtp(String mobile) async {
+  static Future<Map<String, dynamic>> sendLoginOtp(String mobile) async {
     try {
-      const url = "$baseUrl/auth/login/send-otp";
+      const url = "auth/login/send-otp";
 
       final device = await DeviceHelper.getDeviceData();
 
-      final response = await http.post(
-        Uri.parse(url),
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({
+      final response = await api.post(
+        url,
+        data: jsonEncode({
           "mobileNumber": mobile,
           "deviceId": device["deviceId"], // 🔥 FIX HERE
         }),
       );
-
       print("SEND LOGIN OTP STATUS: ${response.statusCode}");
-      print("SEND LOGIN OTP BODY: ${response.body}");
+      print("SEND LOGIN OTP BODY: ${response.data}");
 
-      return response.statusCode == 200;
+      if (response.statusCode == 200) {
+        return {"status": "success"};
+      }
+      // Other Error
+      return response.data;
     } catch (e) {
       print("LOGIN OTP ERROR: $e");
-      return false;
+      return {'error': Constent.sometingWntWrong};
     }
   }
 
@@ -263,20 +227,19 @@ static Future<bool> resendLoginOtp({String? mobile, String? email}) async {
     required String otp,
   }) async {
     try {
-      const url = "$baseUrl/auth/verify-login-otp";
+      const url = "auth/verify-login-otp";
 
       final device = await DeviceHelper.getDeviceData();
 
-      final response = await http.post(
-        Uri.parse(url),
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({"mobileNumber": mobile, "otpCode": otp, ...device}),
+      final response = await api.post(
+        url,
+        data: jsonEncode({"mobileNumber": mobile, "otpCode": otp, ...device}),
       );
 
       print("LOGIN VERIFY STATUS: ${response.statusCode}");
-      print("LOGIN VERIFY BODY: ${response.body}");
+      print("LOGIN VERIFY BODY: ${response.data}");
 
-      final data = jsonDecode(response.body);
+      final data = jsonDecode(response.data);
 
       /// 🟢 SUCCESS LOGIN
       if (response.statusCode == 200) {
@@ -293,15 +256,15 @@ static Future<bool> resendLoginOtp({String? mobile, String? email}) async {
       /// 🔴 USER NOT FOUND (IMPORTANT)
       else if (response.statusCode == 400 ||
           data["message"].toString().contains("User not found")) {
-        return {"status": "not_found"};
+        return response.data;
       }
       /// ❌ INVALID OTP
       else {
-        return {"status": "invalid"};
+        return response.data;
       }
     } catch (e) {
       print("LOGIN VERIFY ERROR: $e");
-      return {"status": "error"};
+      return {"error": Constent.sometingWntWrong};
     }
   }
 
@@ -311,14 +274,13 @@ static Future<bool> resendLoginOtp({String? mobile, String? email}) async {
     required String temporaryToken,
   }) async {
     try {
-      const url = "$baseUrl/auth/verify-new-device";
+      const url = "auth/verify-new-device";
 
       final device = await DeviceHelper.getDeviceData();
 
-      final response = await http.post(
-        Uri.parse(url),
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({
+      final response = await api.post(
+        url,
+        data: jsonEncode({
           "mobileNumber": mobile,
           "otp": otp,
           "temporaryToken": temporaryToken, // 🔥 FIX HERE
@@ -327,41 +289,62 @@ static Future<bool> resendLoginOtp({String? mobile, String? email}) async {
       );
 
       print("NEW DEVICE VERIFY STATUS: ${response.statusCode}");
-      print("NEW DEVICE VERIFY BODY: ${response.body}");
+      print("NEW DEVICE VERIFY BODY: ${response.data}");
 
-      final data = jsonDecode(response.body);
+      final data = jsonDecode(response.data);
 
       if (response.statusCode == 200) {
         return {"status": "success", "token": data["accessToken"]};
-      } else {
-        return {"status": "error"};
       }
+      return response.data;
     } catch (e) {
       print("NEW DEVICE ERROR: $e");
-      return {"status": "error"};
+      return {"error": Constent.sometingWntWrong};
     }
   }
 
   static Future<bool> resendNewDeviceOtp(String temporaryToken) async {
     try {
-      const url = "$baseUrl/auth/resend-new-device-otp";
+      const url = "auth/resend-new-device-otp";
 
-      final response = await http.post(
-        Uri.parse(url),
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({
+      final response = await api.post(
+        url,
+        data: jsonEncode({
           "temporaryToken": temporaryToken, // 🔥 FIX HERE
         }),
       );
 
       print("NEW DEVICE RESEND STATUS: ${response.statusCode}");
-      print("NEW DEVICE RESEND BODY: ${response.body}");
+      print("NEW DEVICE RESEND BODY: ${response.data}");
       print("TOKEN SENT: $temporaryToken");
 
       return response.statusCode == 200;
     } catch (e) {
       print("NEW DEVICE RESEND ERROR: $e");
       return false;
+    }
+  }
+
+  static Future<UserDetailModal?> getUserProfile() async {
+    try {
+      String? token = await TokenHelper.getToken();
+      const String url = "auth/me";
+
+      final response = await api.get(url);
+
+      print("STATUS CODE: ${response.statusCode}");
+      print("BODY: ${response.data}");
+
+      /// 🟢 SUCCESS
+      if (response.statusCode == 200) {
+        return UserDetailModal.fromJson(response.data);
+      }
+
+      /// 🔴 TOKEN EXPIRED / UNAUTHORIZED
+      throw Exception(response.data);
+    } catch (e) {
+      print("PROFILE API ERROR: $e");
+      rethrow;
     }
   }
 }

@@ -43,6 +43,7 @@ dependencies:
   shared_preferences: ^2.5.4
   package_info_plus: ^9.0.0
   uuid: ^4.5.3
+  dio: ^5.9.1
 
 dev_dependencies:
   flutter_test:

@@ -155,12 +155,8 @@ class LoginNewDeviceEmailScreen extends StatelessWidget {
                                 ],
                               ),
                             ),
-                      // Text(
-                      //     "Resend in ${provider.timerText}",
-                      //     style: const TextStyle(color: Colors.white60),
-                      //   ),
+                     
                       const SizedBox(height: 35),
-        
                       /// VERIFY BUTTON
                       GestureDetector(
                         onTap: provider.isOtpValid && !provider.isLoading
