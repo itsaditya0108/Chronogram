@@ -9,9 +9,10 @@ class SignUpMobileOtpProvider extends ChangeNotifier {
   TextEditingController mobileOtpController = TextEditingController();
   String? mobileOtpError;
   bool isMobileOtpValid = false;
+  bool isLoading = false;
 
   /// 🔥 TIMER
-  int seconds = 120;
+  int seconds = 300;
   Timer? _timer;
 
   /// constructor
@@ -20,14 +21,15 @@ class SignUpMobileOtpProvider extends ChangeNotifier {
     // start when screen open
   }
 
-  void init() {
+  void init(BuildContext context) {
     mobileOtpError = null;
     isMobileOtpValid = false;
+    isLoading = false;
     // String? maskedEmail; // for new device
 
     canResend = false;
     isResending = false;
-    startTimer();
+    startTimer(context);
   }
 
   /// realtime check for button enable
@@ -39,18 +41,25 @@ class SignUpMobileOtpProvider extends ChangeNotifier {
   }
 
   /// 🔥 TIMER START
-  void startTimer() {
-    seconds = 120;
+  void startTimer(BuildContext context) {
     canResend = false;
     _timer?.cancel();
 
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (seconds > 0) {
-        seconds--;
+      if (!context.mounted) {
+        timer.cancel();
+        return;
+      }
+      final provider = context.read<SignUpScreenProvider>();
+      int remaining = provider.remainingSeconds();
+      
+      if (remaining > 0) {
+        seconds = remaining;
         notifyListeners();
       } else {
-        timer.cancel();
+        seconds = 0;
         canResend = true; // 🔥 enable resend
+        timer.cancel();
         notifyListeners();
       }
     });
@@ -78,23 +87,39 @@ class SignUpMobileOtpProvider extends ChangeNotifier {
   Future<bool> verifyMobileOtp(BuildContext context) async {
     if (!validMobileOtp()) return false;
 
+    isLoading = true;
+    notifyListeners();
+
     String mobile = context.read<SignUpScreenProvider>().mobileController.text;
 
     String otp = mobileOtpController.text.trim();
 
     final result = await ApiService.verifyOtp(mobile: mobile, otp: otp);
 
-    if (result?["accessToken"] != null) {
-      String token = result?["accessToken"];
-      await TokenHelper.saveRegistrationToken(token);
+    isLoading = false;
 
-      print("TOKEN SAVED: $token");
-      return true;
+    if (result != null) {
+      if (result['statusCode'] == 200 || result['statusCode'] == 201) {
+        String? token = result["registrationToken"] ?? result["token"] ?? result["accessToken"];
+        if (token != null) {
+          await TokenHelper.saveRegistrationToken(token);
+          print("REGISTRATION TOKEN SAVED: $token");
+          mobileOtpError = null;
+          return true;
+        } else {
+          mobileOtpError = "Missing token: $result";
+          notifyListeners();
+          return false;
+        }
+      } else {
+        mobileOtpError = result['error'] ?? result['message'] ?? "Error ${result['statusCode']}";
+      }
     } else {
-      mobileOtpError = result?['error'];
-      notifyListeners();
-      return false;
+      mobileOtpError = "Verification failed";
     }
+    
+    notifyListeners();
+    return false;
   }
 
   String get timerText {
@@ -128,7 +153,7 @@ class SignUpMobileOtpProvider extends ChangeNotifier {
     isResending = false;
 
     if (success) {
-      startTimer(); // 🔥 timer restart
+      startTimer(context); // 🔥 timer restart
     }
 
     notifyListeners();

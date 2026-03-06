@@ -12,7 +12,7 @@ class LoginNewDeviceEmailProvider extends ChangeNotifier {
   String temporaryToken;
 
   /// TIMER
-  int seconds = 120;
+  int seconds = 300;
   Timer? _timer;
   bool canResend = false;
   bool isResending = false;
@@ -57,14 +57,14 @@ class LoginNewDeviceEmailProvider extends ChangeNotifier {
         (route) => false,
       );
     } else {
-      error = result['error'];
+      error = result['error'] ?? result['message'] ?? "Error ${result['statusCode']}";
       notifyListeners();
     }
   }
 
   /// TIMER START
   void startTimer() {
-    seconds = 120;
+    seconds = 300;
     canResend = false;
     _timer?.cancel();
 

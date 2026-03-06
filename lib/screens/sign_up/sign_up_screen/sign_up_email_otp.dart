@@ -32,6 +32,15 @@ class _SignUpEmailOtpScreenState extends State<SignUpEmailOtpScreen> {
     (index) => TextEditingController(),
   );
   final _formKey = GlobalKey<FormState>();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<SignUpEmailOtpProvider>().init(context);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return PopScope(
@@ -56,32 +65,10 @@ class _SignUpEmailOtpScreenState extends State<SignUpEmailOtpScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        SizedBox(
-                          height: MediaQuery.of(context).size.height * 0.10,
-                        ),
+                        SizedBox(height: MediaQuery.of(context).size.height * 0.18),
 
                         /// 🔶 LOGO
-                        Container(
-                          height: 90,
-                          width: 90,
-                          decoration: BoxDecoration(
-                            color: const Color(0xff1C1C1E),
-                            borderRadius: BorderRadius.circular(20),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.orange.withOpacity(0.5),
-                                blurRadius: 40,
-                                spreadRadius: 5,
-                              ),
-                            ],
-                          ),
-                          child: Center(
-                            child: Image.asset(
-                              ScreenImage.allLogoBr,
-                              height: 45,
-                            ),
-                          ),
-                        ),
+                        Image.asset(ScreenImage.allLogoBr, height: 70),
 
                         const SizedBox(height: 35),
 
@@ -207,7 +194,7 @@ class _SignUpEmailOtpScreenState extends State<SignUpEmailOtpScreen> {
                               return GestureDetector(
                                 onTap: provider.isResending
                                     ? null
-                                    : () => provider.resendOtp(widget.email),
+                                    : () => provider.resendOtp(widget.email, context),
                                 child: Text(
                                   provider.isResending
                                       ? "Sending..."
@@ -256,44 +243,55 @@ class _SignUpEmailOtpScreenState extends State<SignUpEmailOtpScreen> {
                                                 context,
                                                 MaterialPageRoute(
                                                   builder: (_) =>
-                                                      SignUpProfileScreen(),
+                                                      const SignUpProfileScreen(),
                                                 ),
                                                 (route) => false,
                                               );
                                             }
                                           }
                                         : null),
-                              child: Container(
-                                height: 55,
-                                width: double.infinity,
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(15),
-                                  gradient: value.isEmailOtpValid
-                                      ? const LinearGradient(
-                                          colors: [
-                                            Color(0xffFF8C00),
-                                            Color(0xffFF5E00),
-                                          ],
-                                        )
-                                      : LinearGradient(
-                                          colors: [
-                                            Colors.grey.shade800,
-                                            Colors.grey.shade900,
-                                          ],
+                              child: TweenAnimationBuilder<double>(
+                                tween: Tween<double>(
+                                    begin: 1.0,
+                                    end: value.isEmailOtpValid ? 1.0 : 0.95),
+                                duration: const Duration(milliseconds: 100),
+                                builder: (context, scale, child) {
+                                  return Transform.scale(
+                                    scale: scale,
+                                    child: Container(
+                                      height: 55,
+                                      width: double.infinity,
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(15),
+                                        gradient: value.isEmailOtpValid
+                                            ? const LinearGradient(
+                                                colors: [
+                                                  Color(0xffFF8C00),
+                                                  Color(0xffFF5E00),
+                                                ],
+                                              )
+                                            : LinearGradient(
+                                                colors: [
+                                                  Colors.grey.shade800,
+                                                  Colors.grey.shade900,
+                                                ],
+                                              ),
+                                      ),
+                                      child: Center(
+                                        child: Text(
+                                          value.isLoading
+                                              ? "Please wait..."
+                                              : "Continue",
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
+                                          ),
                                         ),
-                                ),
-                                child: Center(
-                                  child: Text(
-                                    value.isLoading
-                                        ? "Please wait..."
-                                        : "Continue",
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
+                                      ),
                                     ),
-                                  ),
-                                ),
+                                  );
+                                },
                               ),
                             );
                           },
@@ -305,7 +303,7 @@ class _SignUpEmailOtpScreenState extends State<SignUpEmailOtpScreen> {
                         const AuthProgressIndicator(
                           currentStep: 4,
                           totalSteps: 5,
-                          message: "Verify OTP sent to your email",
+                          message: "Almost there, just one more step!",
                         ),
 
                         SizedBox(

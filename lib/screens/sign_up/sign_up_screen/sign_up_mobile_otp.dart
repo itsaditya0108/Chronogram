@@ -35,7 +35,7 @@ class _SignUpMobileOtpScreenState extends State<SignUpMobileOtpScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((value){
-      context.read<SignUpMobileOtpProvider>().init();
+      context.read<SignUpMobileOtpProvider>().init(context);
     });
     
   }
@@ -66,32 +66,10 @@ class _SignUpMobileOtpScreenState extends State<SignUpMobileOtpScreen> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         // const Spacer(),
-                        SizedBox(
-                          height: MediaQuery.of(context).size.height * 0.10,
-                        ),
+                        SizedBox(height: MediaQuery.of(context).size.height * 0.18),
 
                         /// 🔶 LOGO
-                        Container(
-                          height: 90,
-                          width: 90,
-                          decoration: BoxDecoration(
-                            color: const Color(0xff1C1C1E),
-                            borderRadius: BorderRadius.circular(20),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.orange.withOpacity(0.5),
-                                blurRadius: 40,
-                                spreadRadius: 5,
-                              ),
-                            ],
-                          ),
-                          child: Center(
-                            child: Image.asset(
-                              ScreenImage.allLogoBr,
-                              height: 45,
-                            ),
-                          ),
-                        ),
+                        Image.asset(ScreenImage.allLogoBr, height: 70),
 
                         const SizedBox(height: 35),
 
@@ -279,7 +257,7 @@ class _SignUpMobileOtpScreenState extends State<SignUpMobileOtpScreen> {
                         Consumer<SignUpMobileOtpProvider>(
                           builder: (context, value, child) {
                             return GestureDetector(
-                              onTap: value.isMobileOtpValid
+                              onTap: (value.isMobileOtpValid && !value.isLoading)
                                   ? () async {
                                       bool success = await value
                                           .verifyMobileOtp(context);
@@ -294,35 +272,50 @@ class _SignUpMobileOtpScreenState extends State<SignUpMobileOtpScreen> {
                                       }
                                     }
                                   : null,
-                              child: Container(
-                                height: 55,
-                                width: double.infinity,
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(15),
-                                  gradient: value.isMobileOtpValid
-                                      ? const LinearGradient(
-                                          colors: [
-                                            Color(0xffFF8C00),
-                                            Color(0xffFF5E00),
-                                          ],
-                                        )
-                                      : LinearGradient(
-                                          colors: [
-                                            Colors.grey.shade800,
-                                            Colors.grey.shade900,
-                                          ],
-                                        ),
-                                ),
-                                child: const Center(
-                                  child: Text(
-                                    "Continue",
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
+                              child: TweenAnimationBuilder<double>(
+                                tween: Tween<double>(
+                                    begin: 1.0,
+                                    end: value.isMobileOtpValid ? 1.0 : 0.95),
+                                duration: const Duration(milliseconds: 100),
+                                builder: (context, scale, child) {
+                                  return Transform.scale(
+                                    scale: scale,
+                                    child: Container(
+                                      height: 55,
+                                      width: double.infinity,
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(15),
+                                        gradient: value.isMobileOtpValid
+                                            ? const LinearGradient(
+                                                colors: [
+                                                  Color(0xffFF8C00),
+                                                  Color(0xffFF5E00),
+                                                ],
+                                              )
+                                            : LinearGradient(
+                                                colors: [
+                                                  Colors.grey.shade800,
+                                                  Colors.grey.shade900,
+                                                ],
+                                              ),
+                                      ),
+                                      child: Center(
+                                        child: value.isLoading
+                                            ? const CircularProgressIndicator(
+                                                color: Colors.white,
+                                              )
+                                            : const Text(
+                                                "Continue",
+                                                style: TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                      ),
                                     ),
-                                  ),
-                                ),
+                                  );
+                                },
                               ),
                             );
                           },
@@ -354,7 +347,7 @@ class _SignUpMobileOtpScreenState extends State<SignUpMobileOtpScreen> {
     return const AuthProgressIndicator(
       currentStep: 2,
       totalSteps: 5,
-      message: "Verify OTP sent to your mobile",
+      message: "We’re verifying your information securely",
     );
   }
 }

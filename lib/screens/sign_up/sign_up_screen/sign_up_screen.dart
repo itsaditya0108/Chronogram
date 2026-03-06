@@ -6,7 +6,7 @@ import 'package:chronogram/screens/login/login_screen/login_screen.dart';
 import 'package:chronogram/service/api_service.dart';
 import 'package:chronogram/screens/sign_up/sign_up_provider/sign_up_screen_provider.dart';
 import 'package:chronogram/screens/sign_up/sign_up_screen/sign_up_mobile_otp.dart';
-import 'package:chronogram/screens/sign_up/sign_up_provider/sign_up_screen_provider.dart';
+import 'package:chronogram/app_helper/ui_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/svg.dart';
@@ -38,24 +38,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 SizedBox(height: MediaQuery.of(context).size.height * 0.18),
 
                 /// 🔶 LOGO WITH GLOW
-                Container(
-                  height: 90,
-                  width: 90,
-                  decoration: BoxDecoration(
-                    color: const Color(0xff1C1C1E),
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.orange.withOpacity(0.5),
-                        blurRadius: 40,
-                        spreadRadius: 5,
-                      ),
-                    ],
-                  ),
-                  child: Center(
-                    child: Image.asset(ScreenImage.allLogoBr, height: 45),
-                  ),
-                ),
+                Image.asset(ScreenImage.allLogoBr, height: 70),
 
                 const SizedBox(height: 35),
 
@@ -149,57 +132,75 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           ? () async {
                               if (value.validateMobile()) {
                                 String mobile = value.mobileController.text;
+
+                                if (value.isCooldownActive(mobile)) {
+                                  // Navigate directly to OTP Screen, user re-entered within 2min
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => const SignUpMobileOtpScreen(),
+                                    ),
+                                  );
+                                  return;
+                                }
+
                                 String result = await value.sendOtp(mobile);
 
                                 /// 🟢 NEW USER → OTP screen
+                                if (!context.mounted) return;
 
                                 if (result == "success") {
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (context) =>
-                                          SignUpMobileOtpScreen(),
+                                      builder: (context) => const SignUpMobileOtpScreen(),
                                     ),
-                                  ).then((_) {
-                                    // back ke baad clear data
-                                    value.mobileController.clear();
-                                    value.mobileError = null;
-                                    value.isMobileValid = false;
-                                    value.notifyListeners();
-                                  });
+                                  );
+                                } else {
+                                  // Removed snackbar as per request
+                                  // Error is already handled by provider.mobileError and shown below the field
                                 }
                               }
                             }
                           : null,
-                      child: Container(
-                        height: 55,
-                        width: double.infinity,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(15),
-                          gradient: value.isMobileValid
-                              ? const LinearGradient(
-                                  colors: [
-                                    Color(0xffFF8C00),
-                                    Color(0xffFF5E00),
-                                  ],
-                                )
-                              : LinearGradient(
-                                  colors: [
-                                    Colors.grey.shade800,
-                                    Colors.grey.shade900,
-                                  ],
+                      child: TweenAnimationBuilder<double>(
+                        tween: Tween<double>(begin: 1.0, end: value.isMobileValid ? 1.0 : 0.95),
+                        duration: const Duration(milliseconds: 100),
+                        builder: (context, scale, child) {
+                          return Transform.scale(
+                            scale: scale,
+                            child: Container(
+                              height: 55,
+                              width: double.infinity,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(15),
+                                gradient: value.isMobileValid
+                                    ? const LinearGradient(
+                                        colors: [
+                                          Color(0xffFF8C00),
+                                          Color(0xffFF5E00),
+                                        ],
+                                      )
+                                    : LinearGradient(
+                                        colors: [
+                                          Colors.grey.shade800,
+                                          Colors.grey.shade900,
+                                        ],
+                                      ),
+                              ),
+                              child: const Center(
+                                child: Text(
+                                  "Continue",
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
-                        ),
-                        child: const Center(
-                          child: Text(
-                            "Continue",
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
+                              ),
                             ),
-                          ),
-                        ),
+                          );
+                        },
                       ),
                     );
                   },
@@ -240,7 +241,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 const AuthProgressIndicator(
                   currentStep: 1,
                   totalSteps: 5,
-                  message: "Enter mobile number to get started",
+                  message: "Let’s get started with your registration",
                 ),
               ],
             ),

@@ -23,10 +23,7 @@ class ApiClient {
         "Accept": "application/json",
       },
       validateStatus: (status) {
-        if (status == 401) {
-          return false;
-        }
-        return true; // 🔥 accept all status codes
+        return true; // 🔥 accept all status codes without throwing exception
       },
     );
 
@@ -49,19 +46,35 @@ class ApiClient {
         },
         onResponse: (response, handler) {
           print("RESPONSE[${response.statusCode}] => DATA: ${response.data}");
+
+          if (response.statusCode == 401) {
+            bool isNewDevice = false;
+            final data = response.data;
+            if (data is Map) {
+              String msg = data['message']?.toString() ?? "";
+              if (msg.contains("APPROVAL_REQUIRED") || msg.contains("verify") || msg.contains("untrusted")) {
+                isNewDevice = true;
+              }
+              String error = data['error']?.toString() ?? "";
+              if (error.contains("APPROVAL_REQUIRED") || error.contains("verify") || error.contains("untrusted")) {
+                 isNewDevice = true;
+              }
+            }
+
+            if (!isNewDevice && !isRedirecting) {
+              isRedirecting = true;
+              TokenHelper.clear();
+              // 🔴 Navigate to login & remove all routes
+              navigatorKey.currentState?.pushAndRemoveUntil(
+                MaterialPageRoute(builder: (_) => const SignUpScreen()),
+                (route) => false,
+              );
+            }
+          }
+
           return handler.next(response);
         },
         onError: (DioException e, handler) async {
-          if (e.response?.statusCode == 401 && !isRedirecting) {
-            isRedirecting = true;
-            TokenHelper.clear();
-            // 🔴 Navigate to login & remove all routes
-            navigatorKey.currentState?.pushAndRemoveUntil(
-              MaterialPageRoute(builder: (_) => const SignUpScreen()),
-              (route) => false,
-            );
-          }
-
           return handler.next(e);
         },
       ),
@@ -112,10 +125,9 @@ class ApiClient {
   }
 
   /// ================== ERROR HANDLE ==================
-  String _handleError(DioException error) {
-    if (error.response != null) {
-      return error.response?.data["message"] ??
-          "Server error: ${error.response?.statusCode}";
+  dynamic _handleError(DioException error) {
+    if (error.response != null && error.response?.data != null) {
+      return error.response?.data;
     } else {
       return "Network error. Please try again.";
     }

@@ -6,7 +6,7 @@ class LoginMobileScreenProvider extends ChangeNotifier {
 
 DateTime? lastOtpSentTime;
 String? lastOtpMobile;
-static const int otpCooldown = 120; // 2 min
+static const int otpCooldown = 300; // 5 min
 
   String? mobileError;
   bool isMobileValid = false;
@@ -67,14 +67,33 @@ int remainingSeconds() {
 }
 
 ////Api Method
-Future<String>sendLoginOtp(String mobile)async{
+Future<String> sendLoginOtp(String mobile) async {
   mobileError = null;
   notifyListeners();
   final result = await ApiService.sendLoginOtp(mobile);
-  if(result['status']!='success'){
-    showErrorTemporarily(result['error']);
+
+  if (result['status'] != 'success') {
+    String errorMessage = result['error'] ?? result['message'] ?? "";
+    String lowerError = errorMessage.toLowerCase();
+
+    if (lowerError.contains("already") || lowerError.contains("wait") || lowerError.contains("active")) {
+      final RegExp regex = RegExp(r'wait (\d+) seconds');
+      final match = regex.firstMatch(errorMessage);
+      if (match != null) {
+        int remaining = int.tryParse(match.group(1)!) ?? otpCooldown;
+        lastOtpSentTime = DateTime.now().subtract(Duration(seconds: otpCooldown - remaining));
+        lastOtpMobile = mobile;
+        return "success";
+      }
+    }
+
+    showErrorTemporarily(errorMessage);
     return 'error';
   }
+
+  lastOtpSentTime = DateTime.now();
+  lastOtpMobile = mobile;
+
   return 'success';
 }
 

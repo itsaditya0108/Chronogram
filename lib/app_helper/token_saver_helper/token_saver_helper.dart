@@ -11,6 +11,11 @@ class TokenHelper {
     return prefs.getString("token");
   }
 
+  static Future<void> removeToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove("token");
+  }
+
   static Future clear()async{
     final prefs = await SharedPreferences.getInstance();
     prefs.clear();
@@ -24,6 +29,16 @@ class TokenHelper {
 static Future<String?> getRegistrationToken() async {
   final prefs = await SharedPreferences.getInstance();
   return prefs.getString("reg_token");
+}
+
+static Future<void> saveOtpSessionToken(String token) async {
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.setString("otp_session_token", token);
+}
+
+static Future<String?> getOtpSessionToken() async {
+  final prefs = await SharedPreferences.getInstance();
+  return prefs.getString("otp_session_token");
 }
 
 }

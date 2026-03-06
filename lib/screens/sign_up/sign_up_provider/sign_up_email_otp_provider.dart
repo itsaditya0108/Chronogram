@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../service/api_service.dart';
 import '../../../app_helper/token_saver_helper/token_saver_helper.dart';
+import 'package:chronogram/screens/sign_up/sign_up_provider/sign_up_email_provider.dart';
 
 class SignUpEmailOtpProvider extends ChangeNotifier {
 
@@ -11,7 +12,7 @@ bool canResend = false;
 bool isResending = false;
 
 //Varivable add
-int seconds = 120;
+int seconds = 300;
 Timer? _timer;
 
   // ================= EMAIL CONTROLLER =================
@@ -28,7 +29,10 @@ Timer? _timer;
   SignUpEmailOtpProvider(){
     emailController.addListener(checkEmailValidation);
     emailOtpController.addListener(checkEmailOtpFill);
-    startTimer();
+  }
+
+  void init(BuildContext context) {
+    startTimer(context);
   }
   
   // ================= INDUSTRIAL EMAIL REGEX =================
@@ -98,37 +102,50 @@ Timer? _timer;
     isLoading = false;
     notifyListeners();
 
-    if(result != null){
+    if(result != null) {
+      if (result['statusCode'] == 200 || result['statusCode'] == 201) {
+        String? accessToken = result["accessToken"] ?? result["token"] ?? result["registrationToken"];
 
-      String accessToken = result["accessToken"];
+        if (accessToken != null) {
+          // IMPORTANT: overwrite registration token
+          await TokenHelper.saveRegistrationToken(accessToken);
+          print("STEP4 EMAIL TOKEN SAVED: $accessToken");
+        } else {
+          print("STEP4 EMAIL VERIFIED BUT NO TOKEN IN RESPONSE: $result");
+        }
 
-      // IMPORTANT: overwrite registration token
-      await TokenHelper.saveRegistrationToken(accessToken);
-
-      print("STEP4 EMAIL TOKEN SAVED: $accessToken");
-
-      return true;
-    }
-
-    else{
-      emailOtpError = "Invalid OTP";
+        return true;
+      } else {
+        emailOtpError = result['error'] ?? result['message'] ?? "Error ${result['statusCode']}";
+        notifyListeners();
+        return false;
+      }
+    } else {
+      emailOtpError = "Verification failed";
       notifyListeners();
       return false;
     }
   }
 
-void startTimer() {
-  seconds = 120;
+void startTimer(BuildContext context) {
   canResend = false;
   _timer?.cancel();
 
   _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-    if (seconds > 0) {
-      seconds--;
+    if (!context.mounted) {
+      timer.cancel();
+      return;
+    }
+    final provider = context.read<SignUpEmailProvider>();
+    int remaining = provider.remainingSeconds();
+
+    if (remaining > 0) {
+      seconds = remaining;
       notifyListeners();
     } else {
       timer.cancel();
       canResend = true;
+      seconds = 0;
       notifyListeners();
     }
   });
@@ -151,7 +168,7 @@ String get timerText {
 }
 
 // Resend Function
-Future<void> resendOtp(String email) async {
+Future<void> resendOtp(String email, BuildContext context) async {
   if (isResending) return;
 
   isResending = true;
@@ -164,7 +181,7 @@ Future<void> resendOtp(String email) async {
   isResending = false;
 
   if (success) {
-    startTimer(); // restart timer
+    startTimer(context); // restart timer
   }
 
   notifyListeners();

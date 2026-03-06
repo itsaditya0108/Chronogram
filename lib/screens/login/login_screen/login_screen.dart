@@ -1,6 +1,8 @@
 import 'package:chronogram/screens/login/login_provider/login_screen_provider.dart';
 import 'package:chronogram/screens/login/login_screen/login_otp_screen.dart';
 import 'package:chronogram/service/api_service.dart';
+import 'package:chronogram/app_helper/ui_helper.dart';
+import 'package:chronogram/screens/login/login_helper/aseet_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -10,15 +12,13 @@ class LoginMobileScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => LoginMobileScreenProvider(),
-      child: Scaffold(
-        backgroundColor: Colors.black,
-        resizeToAvoidBottomInset: true,
-        body: SafeArea(
-          child: Consumer<LoginMobileScreenProvider>(
-            builder: (context, provider, child) {
-              return SingleChildScrollView(
+    return Scaffold(
+      backgroundColor: Colors.black,
+      resizeToAvoidBottomInset: true,
+      body: SafeArea(
+        child: Consumer<LoginMobileScreenProvider>(
+          builder: (context, provider, child) {
+            return SingleChildScrollView(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 25),
                   child: Column(
@@ -28,26 +28,7 @@ class LoginMobileScreen extends StatelessWidget {
                       ),
 
                       /// 🔶 LOGO
-                      Container(
-                        height: 90,
-                        width: 90,
-                        decoration: BoxDecoration(
-                          color: const Color(0xff1C1C1E),
-                          borderRadius: BorderRadius.circular(20),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.orange.withOpacity(0.5),
-                              blurRadius: 40,
-                              spreadRadius: 5,
-                            ),
-                          ],
-                        ),
-                        child: const Icon(
-                          Icons.lock,
-                          color: Colors.orange,
-                          size: 40,
-                        ),
-                      ),
+                      Image.asset(ScreenImage.allLogoBr, height: 70),
 
                       const SizedBox(height: 35),
 
@@ -134,12 +115,22 @@ class LoginMobileScreen extends StatelessWidget {
                             ? () async {
                                 if (!provider.validateMobile()) return;
 
-                                String mobile = provider.mobileController.text
-                                    .trim();
-                                final result = await provider.sendLoginOtp(
-                                  mobile,
-                                );
+                                String mobile = provider.mobileController.text.trim();
+
+                                if (provider.isCooldownActive(mobile)) {
+                                  // Navigate directly without calling sendLoginOtp
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => LoginOtpScreen(mobile: mobile),
+                                    ),
+                                  );
+                                  return;
+                                }
+
+                                final result = await provider.sendLoginOtp(mobile);
                                 if (!context.mounted) return;
+
                                 if (result == 'success') {
                                   /// 🔥 SAVE TIME + MOBILE
                                   provider.lastOtpSentTime = DateTime.now();
@@ -148,40 +139,51 @@ class LoginMobileScreen extends StatelessWidget {
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (_) =>
-                                          LoginOtpScreen(mobile: mobile),
+                                      builder: (_) => LoginOtpScreen(mobile: mobile),
                                     ),
                                   );
-                                } 
+                                } else {
+                                  // Removed snackbar as per request
+                                  // Error is already handled by provider.mobileError and shown below the field
+                                }
                               }
                             : null,
-                        child: Container(
-                          height: 55,
-                          width: double.infinity,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(15),
-                            gradient: provider.isMobileValid
-                                ? const LinearGradient(
-                                    colors: [
-                                      Color(0xffFF8C00),
-                                      Color(0xffFF5E00),
-                                    ],
-                                  )
-                                : null,
-                            color: provider.isMobileValid
-                                ? null
-                                : Colors.grey.shade800,
-                          ),
-                          child: const Center(
-                            child: Text(
-                              "Send OTP",
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
+                        child: TweenAnimationBuilder<double>(
+                          tween: Tween<double>(begin: 1.0, end: provider.isMobileValid ? 1.0 : 0.95),
+                          duration: const Duration(milliseconds: 100),
+                          builder: (context, scale, child) {
+                            return Transform.scale(
+                              scale: scale,
+                              child: Container(
+                                height: 55,
+                                width: double.infinity,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(15),
+                                  gradient: provider.isMobileValid
+                                      ? const LinearGradient(
+                                          colors: [
+                                            Color(0xffFF8C00),
+                                            Color(0xffFF5E00),
+                                          ],
+                                        )
+                                      : null,
+                                  color: provider.isMobileValid
+                                      ? null
+                                      : Colors.grey.shade800,
+                                ),
+                                child: const Center(
+                                  child: Text(
+                                    "Send OTP",
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
                               ),
-                            ),
-                          ),
+                            );
+                          },
                         ),
                       ),
 
@@ -225,7 +227,6 @@ class LoginMobileScreen extends StatelessWidget {
             },
           ),
         ),
-      ),
-    );
+      );
   }
 }

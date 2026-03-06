@@ -4,8 +4,10 @@ import 'package:chronogram/screens/login/login_screen/login_new_device_email_scr
 import 'package:chronogram/app_helper/mask/email_mask/email_mask.dart';
 import 'package:chronogram/screens/sign_up/sign_up_screen/sign_up_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../service/api_service.dart';
 import '../../../app_helper/token_saver_helper/token_saver_helper.dart';
+import 'login_screen_provider.dart';
 
 class LoginMobileOtpScreenProvider extends ChangeNotifier {
   TextEditingController mobileOtpController = TextEditingController();
@@ -21,14 +23,14 @@ class LoginMobileOtpScreenProvider extends ChangeNotifier {
   // String? maskedEmail; // for new device
 
   /// TIMER
-  int seconds = 120;
+  int seconds = 300;
   Timer? _timer;
   bool canResend = false;
   bool isResending = false;
 
   LoginMobileOtpScreenProvider() {
     mobileOtpController.addListener(checkMobileOtpFill);
-    startTimer();
+    // startTimer() removed - will be called in init() with BuildContext
   }
 
   /// OTP realtime validation
@@ -87,6 +89,7 @@ class LoginMobileOtpScreenProvider extends ChangeNotifier {
 
       showVerifyEmailButton = true;
       notifyListeners();
+
     }
     /// 🔴 USER NOT REGISTERED
     else if (result["status"] == "not_found") {
@@ -97,12 +100,12 @@ class LoginMobileOtpScreenProvider extends ChangeNotifier {
     }
     /// ❌ INVALID OTP
     else {
-      mobileOtpError = "Invalid OTP";
+      mobileOtpError = result['error'] ?? result['message'] ?? "Invalid OTP";
       notifyListeners();
     }
   }
 
-  void init() {
+  void init(BuildContext context) {
     temporaryToken = "";
     maskedEmail = "";
     mobileOtpError;
@@ -115,22 +118,28 @@ class LoginMobileOtpScreenProvider extends ChangeNotifier {
 
     canResend = false;
     isResending = false;
-    startTimer();
+    startTimer(context);
   }
 
   /// TIMER START
-  void startTimer() {
-    seconds = 120;
+  void startTimer(BuildContext context) {
     canResend = false;
-
     _timer?.cancel();
 
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (seconds > 0) {
-        seconds--;
+      if (!context.mounted) {
+        timer.cancel();
+        return;
+      }
+      final provider = context.read<LoginMobileScreenProvider>();
+      int remaining = provider.remainingSeconds();
+
+      if (remaining > 0) {
+        seconds = remaining;
         notifyListeners();
       } else {
         canResend = true;
+        seconds = 0;
         timer.cancel();
         notifyListeners();
       }
@@ -151,7 +160,7 @@ class LoginMobileOtpScreenProvider extends ChangeNotifier {
   }
 
   /// 🔥 RESEND OTP
-  Future<void> resendLoginOtp(String mobile) async {
+  Future<void> resendLoginOtp(String mobile, BuildContext context) async {
     if (isResending) return;
 
     isResending = true;
@@ -162,7 +171,12 @@ class LoginMobileOtpScreenProvider extends ChangeNotifier {
     isResending = false;
 
     if (sent) {
-      startTimer();
+      // Sync with LoginMobileScreenProvider cooldown
+      final mainProvider = context.read<LoginMobileScreenProvider>();
+      mainProvider.lastOtpSentTime = DateTime.now();
+      mainProvider.lastOtpMobile = mobile;
+      
+      startTimer(context);
     }
     notifyListeners();
   }

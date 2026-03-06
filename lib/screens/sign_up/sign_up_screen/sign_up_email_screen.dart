@@ -48,33 +48,11 @@ class _SignUpEmailScreenState extends State<SignUpEmailScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        SizedBox(
-                          height: MediaQuery.of(context).size.height * 0.12,
-                        ),
+                        SizedBox(height: MediaQuery.of(context).size.height * 0.18),
 
                         /// 🔶 LOGO
                         Center(
-                          child: Container(
-                            height: 90,
-                            width: 90,
-                            decoration: BoxDecoration(
-                              color: const Color(0xff1C1C1E),
-                              borderRadius: BorderRadius.circular(20),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.orange.withOpacity(0.5),
-                                  blurRadius: 40,
-                                  spreadRadius: 5,
-                                ),
-                              ],
-                            ),
-                            child: Center(
-                              child: Image.asset(
-                                ScreenImage.allLogoBr,
-                                height: 45,
-                              ),
-                            ),
-                          ),
+                          child: Image.asset(ScreenImage.allLogoBr, height: 70),
                         ),
 
                         const SizedBox(height: 40),
@@ -202,35 +180,46 @@ class _SignUpEmailScreenState extends State<SignUpEmailScreen> {
                                       }
                                     }
                                   : null,
-                              child: Container(
-                                height: 55,
-                                width: double.infinity,
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(15),
-                                  gradient: value.isEmailValid
-                                      ? const LinearGradient(
-                                          colors: [
-                                            Color(0xffFF8C00),
-                                            Color(0xffFF5E00),
-                                          ],
-                                        )
-                                      : LinearGradient(
-                                          colors: [
-                                            Colors.grey.shade800,
-                                            Colors.grey.shade900,
-                                          ],
+                              child: TweenAnimationBuilder<double>(
+                                tween: Tween<double>(
+                                    begin: 1.0,
+                                    end: value.isEmailValid ? 1.0 : 0.95),
+                                duration: const Duration(milliseconds: 100),
+                                builder: (context, scale, child) {
+                                  return Transform.scale(
+                                    scale: scale,
+                                    child: Container(
+                                      height: 55,
+                                      width: double.infinity,
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(15),
+                                        gradient: value.isEmailValid
+                                            ? const LinearGradient(
+                                                colors: [
+                                                  Color(0xffFF8C00),
+                                                  Color(0xffFF5E00),
+                                                ],
+                                              )
+                                            : LinearGradient(
+                                                colors: [
+                                                  Colors.grey.shade800,
+                                                  Colors.grey.shade900,
+                                                ],
+                                              ),
+                                      ),
+                                      child: const Center(
+                                        child: Text(
+                                          "Continue",
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
+                                          ),
                                         ),
-                                ),
-                                child: const Center(
-                                  child: Text(
-                                    "Continue",
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
+                                      ),
                                     ),
-                                  ),
-                                ),
+                                  );
+                                },
                               ),
                             );
                           },
@@ -241,7 +230,7 @@ class _SignUpEmailScreenState extends State<SignUpEmailScreen> {
                         const AuthProgressIndicator(
                           currentStep: 3,
                           totalSteps: 5,
-                          message: "Add your email address",
+                          message: "Setting up strong protection for your account",
                         ),
 
                         SizedBox(

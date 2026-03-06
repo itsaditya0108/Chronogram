@@ -1,10 +1,12 @@
 import 'package:chronogram/screens/home_screen/chat_screen.dart';
 import 'package:chronogram/screens/home_screen/photo_screen.dart';
-import 'package:chronogram/screens/home_screen/profile_screen.dart';
 import 'package:chronogram/screens/home_screen/video_screen.dart';
+import 'package:chronogram/screens/settings_screen/settings_screen.dart';
 import 'package:chronogram/screens/login/login_helper/aseet_helper.dart';
 import 'package:chronogram/screens/login/login_provider/login_screen_provider.dart';
 import 'package:chronogram/screens/login/login_screen/login_screen.dart';
+import 'package:chronogram/service/api_service.dart';
+import 'package:chronogram/modal/user_detail_modal.dart';
 import 'package:chronogram/screens/sign_up/sign_up_screen/sign_up_email_screen.dart';
 import 'package:chronogram/screens/sign_up/sign_up_provider/sign_up_screen_provider.dart';
 import 'package:flutter/material.dart';
@@ -24,12 +26,14 @@ class _HomeScreenState extends State<HomeScreen>
     with SingleTickerProviderStateMixin {
 
   int currentIndex = 0;
-
+  String userName = "Loading...";
+  UserDetailModal? user;
   late AnimationController glowController;
 
   @override
   void initState() {
     super.initState();
+    _fetchUser();
 
     glowController = AnimationController(
       vsync: this,
@@ -37,14 +41,34 @@ class _HomeScreenState extends State<HomeScreen>
     )..repeat(reverse: true);
   }
 
+  Future<void> _fetchUser() async {
+    try {
+      final userProfile = await ApiService.getUserProfile();
+      if (userProfile != null) {
+        if (mounted) {
+          setState(() {
+            user = userProfile;
+            userName = userProfile.name ?? userProfile.mobileNumber ?? "User";
+          });
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          userName = "User";
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
 
     final List<Widget> pages = [
-      PhotoScreen(),
-      VideoScreen(),
+      PhotoScreen(user: user, userName: userName),
+      VideoScreen(user: user, userName: userName),
       ChatScreen(),
-      ProfileScreen(),
+      SettingsScreen(user: user, userName: userName),
     ];
 
     return Scaffold(
@@ -53,77 +77,6 @@ class _HomeScreenState extends State<HomeScreen>
       body: SafeArea(
         child: Column(
           children: [
-
-            /// 🔥 HEADER
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
-              child: Row(
-                children: [
-
-                  /// profile glow
-                  AnimatedBuilder(
-                    animation: glowController,
-                    builder: (context, child) {
-                      return Container(
-                        width: 50,
-                        height: 50,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          gradient: const LinearGradient(
-                            colors: [
-                              Color(0xffFF8C00),
-                              Color(0xffFF5E00),
-                            ],
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: const Color(0xffFF8C00)
-                                  .withOpacity(0.6),
-                              blurRadius: 20,
-                            )
-                          ],
-                        ),
-                        padding: const EdgeInsets.all(2),
-                        child: Container(
-                          decoration: const BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Color(0xff1C1C1E),
-                          ),
-                          child: const Center(
-                            child: Icon(Icons.person,
-                                color: Colors.white, size: 20),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-
-                  const SizedBox(width: 12),
-
-                  /// welcome text
-                  Text(
-                    "Chronogram User",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-
-                  const Spacer(),
-
-                  /// online dot
-                  Container(
-                    width: 10,
-                    height: 10,
-                    decoration: BoxDecoration(
-                      color: Colors.green,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  )
-                ],
-              ),
-            ),
 
             /// PAGES
             Expanded(
@@ -151,10 +104,10 @@ class _HomeScreenState extends State<HomeScreen>
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                navItem(Icons.photo, "Photos", 0),
-                navItem(Icons.play_circle, "Videos", 1),
-                navItem(Icons.chat, "Chat", 2),
-                navItem(Icons.person, "Profile", 3),
+                navItem(Icons.camera_alt_outlined, "Photos", 0),
+                navItem(Icons.videocam_outlined, "Videos", 1),
+                navItem(Icons.chat_bubble_outline, "Chat", 2),
+                navItem(Icons.settings_outlined, "Settings", 3),
               ],
             ),
           ),
@@ -167,14 +120,13 @@ class _HomeScreenState extends State<HomeScreen>
   Widget navItem(IconData icon, String label, int index) {
     bool active = currentIndex == index;
 
-    return GestureDetector(
+    return _SmoothClick(
       onTap: () {
         setState(() => currentIndex = index);
       },
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-
           AnimatedContainer(
             duration: const Duration(milliseconds: 250),
             padding: const EdgeInsets.all(10),
@@ -190,9 +142,7 @@ class _HomeScreenState extends State<HomeScreen>
               size: 24,
             ),
           ),
-
           const SizedBox(height: 4),
-
           Text(
             label,
             style: TextStyle(
@@ -209,6 +159,34 @@ class _HomeScreenState extends State<HomeScreen>
   void dispose() {
     glowController.dispose();
     super.dispose();
+  }
+}
+
+class _SmoothClick extends StatefulWidget {
+  final Widget child;
+  final VoidCallback? onTap;
+  const _SmoothClick({required this.child, this.onTap});
+
+  @override
+  State<_SmoothClick> createState() => _SmoothClickState();
+}
+
+class _SmoothClickState extends State<_SmoothClick> {
+  bool _isPressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTapDown: (_) => setState(() => _isPressed = true),
+      onTapUp: (_) => setState(() => _isPressed = false),
+      onTapCancel: () => setState(() => _isPressed = false),
+      onTap: widget.onTap,
+      child: AnimatedScale(
+        scale: _isPressed ? 0.95 : 1.0,
+        duration: const Duration(milliseconds: 100),
+        child: widget.child,
+      ),
+    );
   }
 }
 
