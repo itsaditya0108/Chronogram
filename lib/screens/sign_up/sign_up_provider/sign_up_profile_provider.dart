@@ -14,13 +14,23 @@ class SignUpProfileProvider extends ChangeNotifier {
 
   //// Name Validation
   void validateName() {
-    String name = nameController.text.trim();
+    String name = nameController.text;
 
+    // Collapse multiple interior spaces into one
+    if (name.contains('  ')) {
+      name = name.replaceAll(RegExp(r'\s+'), ' ');
+      nameController.value = nameController.value.copyWith(
+        text: name,
+        selection: TextSelection.collapsed(offset: name.length),
+      );
+    }
+
+    String trimmedName = name.trim();
     RegExp nameRegex = RegExp(r"^[a-zA-Z ]{2,25}$");
 
-    if (name.isEmpty) {
+    if (trimmedName.isEmpty) {
       nameError = null;
-    } else if (!nameRegex.hasMatch(name)) {
+    } else if (!nameRegex.hasMatch(trimmedName)) {
       nameError = "Enter valid name (only letters)";
     } else {
       nameError = null;
@@ -74,24 +84,25 @@ class SignUpProfileProvider extends ChangeNotifier {
     isLoading = true;
     notifyListeners();
 
-    final result = await ApiService.completeProfile(
-      name: nameController.text.trim(),
-      dob: dobController.text.trim(),
-      mobile: mobile,
-    );
+    try {
+      final result = await ApiService.completeProfile(
+        name: nameController.text.trim().replaceAll(RegExp(r'\s+'), ' '),
+        dob: dobController.text.trim(),
+        mobile: mobile,
+      );
 
-    isLoading = false;
+      if (result?['accessToken'] == null) {
+        dobError = result?['error'];
+        return false;
+      }
 
-    if (result?['accessToken'] == null) {
-      dobError = result?['error'];
+      String finalToken = result?["accessToken"];
+      await TokenHelper.saveToken(finalToken);
+      return true;
+    } finally {
+      isLoading = false;
       notifyListeners();
-      return false;
     }
-
-    String finalToken = result?["accessToken"];
-    await TokenHelper.saveToken(finalToken);
-    notifyListeners();
-    return true;
   }
 
   @override

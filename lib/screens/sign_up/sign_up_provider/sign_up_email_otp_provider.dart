@@ -32,7 +32,20 @@ Timer? _timer;
   }
 
   void init(BuildContext context) {
-    startTimer(context);
+    // Don't kill an already-running valid timer.
+    final alreadyRunning = _timer != null && _timer!.isActive;
+    if (alreadyRunning) return;
+
+    if (context.mounted) {
+      final remaining = context.read<SignUpEmailProvider>().remainingSeconds();
+      seconds = remaining > 0 ? remaining : 0;
+    }
+
+    canResend = seconds <= 0;
+    if (!canResend) {
+      startTimer(context);
+    }
+    notifyListeners();
   }
   
   // ================= INDUSTRIAL EMAIL REGEX =================
@@ -94,36 +107,39 @@ Timer? _timer;
 
     
 
-    final result = await ApiService.verifyEmailOtp(
-      email: email,
-      otp: otp,
-    );
+    try {
+      final result = await ApiService.verifyEmailOtp(
+        email: email,
+        otp: otp,
+      );
 
-    isLoading = false;
-    notifyListeners();
+      if (result != null) {
+        if (result['statusCode'] == 200 || result['statusCode'] == 201) {
+          String? accessToken = result["accessToken"] ??
+              result["token"] ??
+              result["accessToken"];
 
-    if(result != null) {
-      if (result['statusCode'] == 200 || result['statusCode'] == 201) {
-        String? accessToken = result["accessToken"] ?? result["token"] ?? result["registrationToken"];
+          if (accessToken != null) {
+            await TokenHelper.saveRegistrationToken(accessToken);
+            print("STEP4 EMAIL TOKEN SAVED: $accessToken");
+          } else {
+            print("STEP4 EMAIL VERIFIED BUT NO TOKEN IN RESPONSE: $result");
+          }
 
-        if (accessToken != null) {
-          // IMPORTANT: overwrite registration token
-          await TokenHelper.saveRegistrationToken(accessToken);
-          print("STEP4 EMAIL TOKEN SAVED: $accessToken");
+          return true;
         } else {
-          print("STEP4 EMAIL VERIFIED BUT NO TOKEN IN RESPONSE: $result");
+          emailOtpError = result['error'] ??
+              result['message'] ??
+              "Error ${result['statusCode']}";
+          return false;
         }
-
-        return true;
       } else {
-        emailOtpError = result['error'] ?? result['message'] ?? "Error ${result['statusCode']}";
-        notifyListeners();
+        emailOtpError = "Verification failed";
         return false;
       }
-    } else {
-      emailOtpError = "Verification failed";
+    } finally {
+      isLoading = false;
       notifyListeners();
-      return false;
     }
   }
 
@@ -151,6 +167,14 @@ void startTimer(BuildContext context) {
   });
 }
 
+/// 🔥 STOP TIMER
+void stopTimer() {
+  _timer?.cancel();
+  _timer = null;
+  notifyListeners();
+}
+
+
 ///TEXT FORMAT getter (important)
 
 String get timerText {
@@ -159,31 +183,41 @@ String get timerText {
 
   if (minutes > 0) {
     if (remainingSeconds == 0) {
-      return "$minutes mint";
+      return "$minutes min";
     }
-    return "$minutes mint $remainingSeconds sec";
+    return "$minutes min $remainingSeconds sec";
   } else {
     return "$remainingSeconds sec";
   }
 }
+
 
 // Resend Function
 Future<void> resendOtp(String email, BuildContext context) async {
   if (isResending) return;
 
   isResending = true;
+  emailOtpError = null;
   notifyListeners();
 
-  bool success = await ApiService.resendOtp(
-    email: email,
-  );
-
-  isResending = false;
-
-  if (success) {
-    startTimer(context); // restart timer
+  try {
+    final result = await ApiService.resendOtp(email: email);
+    if (result['success'] == true) {
+      // 🔥 UPDATE PARENT PROVIDER COOLDOWN
+      if (context.mounted) {
+        final parent = context.read<SignUpEmailProvider>();
+        parent.lastOtpSentTime = DateTime.now();
+        parent.lastOtpEmail = email;
+      }
+      startTimer(context); // restart timer
+    } else {
+      emailOtpError = result['error'] ?? result['message'] ?? "Resend failed";
+    }
+  } catch (e) {
+    emailOtpError = e.toString().replaceAll("Exception: ", "");
   }
 
+  isResending = false;
   notifyListeners();
 }
 

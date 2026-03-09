@@ -30,34 +30,32 @@ class LoginNewDeviceEmailProvider extends ChangeNotifier {
 
   /// VERIFY NEW DEVICE EMAIL OTP
   Future<void> verifyEmailOtp(BuildContext context, String mobile) async {
-    if (!isOtpValid) {
-      error = "Enter valid OTP";
-      notifyListeners();
-      return;
-    }
-
-    isLoading = true;
-    error = null;
-    notifyListeners();
-
-    final result = await ApiService.verifyNewDeviceEmailOtp(
-      mobile: mobile,
-      otp: otpController.text.trim(),
-      temporaryToken: temporaryToken,
-    );
-
-    isLoading = false;
-
-    if (result["status"] == "success") {
-      await TokenHelper.saveToken(result["token"]);
-
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (_) => const HomeScreen()),
-        (route) => false,
+    try {
+      final result = await ApiService.verifyNewDeviceEmailOtp(
+        mobile: mobile,
+        otp: otpController.text.trim(),
+        temporaryToken: temporaryToken,
       );
-    } else {
-      error = result['error'] ?? result['message'] ?? "Error ${result['statusCode']}";
+
+      if (result["status"] == "success") {
+        await TokenHelper.saveToken(result["token"]);
+
+        if (!context.mounted) return;
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const HomeScreen(),
+            settings: const RouteSettings(name: "HomeScreen"),
+          ),
+          (route) => false,
+        );
+      } else {
+        error = result['error'] ??
+            result['message'] ??
+            "Error ${result['statusCode']}";
+      }
+    } finally {
+      isLoading = false;
       notifyListeners();
     }
   }

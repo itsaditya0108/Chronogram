@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:chronogram/screens/sign_up/sign_up_provider/sign_up_email_provider.dart';
+import 'package:chronogram/screens/sign_up/sign_up_provider/sign_up_email_otp_provider.dart';
 
 class EditEmailDialog extends StatelessWidget {
   const EditEmailDialog({super.key});
@@ -30,6 +31,9 @@ class EditEmailDialog extends StatelessWidget {
         ),
         TextButton(
           onPressed: () {
+            // Stop the OTP timer before leaving 
+            context.read<SignUpEmailOtpProvider>().stopTimer();
+
             /// 🔥 clear email
             context.read<SignUpEmailProvider>().clearEmail();
 

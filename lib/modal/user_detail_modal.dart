@@ -21,15 +21,15 @@ class UserDetailModal {
       this.status});
 
   UserDetailModal.fromJson(Map<String, dynamic> json) {
-    userId = json['userId'];
-    name = json['name'];
-    email = json['email'];
-    mobileNumber = json['mobileNumber'];
-    dob = json['dob'];
-    profilePictureUrl = json['profilePictureUrl'];
-    mobileVerified = json['mobileVerified'];
-    emailVerified = json['emailVerified'];
-    status = json['status'];
+    userId = json['userId'] is int ? json['userId'] : (json['user_id'] is int ? json['user_id'] : int.tryParse(json['userId']?.toString() ?? json['user_id']?.toString() ?? ""));
+    name = json['name']?.toString();
+    email = json['email']?.toString();
+    mobileNumber = json['mobileNumber']?.toString() ?? json['mobile_number']?.toString();
+    dob = json['dob']?.toString();
+    profilePictureUrl = json['profilePictureUrl']?.toString() ?? json['profile_picture_url']?.toString();
+    mobileVerified = json['mobileVerified'] == true || json['mobile_verified'] == true;
+    emailVerified = json['emailVerified'] == true || json['email_verified'] == true;
+    status = json['status']?.toString() ?? json['user_status_id']?.toString();
   }
 
   Map<String, dynamic> toJson() {

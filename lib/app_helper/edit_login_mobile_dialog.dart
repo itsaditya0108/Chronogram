@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:chronogram/screens/login/login_provider/login_otp_provider.dart';
+import 'package:chronogram/screens/login/login_provider/login_screen_provider.dart';
 
 class EditLoginMobileDialog extends StatelessWidget {
   const EditLoginMobileDialog({super.key});
@@ -28,6 +31,12 @@ class EditLoginMobileDialog extends StatelessWidget {
         ),
         TextButton(
           onPressed: () {
+            // Stop the OTP timer before leaving
+            context.read<LoginMobileOtpScreenProvider>().stopTimer();
+
+            // Clear the login state
+            context.read<LoginMobileScreenProvider>().clearState();
+
             Navigator.pop(context); // close dialog
             Navigator.pop(context); // go back to login screen
           },

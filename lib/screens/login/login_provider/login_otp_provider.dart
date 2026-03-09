@@ -63,63 +63,87 @@ class LoginMobileOtpScreenProvider extends ChangeNotifier {
     mobileOtpError = null;
     notifyListeners();
 
-    final result = await ApiService.verifyLoginOtp(
-      mobile: mobile,
-      otp: mobileOtpController.text.trim(),
-    );
-
-    isLoading = false;
-
-    /// ✅ LOGIN SUCCESS
-    if (result["status"] == "success") {
-      await TokenHelper.saveToken(result["token"]);
-
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (_) => const HomeScreen()),
-        (route) => false,
+    try {
+      final result = await ApiService.verifyLoginOtp(
+        mobile: mobile,
+        otp: mobileOtpController.text.trim(),
       );
-    }
-    /// 🔥 NEW DEVICE (401)
-    else if (result["status"] == "untrusted") {
-      maskedEmail = result["maskedEmail"];
-      temporaryToken = result['temporaryToken'] ?? "";
-      print('Temp Token From 401:c $temporaryToken');
-      mobileOtpError = "New device detected. Verify email to continue";
 
-      showVerifyEmailButton = true;
-      notifyListeners();
+      /// ✅ LOGIN SUCCESS
+      if (result["status"] == "success") {
+        await TokenHelper.saveToken(result["token"]);
 
-    }
-    /// 🔴 USER NOT REGISTERED
-    else if (result["status"] == "not_found") {
-      mobileOtpError = "Mobile number is not registered. Please register first";
+        if (!context.mounted) return;
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const HomeScreen(),
+            settings: const RouteSettings(name: "HomeScreen"),
+          ),
+          (route) => false,
+        );
+      }
 
-      showRegisterButton = true;
-      notifyListeners();
-    }
-    /// ❌ INVALID OTP
-    else {
-      mobileOtpError = result['error'] ?? result['message'] ?? "Invalid OTP";
+      /// 🔥 NEW DEVICE (401)
+      else if (result["status"] == "untrusted") {
+        maskedEmail = result["maskedEmail"] ?? "";
+        temporaryToken = result['temporaryToken'] ?? "";
+        print('Temp Token From 401:c $temporaryToken');
+        mobileOtpError = "New device detected. Verify email to continue";
+
+        showVerifyEmailButton = true;
+      }
+
+      /// 🔴 USER NOT REGISTERED
+      else if (result["status"] == "not_found") {
+        mobileOtpError =
+            "Mobile number is not registered. Please register first";
+
+        showRegisterButton = true;
+      }
+
+      /// ❌ INVALID OTP
+      else {
+        mobileOtpError = result['error'] ?? result['message'] ?? "Invalid OTP";
+      }
+    } finally {
+      isLoading = false;
       notifyListeners();
     }
   }
 
   void init(BuildContext context) {
-    temporaryToken = "";
-    maskedEmail = "";
-    mobileOtpError;
+    mobileOtpError = null;
     isMobileOtpValid = false;
     isLoading = false;
-
     showRegisterButton = false;
     showVerifyEmailButton = false;
-    // String? maskedEmail; // for new device
-
-    canResend = false;
     isResending = false;
-    startTimer(context);
+
+    // Check if timer is already running to avoid reset flicker
+    final alreadyRunning = _timer != null && _timer!.isActive;
+    if (alreadyRunning) return;
+
+    // Seed seconds from the main login provider
+    if (context.mounted) {
+      final remaining = context.read<LoginMobileScreenProvider>().remainingSeconds();
+      seconds = remaining > 0 ? remaining : 0;
+    }
+
+    canResend = seconds <= 0;
+    if (!canResend) {
+      startTimer(context);
+    }
+    notifyListeners();
   }
+
+  /// 🔥 STOP TIMER
+  void stopTimer() {
+    _timer?.cancel();
+    _timer = null;
+    notifyListeners();
+  }
+
 
   /// TIMER START
   void startTimer(BuildContext context) {
@@ -164,20 +188,24 @@ class LoginMobileOtpScreenProvider extends ChangeNotifier {
     if (isResending) return;
 
     isResending = true;
+    mobileOtpError = null;
     notifyListeners();
 
-    bool sent = await ApiService.resendLoginOtp(mobile: mobile);
+    try {
+      bool sent = await ApiService.resendLoginOtp(mobile: mobile);
+      if (sent) {
+        // Sync with LoginMobileScreenProvider cooldown
+        final mainProvider = context.read<LoginMobileScreenProvider>();
+        mainProvider.lastOtpSentTime = DateTime.now();
+        mainProvider.lastOtpMobile = mobile;
+        
+        startTimer(context);
+      }
+    } catch (e) {
+      mobileOtpError = e.toString().replaceAll("Exception: ", "");
+    }
 
     isResending = false;
-
-    if (sent) {
-      // Sync with LoginMobileScreenProvider cooldown
-      final mainProvider = context.read<LoginMobileScreenProvider>();
-      mainProvider.lastOtpSentTime = DateTime.now();
-      mainProvider.lastOtpMobile = mobile;
-      
-      startTimer(context);
-    }
     notifyListeners();
   }
 

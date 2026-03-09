@@ -12,6 +12,7 @@ import 'package:chronogram/screens/sign_up/sign_up_provider/sign_up_screen_provi
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:photo_manager/photo_manager.dart';
 import 'package:provider/provider.dart';
 
 
@@ -43,6 +44,7 @@ class _HomeScreenState extends State<HomeScreen>
 
   Future<void> _fetchUser() async {
     try {
+      // 1. Fetch user profile first (Independent of permissions)
       final userProfile = await ApiService.getUserProfile();
       if (userProfile != null) {
         if (mounted) {
@@ -52,6 +54,15 @@ class _HomeScreenState extends State<HomeScreen>
           });
         }
       }
+      
+      // 2. Request permissions (Optional here as children also handle it)
+      // Moving this after profile ensures name is updated even if this hangs
+      PhotoManager.requestPermissionExtend().then((ps) {
+         if (ps.isAuth && mounted) {
+           // Permission granted
+         }
+      });
+
     } catch (e) {
       if (mounted) {
         setState(() {

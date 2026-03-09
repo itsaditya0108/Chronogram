@@ -6,6 +6,7 @@ import 'package:chronogram/screens/login/login_helper/aseet_helper.dart';
 import 'package:chronogram/screens/sign_up/sign_up_provider/sign_up_profile_provider.dart';
 import 'package:chronogram/screens/sign_up/sign_up_provider/sign_up_screen_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 class SignUpProfileScreen extends StatelessWidget {
@@ -86,6 +87,15 @@ class _ProfileView extends StatelessWidget {
                             onChanged: (_) => p.validateName(),
                             style: const TextStyle(color: Colors.white),
                             maxLength: 25,
+                            inputFormatters: [
+                              FilteringTextInputFormatter.deny(RegExp(r'[0-9]')),
+                              TextInputFormatter.withFunction((oldValue, newValue) {
+                                if (newValue.text.contains('  ')) {
+                                  return oldValue;
+                                }
+                                return newValue;
+                              }),
+                            ],
                             decoration: const InputDecoration(
                               hintText: "Full Name",
                               hintStyle: TextStyle(color: Colors.white38),
@@ -219,70 +229,29 @@ class _ProfileView extends StatelessWidget {
                 /// FINISH BUTTON
                 Consumer<SignUpProfileProvider>(
                   builder: (context, p, child) {
-                    return GestureDetector(
-                      onTap: p.isLoading
-                          ? null
-                          : (p.isValid
-                                ? () async {
-                                    String mobile = context
-                                        .read<SignUpScreenProvider>()
-                                        .mobileController
-                                        .text;
-      
-                                    bool done = await p.completeProfileApi(
-                                      mobile,
-                                    );
-      
-                                    if (done) {
-                                      Navigator.pushAndRemoveUntil(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (_) => const HomeScreen(),
-                                        ),
-                                        (route) => false,
-                                      );
-                                    } else {
-                                      // Removed snackbar as per request
-                                      // Error logic should be handled in provider to show inline error if needed
-                                    }
-                                  }
-                                : null),
-                      child: TweenAnimationBuilder<double>(
-                        tween: Tween<double>(begin: 1.0, end: p.isValid ? 1.0 : 0.95),
-                        duration: const Duration(milliseconds: 100),
-                        builder: (context, scale, child) {
-                          return Transform.scale(
-                            scale: scale,
-                            child: Container(
-                              height: 55,
-                              width: double.infinity,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(15),
-                                gradient: p.isValid
-                                    ? const LinearGradient(
-                                        colors: [Color(0xffFF8C00), Color(0xffFF5E00)],
-                                      )
-                                    : LinearGradient(
-                                        colors: [
-                                          Colors.grey.shade800,
-                                          Colors.grey.shade900,
-                                        ],
-                                      ),
-                              ),
-                              child: Center(
-                                child: Text(
-                                  p.isLoading ? "Please wait..." : "Finish",
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
+                    return AppButton(
+                      title: "Finish",
+                      isLoading: p.isLoading,
+                      isEnabled: p.isValid,
+                      onTap: () async {
+                        String mobile = context
+                            .read<SignUpScreenProvider>()
+                            .mobileController
+                            .text;
+
+                        bool done = await p.completeProfileApi(mobile);
+
+                        if (done) {
+                          Navigator.pushAndRemoveUntil(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const HomeScreen(),
+                              settings: const RouteSettings(name: "HomeScreen"),
                             ),
+                            (route) => false,
                           );
-                        },
-                      ),
+                        }
+                      },
                     );
                   },
                 ),

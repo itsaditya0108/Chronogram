@@ -3,6 +3,7 @@ import 'package:chronogram/screens/login/login_screen/login_otp_screen.dart';
 import 'package:chronogram/service/api_service.dart';
 import 'package:chronogram/app_helper/ui_helper.dart';
 import 'package:chronogram/screens/login/login_helper/aseet_helper.dart';
+import 'package:chronogram/buttons/buttons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -109,82 +110,37 @@ class LoginMobileScreen extends StatelessWidget {
                       const SizedBox(height: 30),
 
                       /// 🔘 SEND OTP BUTTON
-                      InkWell(
-               
-                        onTap: provider.isMobileValid
-                            ? () async {
-                                if (!provider.validateMobile()) return;
+                      AppButton(
+                        title: "Send OTP",
+                        isLoading: provider.isLoading,
+                        isEnabled: provider.isMobileValid,
+                        onTap: () async {
+                          if (!provider.validateMobile()) return;
 
-                                String mobile = provider.mobileController.text.trim();
+                          String mobile = provider.mobileController.text.trim();
 
-                                if (provider.isCooldownActive(mobile)) {
-                                  // Navigate directly without calling sendLoginOtp
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (_) => LoginOtpScreen(mobile: mobile),
-                                    ),
-                                  );
-                                  return;
-                                }
-
-                                final result = await provider.sendLoginOtp(mobile);
-                                if (!context.mounted) return;
-
-                                if (result == 'success') {
-                                  /// 🔥 SAVE TIME + MOBILE
-                                  provider.lastOtpSentTime = DateTime.now();
-                                  provider.lastOtpMobile = mobile;
-
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (_) => LoginOtpScreen(mobile: mobile),
-                                    ),
-                                  );
-                                } else {
-                                  // Removed snackbar as per request
-                                  // Error is already handled by provider.mobileError and shown below the field
-                                }
-                              }
-                            : null,
-                        child: TweenAnimationBuilder<double>(
-                          tween: Tween<double>(begin: 1.0, end: provider.isMobileValid ? 1.0 : 0.95),
-                          duration: const Duration(milliseconds: 100),
-                          builder: (context, scale, child) {
-                            return Transform.scale(
-                              scale: scale,
-                              child: Container(
-                                height: 55,
-                                width: double.infinity,
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(15),
-                                  gradient: provider.isMobileValid
-                                      ? const LinearGradient(
-                                          colors: [
-                                            Color(0xffFF8C00),
-                                            Color(0xffFF5E00),
-                                          ],
-                                        )
-                                      : null,
-                                  color: provider.isMobileValid
-                                      ? null
-                                      : Colors.grey.shade800,
-                                ),
-                                child: const Center(
-                                  child: Text(
-                                    "Send OTP",
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
+                          if (provider.isCooldownActive(mobile)) {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => LoginOtpScreen(mobile: mobile),
                               ),
                             );
-                          },
-                        ),
+                            return;
+                          }
+
+                          final result = await provider.sendLoginOtp(mobile);
+                          if (!context.mounted) return;
+
+                          if (result == 'success') {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => LoginOtpScreen(mobile: mobile),
+                              ),
+                            );
+                          }
+                        },
                       ),
 
                       const SizedBox(height: 25),

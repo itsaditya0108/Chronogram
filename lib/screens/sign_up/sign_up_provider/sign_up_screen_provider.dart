@@ -1,3 +1,4 @@
+import 'package:chronogram/app_helper/token_saver_helper/token_saver_helper.dart';
 import 'package:chronogram/service/api_service.dart';
 import 'package:flutter/material.dart';
 
@@ -5,6 +6,7 @@ class SignUpScreenProvider extends ChangeNotifier {
   TextEditingController mobileController = TextEditingController();
   String? mobileError;
   bool isMobileValid = false;
+  bool isLoading = false;
 
   DateTime? lastOtpSentTime;
   String? lastOtpMobile;
@@ -55,23 +57,45 @@ class SignUpScreenProvider extends ChangeNotifier {
 
   Future<String> sendOtp(String mobile) async {
     mobileError = null;
+    isLoading = true;
     notifyListeners();
-    final result = await ApiService.sendOtp(mobile);
+    try {
+      final result = await ApiService.sendOtp(mobile);
 
-    /// ❌ OTHER ERROR
     if (result["status"] != "success") {
       String errorMessage = result['error'] ?? result['message'] ?? "";
       String lowerError = errorMessage.toLowerCase();
 
-      if (lowerError.contains("already") || lowerError.contains("wait") || lowerError.contains("active")) {
+      // REGISTRATION COLLISION CHECK
+      // If the mobile is already registered/in-use, we HARD STOP.
+      bool isAlreadyRegistered = lowerError.contains("already in use") || 
+                                 lowerError.contains("already registered") ||
+                                 lowerError.contains("taken");
+
+      if (isAlreadyRegistered) {
+        showErrorTemporarily(errorMessage);
+        return "error";
+      }
+
+      // RATE LIMIT / COOLDOWN BYPASS
+      // If OTP is already sent to THIS specific user, we can move forward (bypass).
+      if (lowerError.contains("already sent") || 
+          lowerError.contains("wait") || 
+          lowerError.contains("active") ||
+          lowerError.contains("exists") ||
+          lowerError.contains("check your messages")) {
+        
         final RegExp regex = RegExp(r'wait (\d+) seconds');
         final match = regex.firstMatch(errorMessage);
         if (match != null) {
           int remaining = int.tryParse(match.group(1)!) ?? otpCooldown;
           lastOtpSentTime = DateTime.now().subtract(Duration(seconds: otpCooldown - remaining));
           lastOtpMobile = mobile;
-          return "success";
+        } else {
+          lastOtpSentTime = DateTime.now();
+          lastOtpMobile = mobile;
         }
+        return "success";
       }
 
       showErrorTemporarily(errorMessage);
@@ -82,6 +106,10 @@ class SignUpScreenProvider extends ChangeNotifier {
     lastOtpMobile = mobile;
 
     return "success";
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
   }
 
   //auto-hide logic add karo for user already exists error after 3 seconds
@@ -92,5 +120,14 @@ class SignUpScreenProvider extends ChangeNotifier {
       mobileError = null;
       notifyListeners();
     });
+  }
+
+  void clearState() {
+    mobileController.clear();
+    lastOtpSentTime = null;
+    lastOtpMobile = null;
+    mobileError = null;
+    isMobileValid = false;
+    notifyListeners();
   }
 }

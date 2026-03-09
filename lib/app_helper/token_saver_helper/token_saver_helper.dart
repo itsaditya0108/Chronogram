@@ -41,4 +41,18 @@ static Future<String?> getOtpSessionToken() async {
   return prefs.getString("otp_session_token");
 }
 
+  static Future<void> saveRefreshToken(String token) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString("refresh_token", token);
+  }
+
+  static Future<String?> getRefreshToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString("refresh_token");
+  }
+
+  static Future<void> removeRefreshToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove("refresh_token");
+  }
 }

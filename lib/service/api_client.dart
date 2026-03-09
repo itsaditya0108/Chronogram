@@ -1,6 +1,7 @@
 import 'package:chronogram/app_helper/token_saver_helper/token_saver_helper.dart';
 import 'package:chronogram/main.dart';
 import 'package:chronogram/screens/sign_up/sign_up_screen/sign_up_screen.dart';
+import 'package:chronogram/service/connectivity_service.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 
@@ -33,6 +34,17 @@ class ApiClient {
     dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) async {
+          // 🌐 Connectivity Check
+          if (!ConnectivityService().isOnline) {
+            return handler.reject(
+              DioException(
+                requestOptions: options,
+                type: DioExceptionType.connectionError,
+                message: "No internet connection detected.",
+              ),
+            );
+          }
+
           // Add token if needed
           String? token =
               await TokenHelper.getToken(); // get token from storage
@@ -90,7 +102,11 @@ class ApiClient {
       final response = await dio.get(path, queryParameters: queryParameters);
       return response;
     } on DioException catch (e) {
-      rethrow;
+      return Response(
+        requestOptions: e.requestOptions,
+        data: _handleError(e),
+        statusCode: e.response?.statusCode ?? 500,
+      );
     }
   }
 
@@ -100,7 +116,11 @@ class ApiClient {
       final response = await dio.post(path, data: data);
       return response;
     } on DioException catch (e) {
-      rethrow;
+      return Response(
+        requestOptions: e.requestOptions,
+        data: _handleError(e),
+        statusCode: e.response?.statusCode ?? 500,
+      );
     }
   }
 
@@ -110,7 +130,11 @@ class ApiClient {
       final response = await dio.put(path, data: data);
       return response;
     } on DioException catch (e) {
-      rethrow;
+      return Response(
+        requestOptions: e.requestOptions,
+        data: _handleError(e),
+        statusCode: e.response?.statusCode ?? 500,
+      );
     }
   }
 
@@ -120,16 +144,26 @@ class ApiClient {
       final response = await dio.delete(path, data: data);
       return response;
     } on DioException catch (e) {
-      rethrow;
+      return Response(
+        requestOptions: e.requestOptions,
+        data: _handleError(e),
+        statusCode: e.response?.statusCode ?? 500,
+      );
     }
   }
 
   /// ================== ERROR HANDLE ==================
   dynamic _handleError(DioException error) {
-    if (error.response != null && error.response?.data != null) {
+    if (error.type == DioExceptionType.connectionTimeout ||
+        error.type == DioExceptionType.sendTimeout ||
+        error.type == DioExceptionType.receiveTimeout) {
+      return {"message": "Connection timed out. Please check your internet connection.", "isNetworkError": true};
+    } else if (error.type == DioExceptionType.connectionError) {
+      return {"message": "No internet connection. Please check your Wi-Fi or mobile data.", "isNetworkError": true};
+    } else if (error.response != null && error.response?.data != null) {
       return error.response?.data;
     } else {
-      return "Network error. Please try again.";
+      return {"message": "Network error. Please try again.", "isNetworkError": true};
     }
   }
 }

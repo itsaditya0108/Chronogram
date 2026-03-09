@@ -1,3 +1,4 @@
+import 'package:chronogram/app_helper/token_saver_helper/token_saver_helper.dart';
 import 'package:chronogram/service/api_service.dart';
 import 'package:flutter/material.dart';
 
@@ -10,6 +11,7 @@ static const int otpCooldown = 300; // 5 min
 
   String? mobileError;
   bool isMobileValid = false;
+  bool isLoading = false;
   String? successMessage;
 
   LoginMobileScreenProvider() {
@@ -69,22 +71,32 @@ int remainingSeconds() {
 ////Api Method
 Future<String> sendLoginOtp(String mobile) async {
   mobileError = null;
+  isLoading = true;
   notifyListeners();
-  final result = await ApiService.sendLoginOtp(mobile);
+  try {
+    final result = await ApiService.sendLoginOtp(mobile);
 
   if (result['status'] != 'success') {
     String errorMessage = result['error'] ?? result['message'] ?? "";
     String lowerError = errorMessage.toLowerCase();
 
-    if (lowerError.contains("already") || lowerError.contains("wait") || lowerError.contains("active")) {
+    if (lowerError.contains("already sent") || 
+        lowerError.contains("wait") || 
+        lowerError.contains("active") || 
+        lowerError.contains("exists") ||
+        lowerError.contains("check your messages")) {
+      
       final RegExp regex = RegExp(r'wait (\d+) seconds');
       final match = regex.firstMatch(errorMessage);
       if (match != null) {
         int remaining = int.tryParse(match.group(1)!) ?? otpCooldown;
         lastOtpSentTime = DateTime.now().subtract(Duration(seconds: otpCooldown - remaining));
         lastOtpMobile = mobile;
-        return "success";
+      } else {
+        lastOtpSentTime = DateTime.now();
+        lastOtpMobile = mobile;
       }
+      return "success";
     }
 
     showErrorTemporarily(errorMessage);
@@ -95,6 +107,10 @@ Future<String> sendLoginOtp(String mobile) async {
   lastOtpMobile = mobile;
 
   return 'success';
+  } finally {
+    isLoading = false;
+    notifyListeners();
+  }
 }
 
 
@@ -110,5 +126,15 @@ Future<String> sendLoginOtp(String mobile) async {
       mobileError = null;
       notifyListeners();
     });
+  }
+
+  void clearState() {
+    mobileController.clear();
+    lastOtpSentTime = null;
+    lastOtpMobile = null;
+    mobileError = null;
+    isMobileValid = false;
+    successMessage = null;
+    notifyListeners();
   }
 }

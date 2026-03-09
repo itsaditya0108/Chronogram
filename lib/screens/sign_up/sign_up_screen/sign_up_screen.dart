@@ -127,81 +127,38 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 /// 🔘 CONTINUE BUTTON
                 Consumer<SignUpScreenProvider>(
                   builder: (context, value, child) {
-                    return InkWell(
-                      onTap: value.isMobileValid
-                          ? () async {
-                              if (value.validateMobile()) {
-                                String mobile = value.mobileController.text;
+                    return AppButton(
+                      title: "Continue",
+                      isLoading: value.isLoading,
+                      isEnabled: value.isMobileValid,
+                      onTap: () async {
+                        if (value.validateMobile()) {
+                          String mobile = value.mobileController.text;
 
-                                if (value.isCooldownActive(mobile)) {
-                                  // Navigate directly to OTP Screen, user re-entered within 2min
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => const SignUpMobileOtpScreen(),
-                                    ),
-                                  );
-                                  return;
-                                }
-
-                                String result = await value.sendOtp(mobile);
-
-                                /// 🟢 NEW USER → OTP screen
-                                if (!context.mounted) return;
-
-                                if (result == "success") {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => const SignUpMobileOtpScreen(),
-                                    ),
-                                  );
-                                } else {
-                                  // Removed snackbar as per request
-                                  // Error is already handled by provider.mobileError and shown below the field
-                                }
-                              }
-                            }
-                          : null,
-                      child: TweenAnimationBuilder<double>(
-                        tween: Tween<double>(begin: 1.0, end: value.isMobileValid ? 1.0 : 0.95),
-                        duration: const Duration(milliseconds: 100),
-                        builder: (context, scale, child) {
-                          return Transform.scale(
-                            scale: scale,
-                            child: Container(
-                              height: 55,
-                              width: double.infinity,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(15),
-                                gradient: value.isMobileValid
-                                    ? const LinearGradient(
-                                        colors: [
-                                          Color(0xffFF8C00),
-                                          Color(0xffFF5E00),
-                                        ],
-                                      )
-                                    : LinearGradient(
-                                        colors: [
-                                          Colors.grey.shade800,
-                                          Colors.grey.shade900,
-                                        ],
-                                      ),
+                          if (value.isCooldownActive(mobile)) {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const SignUpMobileOtpScreen(),
                               ),
-                              child: const Center(
-                                child: Text(
-                                  "Continue",
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
+                            );
+                            return;
+                          }
+
+                          String result = await value.sendOtp(mobile);
+
+                          if (!context.mounted) return;
+
+                          if (result == "success") {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const SignUpMobileOtpScreen(),
                               ),
-                            ),
-                          );
-                        },
-                      ),
+                            );
+                          }
+                        }
+                      },
                     );
                   },
                 ),

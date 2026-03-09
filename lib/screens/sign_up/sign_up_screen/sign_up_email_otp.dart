@@ -1,22 +1,14 @@
-import 'dart:math';
 import 'package:chronogram/app_helper/sign_up_edit_email_dialog.dart';
 import 'package:chronogram/app_helper/exit_user_dilog.dart';
 import 'package:chronogram/auth_progress_indicator/auth_progress_indicator.dart';
 import 'package:chronogram/buttons/buttons.dart';
-import 'package:chronogram/screens/home_screen/home_screen.dart';
 import 'package:chronogram/screens/login/login_helper/aseet_helper.dart';
-import 'package:chronogram/screens/login/login_provider/login_screen_provider.dart';
-import 'package:chronogram/screens/login/login_screen/login_screen.dart';
 import 'package:chronogram/app_helper/mask/email_mask/email_mask.dart';
 import 'package:chronogram/screens/sign_up/sign_up_provider/sign_up_email_otp_provider.dart';
-import 'package:chronogram/screens/sign_up/sign_up_provider/sign_up_email_provider.dart';
-import 'package:chronogram/screens/sign_up/sign_up_screen/sign_up_email_screen.dart';
-import 'package:chronogram/screens/sign_up/sign_up_provider/sign_up_screen_provider.dart';
 import 'package:chronogram/screens/sign_up/sign_up_screen/sign_up_profile_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_otp_text_field/flutter_otp_text_field.dart';
-import 'package:flutter_svg/svg.dart';
 import 'package:provider/provider.dart';
 
 class SignUpEmailOtpScreen extends StatefulWidget {
@@ -106,6 +98,7 @@ class _SignUpEmailOtpScreenState extends State<SignUpEmailOtpScreen> {
                               onTap: () {
                                 showDialog(
                                   context: context,
+                                  barrierDismissible: false, // must press Cancel or Yes Change
                                   builder: (context) => EditEmailDialog(),
                                 );
                               },
@@ -229,70 +222,22 @@ class _SignUpEmailOtpScreenState extends State<SignUpEmailOtpScreen> {
                         /// CONTINUE BUTTON
                         Consumer<SignUpEmailOtpProvider>(
                           builder: (context, value, child) {
-                            return GestureDetector(
-                              onTap: value.isLoading
-                                  ? null
-                                  : (value.isEmailOtpValid
-                                        ? () async {
-                                            bool success = await value
-                                                .verifyEmailOtpApi(
-                                                  widget.email,
-                                                );
-                                            if (success) {
-                                              Navigator.pushAndRemoveUntil(
-                                                context,
-                                                MaterialPageRoute(
-                                                  builder: (_) =>
-                                                      const SignUpProfileScreen(),
-                                                ),
-                                                (route) => false,
-                                              );
-                                            }
-                                          }
-                                        : null),
-                              child: TweenAnimationBuilder<double>(
-                                tween: Tween<double>(
-                                    begin: 1.0,
-                                    end: value.isEmailOtpValid ? 1.0 : 0.95),
-                                duration: const Duration(milliseconds: 100),
-                                builder: (context, scale, child) {
-                                  return Transform.scale(
-                                    scale: scale,
-                                    child: Container(
-                                      height: 55,
-                                      width: double.infinity,
-                                      decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(15),
-                                        gradient: value.isEmailOtpValid
-                                            ? const LinearGradient(
-                                                colors: [
-                                                  Color(0xffFF8C00),
-                                                  Color(0xffFF5E00),
-                                                ],
-                                              )
-                                            : LinearGradient(
-                                                colors: [
-                                                  Colors.grey.shade800,
-                                                  Colors.grey.shade900,
-                                                ],
-                                              ),
-                                      ),
-                                      child: Center(
-                                        child: Text(
-                                          value.isLoading
-                                              ? "Please wait..."
-                                              : "Continue",
-                                          style: const TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                      ),
+                            return AppButton(
+                              title: "Continue",
+                              isLoading: value.isLoading,
+                              isEnabled: value.isEmailOtpValid,
+                              onTap: () async {
+                                bool success = await value.verifyEmailOtpApi(widget.email);
+                                if (success) {
+                                  Navigator.pushAndRemoveUntil(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => const SignUpProfileScreen(),
                                     ),
+                                    (route) => false,
                                   );
-                                },
-                              ),
+                                }
+                              },
                             );
                           },
                         ),

@@ -2,6 +2,7 @@ import 'package:chronogram/app_helper/exit_user_dilog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:chronogram/screens/login/login_helper/aseet_helper.dart';
+import 'package:chronogram/buttons/buttons.dart';
 import 'package:flutter_otp_text_field/flutter_otp_text_field.dart';
 import 'package:provider/provider.dart';
 import '../login_provider/login_new_device_email_provider.dart';
@@ -142,54 +143,13 @@ class LoginNewDeviceEmailScreen extends StatelessWidget {
                      
                       const SizedBox(height: 35),
                       /// VERIFY BUTTON
-                      GestureDetector(
-                        onTap: provider.isOtpValid && !provider.isLoading
-                            ? () => provider.verifyEmailOtp(context, mobile)
-                            : null,
-                        child: TweenAnimationBuilder<double>(
-                          tween: Tween<double>(
-                              begin: 1.0,
-                              end: provider.isOtpValid ? 1.0 : 0.95),
-                          duration: const Duration(milliseconds: 100),
-                          builder: (context, scale, child) {
-                            return Transform.scale(
-                              scale: scale,
-                              child: Container(
-                                height: 55,
-                                width: double.infinity,
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(15),
-                                  gradient: provider.isOtpValid
-                                      ? const LinearGradient(
-                                          colors: [
-                                            Color(0xffFF8C00),
-                                            Color(0xffFF5E00),
-                                          ],
-                                        )
-                                      : LinearGradient(
-                                          colors: [
-                                            Colors.grey.shade800,
-                                            Colors.grey.shade900,
-                                          ],
-                                        ),
-                                ),
-                                child: Center(
-                                  child: provider.isLoading
-                                      ? const CircularProgressIndicator(
-                                          color: Colors.white,
-                                        )
-                                      : const Text(
-                                          "Verify & Login",
-                                          style: TextStyle(
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                ),
-                              ),
-                            );
-                          },
-                        ),
+                      AppButton(
+                        title: "Verify & Login",
+                        isLoading: provider.isLoading,
+                        isEnabled: provider.isOtpValid,
+                        onTap: () async {
+                          await provider.verifyEmailOtp(context, mobile);
+                        },
                       ),
                     ],
                   ),

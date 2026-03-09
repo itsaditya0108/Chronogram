@@ -1,4 +1,5 @@
 import 'package:chronogram/screens/sign_up/sign_up_provider/sign_up_screen_provider.dart';
+import 'package:chronogram/screens/sign_up/sign_up_provider/sign_up_mobile_otp_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -31,6 +32,9 @@ class EditMobileDialog extends StatelessWidget {
         ),
         TextButton(
           onPressed: () {
+            // Stop the OTP timer before leaving
+            context.read<SignUpMobileOtpProvider>().stopTimer();
+
             /// clear mobile
             context.read<SignUpScreenProvider>().clearMobile();
 

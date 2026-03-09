@@ -148,79 +148,34 @@ class _SignUpEmailScreenState extends State<SignUpEmailScreen> {
                         /// 🔘 CONTINUE BUTTON
                         Consumer<SignUpEmailProvider>(
                           builder: (context, value, child) {
-                            return GestureDetector(
-                              onTap: value.isEmailValid
-                                  ? () async {
-                                      String result = await value
-                                          .linkEmailApi();
+                            return AppButton(
+                              title: "Continue",
+                              isLoading: value.isLoading,
+                              isEnabled: value.isEmailValid,
+                              onTap: () async {
+                                String result = await value.linkEmailApi();
 
-                                      if (!context.mounted) return;
+                                if (!context.mounted) return;
 
-                                      if (result == "success") {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (context) =>
-                                                ChangeNotifierProvider(
-                                                  create: (_) =>
-                                                      SignUpEmailOtpProvider(),
-                                                  child: SignUpEmailOtpScreen(
-                                                    email: value
-                                                        .emailController
-                                                        .text,
-                                                  ),
-                                                ),
-                                          ),
-                                        ).then((_) {
-                                          value.emailController.clear();
-                                          value.emailError = null;
-                                          value.isEmailValid = false;
-                                          value.notifyListeners();
-                                        });
-                                      }
-                                    }
-                                  : null,
-                              child: TweenAnimationBuilder<double>(
-                                tween: Tween<double>(
-                                    begin: 1.0,
-                                    end: value.isEmailValid ? 1.0 : 0.95),
-                                duration: const Duration(milliseconds: 100),
-                                builder: (context, scale, child) {
-                                  return Transform.scale(
-                                    scale: scale,
-                                    child: Container(
-                                      height: 55,
-                                      width: double.infinity,
-                                      decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(15),
-                                        gradient: value.isEmailValid
-                                            ? const LinearGradient(
-                                                colors: [
-                                                  Color(0xffFF8C00),
-                                                  Color(0xffFF5E00),
-                                                ],
-                                              )
-                                            : LinearGradient(
-                                                colors: [
-                                                  Colors.grey.shade800,
-                                                  Colors.grey.shade900,
-                                                ],
-                                              ),
-                                      ),
-                                      child: const Center(
-                                        child: Text(
-                                          "Continue",
-                                          style: TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.bold,
-                                          ),
+                                if (result == "success") {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => ChangeNotifierProvider(
+                                        create: (_) => SignUpEmailOtpProvider(),
+                                        child: SignUpEmailOtpScreen(
+                                          email: value.emailController.text,
                                         ),
                                       ),
                                     ),
-                                  );
-                                },
-                              ),
+                                  ).then((_) {
+                                    value.emailController.clear();
+                                    value.emailError = null;
+                                    value.isEmailValid = false;
+                                    value.notifyListeners();
+                                  });
+                                }
+                              },
                             );
                           },
                         ),

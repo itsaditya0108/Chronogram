@@ -1,4 +1,3 @@
-import 'dart:math';
 import 'package:chronogram/app_helper/sign_up_change_mobile_number.dart';
 import 'package:chronogram/app_helper/exit_user_dilog.dart';
 import 'package:chronogram/auth_progress_indicator/auth_progress_indicator.dart';
@@ -6,16 +5,11 @@ import 'package:chronogram/app_helper/mobile_mask/mobile_mask.dart';
 import 'package:chronogram/screens/sign_up/sign_up_provider/sign_up_screen_provider.dart';
 import 'package:chronogram/buttons/buttons.dart';
 import 'package:chronogram/screens/login/login_helper/aseet_helper.dart';
-import 'package:chronogram/screens/login/login_provider/login_screen_provider.dart';
-import 'package:chronogram/screens/login/login_screen/login_screen.dart';
-import 'package:chronogram/screens/sign_up/sign_up_provider/sign_up_email_provider.dart';
 import 'package:chronogram/screens/sign_up/sign_up_provider/sign_up_mobile_otp_provider.dart';
 import 'package:chronogram/screens/sign_up/sign_up_screen/sign_up_email_screen.dart';
-import 'package:chronogram/screens/sign_up/sign_up_provider/sign_up_screen_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_otp_text_field/flutter_otp_text_field.dart';
-import 'package:flutter_svg/svg.dart';
 import 'package:provider/provider.dart';
 
 class SignUpMobileOtpScreen extends StatefulWidget {
@@ -98,6 +92,7 @@ class _SignUpMobileOtpScreenState extends State<SignUpMobileOtpScreen> {
                               onTap: () {
                                 showDialog(
                                   context: context,
+                                  barrierDismissible: false, // must press Cancel or Yes Change
                                   builder: (context) => EditMobileDialog(),
                                 );
                               },
@@ -256,67 +251,21 @@ class _SignUpMobileOtpScreenState extends State<SignUpMobileOtpScreen> {
                         /// CONTINUE BUTTON
                         Consumer<SignUpMobileOtpProvider>(
                           builder: (context, value, child) {
-                            return GestureDetector(
-                              onTap: (value.isMobileOtpValid && !value.isLoading)
-                                  ? () async {
-                                      bool success = await value
-                                          .verifyMobileOtp(context);
-                                      if (success) {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (_) =>
-                                                const SignUpEmailScreen(),
-                                          ),
-                                        );
-                                      }
-                                    }
-                                  : null,
-                              child: TweenAnimationBuilder<double>(
-                                tween: Tween<double>(
-                                    begin: 1.0,
-                                    end: value.isMobileOtpValid ? 1.0 : 0.95),
-                                duration: const Duration(milliseconds: 100),
-                                builder: (context, scale, child) {
-                                  return Transform.scale(
-                                    scale: scale,
-                                    child: Container(
-                                      height: 55,
-                                      width: double.infinity,
-                                      decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(15),
-                                        gradient: value.isMobileOtpValid
-                                            ? const LinearGradient(
-                                                colors: [
-                                                  Color(0xffFF8C00),
-                                                  Color(0xffFF5E00),
-                                                ],
-                                              )
-                                            : LinearGradient(
-                                                colors: [
-                                                  Colors.grey.shade800,
-                                                  Colors.grey.shade900,
-                                                ],
-                                              ),
-                                      ),
-                                      child: Center(
-                                        child: value.isLoading
-                                            ? const CircularProgressIndicator(
-                                                color: Colors.white,
-                                              )
-                                            : const Text(
-                                                "Continue",
-                                                style: TextStyle(
-                                                  color: Colors.white,
-                                                  fontSize: 16,
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                              ),
-                                      ),
+                            return AppButton(
+                              title: "Continue",
+                              isLoading: value.isLoading,
+                              isEnabled: value.isMobileOtpValid,
+                              onTap: () async {
+                                bool success = await value.verifyMobileOtp(context);
+                                if (success) {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => const SignUpEmailScreen(),
                                     ),
                                   );
-                                },
-                              ),
+                                }
+                              },
                             );
                           },
                         ),

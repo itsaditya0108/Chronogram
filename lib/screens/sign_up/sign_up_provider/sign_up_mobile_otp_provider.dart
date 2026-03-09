@@ -25,11 +25,26 @@ class SignUpMobileOtpProvider extends ChangeNotifier {
     mobileOtpError = null;
     isMobileOtpValid = false;
     isLoading = false;
-    // String? maskedEmail; // for new device
-
-    canResend = false;
     isResending = false;
-    startTimer(context);
+
+    // If a timer is already running with time still left, don't reset it.
+    // This prevents the "Resend OTP" flicker when the screen rebuilds
+    // or when the user opens/dismisses the Change Number dialog.
+    final alreadyRunning = _timer != null && _timer!.isActive;
+    if (alreadyRunning) return;
+
+    // Seed seconds immediately so the UI shows correct time from frame 1
+    // (avoids a 1-second "0 sec" flash before the first timer tick).
+    if (context.mounted) {
+      final remaining = context.read<SignUpScreenProvider>().remainingSeconds();
+      seconds = remaining > 0 ? remaining : 0;
+    }
+
+    canResend = seconds <= 0;
+    if (!canResend) {
+      startTimer(context);
+    }
+    notifyListeners();
   }
 
   /// realtime check for button enable
@@ -59,11 +74,17 @@ class SignUpMobileOtpProvider extends ChangeNotifier {
       } else {
         seconds = 0;
         canResend = true; // 🔥 enable resend
-        timer.cancel();
-        notifyListeners();
       }
     });
   }
+
+  /// 🔥 STOP TIMER
+  void stopTimer() {
+    _timer?.cancel();
+    _timer = null;
+    notifyListeners();
+  }
+
 
   /// final validation
   bool validMobileOtp() {
@@ -94,32 +115,35 @@ class SignUpMobileOtpProvider extends ChangeNotifier {
 
     String otp = mobileOtpController.text.trim();
 
-    final result = await ApiService.verifyOtp(mobile: mobile, otp: otp);
+    try {
+      final result = await ApiService.verifyOtp(mobile: mobile, otp: otp);
 
-    isLoading = false;
-
-    if (result != null) {
-      if (result['statusCode'] == 200 || result['statusCode'] == 201) {
-        String? token = result["registrationToken"] ?? result["token"] ?? result["accessToken"];
-        if (token != null) {
-          await TokenHelper.saveRegistrationToken(token);
-          print("REGISTRATION TOKEN SAVED: $token");
-          mobileOtpError = null;
-          return true;
+      if (result != null) {
+        if (result['statusCode'] == 200 || result['statusCode'] == 201) {
+          String? token = result["registrationToken"] ??
+              result["token"] ??
+              result["accessToken"];
+          if (token != null) {
+            await TokenHelper.saveRegistrationToken(token);
+            print("REGISTRATION TOKEN SAVED: $token");
+            mobileOtpError = null;
+            return true;
+          } else {
+            mobileOtpError = "Missing token: $result";
+            return false;
+          }
         } else {
-          mobileOtpError = "Missing token: $result";
-          notifyListeners();
-          return false;
+          mobileOtpError =
+              result['error'] ?? result['message'] ?? "Error ${result['statusCode']}";
         }
       } else {
-        mobileOtpError = result['error'] ?? result['message'] ?? "Error ${result['statusCode']}";
+        mobileOtpError = "Verification failed";
       }
-    } else {
-      mobileOtpError = "Verification failed";
+      return false;
+    } finally {
+      isLoading = false;
+      notifyListeners();
     }
-    
-    notifyListeners();
-    return false;
   }
 
   String get timerText {
@@ -146,16 +170,27 @@ class SignUpMobileOtpProvider extends ChangeNotifier {
     String mobile = context.read<SignUpScreenProvider>().mobileController.text;
 
     isResending = true;
+    mobileOtpError = null;
     notifyListeners();
 
-    bool success = await ApiService.resendOtp(mobile: mobile);
-
-    isResending = false;
-
-    if (success) {
-      startTimer(context); // 🔥 timer restart
+    try {
+      final result = await ApiService.resendOtp(mobile: mobile);
+      if (result['success'] == true) {
+        // 🔥 UPDATE PARENT PROVIDER COOLDOWN
+        if (context.mounted) {
+           final parent = context.read<SignUpScreenProvider>();
+           parent.lastOtpSentTime = DateTime.now();
+           parent.lastOtpMobile = mobile;
+        }
+        startTimer(context); // 🔥 timer restart
+      } else {
+        mobileOtpError = result['error'] ?? result['message'] ?? "Resend failed";
+      }
+    } catch (e) {
+      mobileOtpError = e.toString().replaceAll("Exception: ", "");
     }
 
+    isResending = false;
     notifyListeners();
   }
 

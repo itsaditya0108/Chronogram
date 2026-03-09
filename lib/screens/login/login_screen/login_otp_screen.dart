@@ -2,11 +2,13 @@ import 'package:chronogram/app_helper/edit_login_mobile_dialog.dart';
 import 'package:chronogram/app_helper/exit_user_dilog.dart';
 import 'package:chronogram/screens/home_screen/home_screen.dart';
 import 'package:chronogram/screens/login/login_provider/login_otp_provider.dart';
+import 'package:chronogram/screens/login/login_provider/login_screen_provider.dart';
 import 'package:chronogram/screens/login/login_screen/login_new_device_email_screen.dart';
 import 'package:chronogram/app_helper/mask/email_mask/email_mask.dart';
 import 'package:chronogram/app_helper/mobile_mask/mobile_mask.dart';
 import 'package:chronogram/screens/sign_up/sign_up_screen/sign_up_screen.dart';
 import 'package:chronogram/screens/login/login_helper/aseet_helper.dart';
+import 'package:chronogram/buttons/buttons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_otp_text_field/flutter_otp_text_field.dart';
@@ -92,6 +94,7 @@ class _LoginOtpScreenState extends State<LoginOtpScreen> {
                                     onTap: () {
                                       showDialog(
                                         context: context,
+                                        barrierDismissible: false,
                                         builder: (context) =>
                                             EditLoginMobileDialog(),
                                       );
@@ -287,59 +290,16 @@ class _LoginOtpScreenState extends State<LoginOtpScreen> {
                               const SizedBox(height: 35),
 
                               /// 🔘 LOGIN BUTTON
-                              GestureDetector(
-                                onTap: provider.isMobileOtpValid
-                                    ? () {
-                                        provider.verifyLoginOtp(
-                                          context,
-                                          widget.mobile,
-                                        );
-                                      }
-                                    : null,
-
-                                child: TweenAnimationBuilder<double>(
-                                  tween: Tween<double>(begin: 1.0, end: provider.isMobileOtpValid ? 1.0 : 0.95),
-                                  duration: const Duration(milliseconds: 100),
-                                  builder: (context, scale, child) {
-                                    return Transform.scale(
-                                      scale: scale,
-                                      child: Container(
-                                        height: 55,
-                                        width: double.infinity,
-                                        decoration: BoxDecoration(
-                                          borderRadius: BorderRadius.circular(15),
-                                          gradient: provider.isMobileOtpValid
-                                              ? const LinearGradient(
-                                                  colors: [
-                                                    Color(0xffFF8C00),
-                                                    Color(0xffFF5E00),
-                                                  ],
-                                                )
-                                              : LinearGradient(
-                                                  colors: [
-                                                    Colors.grey.shade800,
-                                                    Colors.grey.shade900,
-                                                  ],
-                                                ),
-                                        ),
-                                        child: Center(
-                                          child: provider.isLoading
-                                              ? const CircularProgressIndicator(
-                                                  color: Colors.white,
-                                                )
-                                              : const Text(
-                                                  "Login",
-                                                  style: TextStyle(
-                                                    color: Colors.white,
-                                                    fontSize: 16,
-                                                    fontWeight: FontWeight.bold,
-                                                  ),
-                                                ),
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                ),
+                              AppButton(
+                                title: "Login",
+                                isLoading: provider.isLoading,
+                                isEnabled: provider.isMobileOtpValid,
+                                onTap: () async {
+                                  await provider.verifyLoginOtp(
+                                    context,
+                                    widget.mobile,
+                                  );
+                                },
                               ),
 
                               const SizedBox(height: 40),

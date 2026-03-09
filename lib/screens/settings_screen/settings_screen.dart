@@ -1,9 +1,16 @@
+import 'package:chronogram/screens/settings_screen/about_screen.dart';
+import 'package:chronogram/screens/settings_screen/help_support_screen.dart';
 import 'package:chronogram/screens/settings_screen/notifications_screen.dart';
+import 'package:chronogram/screens/settings_screen/privacy_security_screen.dart';
 import 'package:chronogram/screens/settings_screen/storage_screen.dart';
 import 'package:chronogram/screens/settings_screen/view_profile_screen.dart';
 import 'package:chronogram/screens/sign_up/sign_up_screen/sign_up_screen.dart';
 import 'package:chronogram/app_helper/token_saver_helper/token_saver_helper.dart';
+import 'package:chronogram/service/api_service.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:chronogram/screens/login/login_provider/login_screen_provider.dart';
+import 'package:chronogram/screens/sign_up/sign_up_provider/sign_up_screen_provider.dart';
 import 'package:chronogram/modal/user_detail_modal.dart';
 
 class SettingsScreen extends StatelessWidget {
@@ -81,22 +88,23 @@ class SettingsScreen extends StatelessWidget {
                               fontWeight: FontWeight.bold,
                             ),
                           ),
+                          const SizedBox(height: 3),
+                          Text(
+                            user?.email != null ? _maskEmail(user!.email!) : "tap to view profile",
+                            style: const TextStyle(
+                              color: Colors.white60,
+                              fontSize: 13,
+                            ),
+                          ),
                           const SizedBox(height: 4),
-                          Text(
-                            user?.email != null ? _maskEmail(user!.email!) : "john.doe@email.com",
-                            style: const TextStyle(
-                              color: Colors.white60,
-                              fontSize: 14,
+                          Row(children: [
+                            const Text(
+                              "View Profile",
+                              style: TextStyle(color: Colors.orange, fontSize: 12, fontWeight: FontWeight.w600),
                             ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            user?.mobileNumber != null ? _maskPhone(user!.mobileNumber!) : "+1 234 567 8900",
-                            style: const TextStyle(
-                              color: Colors.white60,
-                              fontSize: 12,
-                            ),
-                          ),
+                            const SizedBox(width: 3),
+                            const Icon(Icons.arrow_forward_ios_rounded, color: Colors.orange, size: 10),
+                          ]),
                         ],
                       ),
                     ),
@@ -232,11 +240,17 @@ class SettingsScreen extends StatelessWidget {
                       Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationsScreen()));
                     }),
                     const Divider(color: Colors.white12, height: 1),
-                    _buildListTile(Icons.shield_outlined, "Privacy & Security"),
+                    _buildListTile(Icons.shield_outlined, "Privacy & Security", onTap: () {
+                      Navigator.push(context, MaterialPageRoute(builder: (_) => const PrivacySecurityScreen()));
+                    }),
                     const Divider(color: Colors.white12, height: 1),
-                    _buildListTile(Icons.help_outline, "Help & Support"),
+                    _buildListTile(Icons.help_outline, "Help & Support", onTap: () {
+                      Navigator.push(context, MaterialPageRoute(builder: (_) => const HelpSupportScreen()));
+                    }),
                     const Divider(color: Colors.white12, height: 1),
-                    _buildListTile(Icons.info_outline, "About"),
+                    _buildListTile(Icons.info_outline, "About", onTap: () {
+                      Navigator.push(context, MaterialPageRoute(builder: (_) => const AboutScreen()));
+                    }),
                   ],
                 ),
               ),
@@ -246,9 +260,39 @@ class SettingsScreen extends StatelessWidget {
               /// LOGOUT BUTTON
               _SmoothClick(
                 onTap: () async {
-                  // Note: Handle local token clearance and navigation
-                  await TokenHelper.clear();
-                  if(!context.mounted) return;
+                  // Show confirmation before logging out
+                  final confirm = await showDialog<bool>(
+                    context: context,
+                    barrierDismissible: false,
+                    builder: (ctx) => AlertDialog(
+                      backgroundColor: const Color(0xff1A1A1A),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                      title: const Text("Log Out?", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                      content: const Text(
+                        "Are you sure you want to log out of your account?",
+                        style: TextStyle(color: Colors.white60, fontSize: 14),
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(ctx, false),
+                          child: const Text("Cancel", style: TextStyle(color: Colors.white54)),
+                        ),
+                        ElevatedButton(
+                          onPressed: () => Navigator.pop(ctx, true),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.redAccent,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                          child: const Text("Yes, Logout", style: TextStyle(color: Colors.white)),
+                        ),
+                      ],
+                    ),
+                  );
+                  if (confirm != true) return;
+                  await ApiService.logout();
+                  if (!context.mounted) return;
+                  context.read<LoginMobileScreenProvider>().clearState();
+                  context.read<SignUpScreenProvider>().clearState();
                   Navigator.pushAndRemoveUntil(
                     context,
                     MaterialPageRoute(builder: (_) => const SignUpScreen()),
