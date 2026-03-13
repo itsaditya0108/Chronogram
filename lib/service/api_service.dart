@@ -9,75 +9,118 @@ import 'package:dio/dio.dart';
 class ApiService {
   static final api = ApiClient();
 
-  /// ================== ERROR SANITIZATION ==================
+  /// ================== ERROR MAPPING & SANITIZATION ==================
+  
+  static const Map<String, String> _errorMessages = {
+    "Invalid mobile number format": "Please enter a valid 10-digit mobile number.",
+    "Device ID is required": "Device initialization error. Please restart the app.",
+    "User already registered. Please login.": "This number is already registered. Please login instead.",
+    "Your account is temporarily locked": "Your account is locked for 15 minutes due to multiple failed attempts.",
+    "Invalid Mobile OTP": "Incorrect OTP. Please check and try again.",
+    "OTP not found or expired": "OTP has expired. Please request a new one.",
+    "Invalid session": "Session expired. Please request a new OTP.",
+    "OTP session mismatch": "Security session mismatch. Please request a new OTP.",
+    "Email is required for registration": "Email address is required.",
+    "Invalid email format": "Please enter a valid email address.",
+    "Email already in use": "This email is already associated with another account.",
+    "Invalid registration token": "Registration session expired. Please start over.",
+    "Invalid OTP": "Incorrect OTP. Please try again.",l
+    "OTP expired": "OTP has expired. Please try resending.",
+    "Only alphabetic characters": "Name should only contain letters.",
+    "Users must be 12 years or older": "You must be at least 12 years old to register.",
+    "User not found. Please register.": "This number is not registered. Please sign up first.",
+    "APPROVAL_REQUIRED": "New device detected. OTP sent to your email.",
+    "INVALID_OTP_SESSION": "Session expired. Please request a new OTP.",
+    "OTP_EXPIRED": "OTP has expired. Please resend.",
+    "Account deleted.": "This account has been deleted. Please contact support.",
+    "Mobile verified. Verify Email to proceed.": "Mobile verified. Please verify your email.",
+    "Email verified. Complete profile": "Email verified. Please complete your profile.",
+  };
+
+  static String _getMappedMessage(String technicalMsg) {
+    for (var entry in _errorMessages.entries) {
+      if (technicalMsg.contains(entry.key)) {
+        return entry.value;
+      }
+    }
+    return technicalMsg;
+  }
+
   static Map<String, dynamic> _cleanMap(Map<String, dynamic> map, {int? statusCode}) {
-    // Handle Network Errors from ApiClient
+    // 1. Handle Network Errors from ApiClient
     if (map.containsKey('isNetworkError') && map['isNetworkError'] == true) {
       return map; 
     }
 
-    // Handle 429 Too Many Requests
+    // 2. Handle 429 Too Many Requests (Rate Limiting)
     if (statusCode == 429) {
-      String blockMsg = "You have made too many requests. Please wait and try again later.";
-      if (map.containsKey('error') && map['error'] != null) {
-        String errMsg = map['error'].toString();
-        if (!errMsg.startsWith('uri=') && !errMsg.startsWith('path=')) {
-          blockMsg = errMsg;
+      String blockMsg = _errorMessages["Your account is temporarily locked"]!;
+      if (map.containsKey('message') || map.containsKey('error')) {
+        String raw = (map['message'] ?? map['error']).toString();
+        if (!raw.startsWith('uri=') && !raw.startsWith('path=')) {
+          blockMsg = _getMappedMessage(raw);
         }
       }
-      if (map.containsKey('message') && map['message'] != null) {
-        String msg = map['message'].toString();
-        if (msg.startsWith('uri=') || msg.startsWith('path=')) {
-           if (msg.contains('send-otp')) {
-             blockMsg = blockMsg.contains("wait") ? blockMsg : "OTP already sent. Please wait or check your messages.";
-           }
-        } else {
-           blockMsg = msg;
+      return {"message": blockMsg, "isBlocked": true, "error": blockMsg, "statusCode": 429};
+    }
+
+    // 3. Handle 410 Gone (Deleted Account)
+    if (statusCode == 410) {
+      String msg = _errorMessages["Account deleted."]!;
+      return {"message": msg, "error": msg, "statusCode": 410, "isDeleted": true};
+    }
+
+    // 4. Handle 403 Forbidden (Security Mismatches)
+    if (statusCode == 403) {
+      String msg = "Access denied. Please try again.";
+      if (map.containsKey('message') || map.containsKey('error')) {
+        msg = _getMappedMessage((map['message'] ?? map['error']).toString());
+      }
+      return {"message": msg, "error": msg, "statusCode": 403};
+    }
+
+    // 4. Spring Boot technical message handling
+    String? currentMessage = map['message']?.toString() ?? map['error']?.toString();
+    
+    if (currentMessage != null) {
+      // Clean up "Exception: " prefix if present
+      final exceptionMatch = RegExp(r'Exception: (.*)').firstMatch(currentMessage);
+      if (exceptionMatch != null) {
+        currentMessage = exceptionMatch.group(1) ?? currentMessage;
+        if (currentMessage.endsWith("]")) {
+          currentMessage = currentMessage.substring(0, currentMessage.length - 1);
         }
       }
-      return {"message": blockMsg, "isBlocked": true, "error": blockMsg};
-    }
 
-    // Spring Boot technical message handling
-    if (map.containsKey('error') && map['error'] != null) {
-      String errMsg = map['error'].toString();
-      
-      // Clean up common technical patterns
-      if (errMsg.contains("INVALID_OTP_SESSION")) {
-        map['message'] = "OTP session expired. Please request a new OTP.";
-      } else if (errMsg.contains("OTP_EXPIRED")) {
-        map['message'] = "OTP has expired. Please try resending.";
-      } else if (errMsg.startsWith('uri=') || errMsg.startsWith('path=')) {
-        map['message'] = "An error occurred. Please try again.";
-      } else {
-        map['message'] = errMsg;
-      }
-    }
-
-    if (map.containsKey('message') && map['message'] != null) {
-      String msg = map['message'].toString();
-      
-      if (msg.startsWith('uri=') || msg.startsWith('path=')) {
-        if (msg.contains('send-otp')) {
-          map['message'] = "OTP already sent. Please wait or check your messages.";
-        } else if (msg.contains('verify-otp')) {
-          map['message'] = "Invalid or expired OTP session.";
-        } else if (msg.contains('verify-email')) {
-          map['message'] = "Email verification session failed. Please resend.";
+      // If it's a technical URI/Path without a clear message, use a fallback
+      if (currentMessage.startsWith('uri=') || currentMessage.startsWith('path=')) {
+        if (currentMessage.contains('send-otp') || currentMessage.contains('resend')) {
+          // 🛑 CRITICAL: Preserve the "wait X seconds" for the timer logic
+          final waitMatch = RegExp(r'wait (\d+) seconds').firstMatch(currentMessage);
+          if (waitMatch != null) {
+            String seconds = waitMatch.group(1)!;
+            String sanitized = "OTP already sent. Please wait $seconds seconds.";
+            map['message'] = sanitized;
+            map['error'] = sanitized;
+            map['isAlreadySent'] = true;
+          } else {
+            String sanitized = "OTP already sent. Please wait or check your messages.";
+            map['message'] = sanitized;
+            map['error'] = sanitized;
+            map['isAlreadySent'] = true;
+          }
         } else {
           map['message'] = "Action failed. Please try again."; 
         }
-      } else if (msg.contains("INVALID_OTP_SESSION")) {
-        map['message'] = "Session expired. Please request a new OTP.";
       } else {
-        // Generic Exception cleanup
-        final exceptionMatch = RegExp(r'Exception: (.*)').firstMatch(msg);
-        if (exceptionMatch != null) {
-          String match = exceptionMatch.group(1) ?? "";
-          if (match.endsWith("]")) {
-            match = match.substring(0, match.length - 1);
-          }
-          map['message'] = match.trim();
+        // Apply mapping for known technical strings
+        String sanitized = _getMappedMessage(currentMessage.trim());
+        map['message'] = sanitized;
+        map['error'] = sanitized; // Ensure both are consistent for UI providers
+        
+        // Add bypass flag if it matches bypassable patterns
+        if (sanitized.contains("already sent") || sanitized.contains("already exists") || sanitized.contains("OTP sent successfully")) {
+          map['isAlreadySent'] = true;
         }
       }
     }
@@ -292,11 +335,12 @@ class ApiService {
         if (data["accessToken"] != null) await TokenHelper.saveToken(data["accessToken"]);
         if (data["refreshToken"] != null) await TokenHelper.saveRefreshToken(data["refreshToken"]);
         return {"status": "success", "token": data["accessToken"]};
-      } else if (response.statusCode == 401) {
+      } else if (response.statusCode == 401 && data["message"].toString().contains("APPROVAL_REQUIRED")) {
         return {
           "status": "untrusted",
           "maskedEmail": data["maskedEmail"],
           "temporaryToken": data["temporaryToken"],
+          "message": data["message"],
         };
       }
       return data;
@@ -374,7 +418,7 @@ class ApiService {
     return await resendOtp(email: email);
   }
 
-  static Future<bool> resendLoginOtp({required String mobile}) async {
+  static Future<Map<String, dynamic>> resendLoginOtp({required String mobile}) async {
     try {
       final device = await DeviceHelper.getDeviceData();
       const String url = "auth/login/resend-otp";
@@ -385,27 +429,26 @@ class ApiService {
         if (data["otpSessionToken"] != null) {
           await TokenHelper.saveOtpSessionToken(data["otpSessionToken"]);
         }
-        return true;
+        return {"status": "success", ...data};
       }
-      return false;
+      return data;
     } catch (e) {
-      return false;
+      return {"error": Constent.sometingWntWrong};
     }
   }
 
-  static Future<bool> resendNewDeviceOtp(String temporaryToken) async {
+  static Future<Map<String, dynamic>> resendNewDeviceOtp(String temporaryToken) async {
     try {
       const url = "auth/resend-new-device-otp";
       final response = await api.post(url, data: {"temporaryToken": temporaryToken});
       final data = _parseData(response.data, statusCode: response.statusCode);
       
       if (response.statusCode == 200) {
-        // Handle any tokens if returned
-        return true;
+        return {"status": "success", ...data};
       }
-      return false;
+      return data;
     } catch (e) {
-      return false;
+      return {"error": Constent.sometingWntWrong};
     }
   }
 

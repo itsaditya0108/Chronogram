@@ -76,32 +76,38 @@ Future<String> sendLoginOtp(String mobile) async {
   try {
     final result = await ApiService.sendLoginOtp(mobile);
 
-  if (result['status'] != 'success') {
-    String errorMessage = result['error'] ?? result['message'] ?? "";
-    String lowerError = errorMessage.toLowerCase();
+    if (result["status"] != "success") {
+      String errorMessage = result['error'] ?? result['message'] ?? "";
+      String lowerError = errorMessage.toLowerCase();
 
-    if (lowerError.contains("already sent") || 
-        lowerError.contains("wait") || 
-        lowerError.contains("active") || 
-        lowerError.contains("exists") ||
-        lowerError.contains("check your messages")) {
-      
-      final RegExp regex = RegExp(r'wait (\d+) seconds');
-      final match = regex.firstMatch(errorMessage);
-      if (match != null) {
-        int remaining = int.tryParse(match.group(1)!) ?? otpCooldown;
-        lastOtpSentTime = DateTime.now().subtract(Duration(seconds: otpCooldown - remaining));
-        lastOtpMobile = mobile;
-      } else {
-        lastOtpSentTime = DateTime.now();
-        lastOtpMobile = mobile;
+      // SPECIFIC STOP CONDITIONS: User not found or Account Locked
+      if (result['statusCode'] == 404 || lowerError.contains("not found") || result['statusCode'] == 429 || result['isDeleted'] == true) {
+        showErrorTemporarily(errorMessage);
+        return "error";
       }
-      return "success";
-    }
 
-    showErrorTemporarily(errorMessage);
-    return 'error';
-  }
+      // Bypass logic: Only if explicitly told it's already sent OR a wait message is present
+      if (result['isAlreadySent'] == true || 
+          lowerError.contains("wait") || 
+          lowerError.contains("active")) {
+        
+        final RegExp regex = RegExp(r'wait (\d+)'); // Catch wait 15 minute(s) or wait 10 seconds
+        final match = regex.firstMatch(errorMessage);
+        if (match != null) {
+          int unitValue = int.tryParse(match.group(1)!) ?? 0;
+          int waitSecs = errorMessage.contains("minute") ? unitValue * 60 : unitValue;
+          lastOtpSentTime = DateTime.now().subtract(Duration(seconds: otpCooldown - waitSecs));
+          lastOtpMobile = mobile;
+        } else {
+          lastOtpSentTime = DateTime.now();
+          lastOtpMobile = mobile;
+        }
+        return "success";
+      }
+
+      showErrorTemporarily(errorMessage);
+      return "error";
+    }
 
   lastOtpSentTime = DateTime.now();
   lastOtpMobile = mobile;

@@ -96,54 +96,60 @@ Future<String> linkEmailApi() async {
     String email = emailController.text.trim();
     final result = await ApiService.sendEmailOtp(email: email);
 
-  /// 🟢 SUCCESS
-  if (result["statusCode"] == 200 || result["statusCode"] == 201) {
+    // 🟢 SUCCESS Case
+    if (result["status"] == "success") {
       String? token = result["registrationToken"] ?? result["token"] ?? result["accessToken"];
       if (token != null) {
-          await TokenHelper.saveRegistrationToken(token);
-          print("REGISTRATION TOKEN (EMAIL OTP) SAVED: $token");
+        await TokenHelper.saveRegistrationToken(token);
       }
       lastOtpSentTime = DateTime.now();
       lastOtpEmail = email;
+      notifyListeners();
       return 'success';
-  }
-  
-  String errorMessage = result['error'] ?? result['message'] ?? "Error ${result['statusCode']}";
-  
-  String lowerError = errorMessage.toLowerCase();
-  
-  // Safe bypass ONLY for rate limit or "already sent to you" cases.
-  // Explicitly EXCLUDE "in use" or "taken" which means someone else owns it.
-  bool isRateLimit = lowerError.contains("wait") || lowerError.contains("seconds") || lowerError.contains("active otp");
-  bool isAlreadySentToUser = lowerError.contains("already sent") && !lowerError.contains("in use");
+    }
 
-  if (isRateLimit || isAlreadySentToUser) {
+    // 🔴 ERROR Case
+    String errorMessage = result['error'] ?? result['message'] ?? 'Failed to send OTP';
+    String lowerError = errorMessage.toLowerCase();
+
+    // 🟡 BYPASS Case (OTP already sent/active)
+    if (result['isAlreadySent'] == true ||
+        lowerError.contains("already sent") ||
+        lowerError.contains("wait") ||
+        lowerError.contains("active otp") ||
+        lowerError.contains("exists")) {
+      
       final RegExp regex = RegExp(r'wait (\d+) seconds');
       final match = regex.firstMatch(errorMessage);
       if (match != null) {
-          int remaining = int.tryParse(match.group(1)!) ?? otpCooldown;
-          lastOtpSentTime = DateTime.now().subtract(Duration(seconds: otpCooldown - remaining));
-          lastOtpEmail = email;
+        int remaining = int.tryParse(match.group(1)!) ?? otpCooldown;
+        lastOtpSentTime = DateTime.now().subtract(Duration(seconds: otpCooldown - remaining));
+        lastOtpEmail = email;
       } else {
-          lastOtpSentTime = DateTime.now();
-          lastOtpEmail = email;
+        lastOtpSentTime = DateTime.now();
+        lastOtpEmail = email;
       }
+      notifyListeners();
 
-      // Force resend to sync the backend Registration Token with this specific email!
-      final resendResult = await ApiService.resendRegistrationEmailOtp(email: email);
-      if (resendResult["statusCode"] == 200 || resendResult["statusCode"] == 201) {
-         String? token = resendResult["registrationToken"] ?? resendResult["token"] ?? resendResult["accessToken"];
-         if (token != null) {
-            await TokenHelper.saveRegistrationToken(token);
-         }
-         return 'success';
+      // Ensure we have a valid token if we are bypassing
+      String? token = result["registrationToken"] ?? result["token"] ?? result["accessToken"];
+      if (token != null) {
+        await TokenHelper.saveRegistrationToken(token);
+      } else {
+        // Force a resend to get a fresh token if missing
+        final resendResult = await ApiService.resendRegistrationEmailOtp(email: email);
+        String? resendToken = resendResult["registrationToken"] ?? resendResult["token"] ?? resendResult["accessToken"];
+        if (resendToken != null) {
+          await TokenHelper.saveRegistrationToken(resendToken);
+        }
       }
-      return 'success'; // Proceed to OTP screen if we suspect an active session exists
-  }
-  
-  emailError = errorMessage;
-  notifyListeners();
-  return "message";
+      return 'success';
+    }
+
+    // ❌ HARD ERROR (e.g., email already in use)
+    emailError = errorMessage;
+    notifyListeners();
+    return "message";
   } finally {
     isLoading = false;
     notifyListeners();

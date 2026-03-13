@@ -57,6 +57,7 @@ class ConnectivityOverlay extends StatefulWidget {
 }
 
 class _ConnectivityOverlayState extends State<ConnectivityOverlay> {
+  bool _wasOffline = false;
   bool _dialogShowing = false;
 
   @override

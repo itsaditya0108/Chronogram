@@ -192,14 +192,31 @@ class LoginMobileOtpScreenProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      bool sent = await ApiService.resendLoginOtp(mobile: mobile);
-      if (sent) {
+      final result = await ApiService.resendLoginOtp(mobile: mobile);
+      final mainProvider = context.read<LoginMobileScreenProvider>();
+      
+      if (result["status"] == "success") {
         // Sync with LoginMobileScreenProvider cooldown
-        final mainProvider = context.read<LoginMobileScreenProvider>();
         mainProvider.lastOtpSentTime = DateTime.now();
         mainProvider.lastOtpMobile = mobile;
-        
         startTimer(context);
+      } else {
+        String msg = result['error'] ?? result['message'] ?? "Resend failed";
+        mobileOtpError = msg;
+
+        // If it's a rate limit or "wait" message, sync the timer anyway
+        String lowerMsg = msg.toLowerCase();
+        if (result['statusCode'] == 429 || lowerMsg.contains("wait") || lowerMsg.contains("active")) {
+          final RegExp regex = RegExp(r'wait (\d+)');
+          final match = regex.firstMatch(msg);
+          if (match != null) {
+            int unitValue = int.tryParse(match.group(1)!) ?? 0;
+            int waitSecs = msg.contains("minute") ? unitValue * 60 : unitValue;
+            mainProvider.lastOtpSentTime = DateTime.now().subtract(Duration(seconds: mainProvider.otpCooldown - waitSecs));
+            mainProvider.lastOtpMobile = mobile;
+            startTimer(context);
+          }
+        }
       }
     } catch (e) {
       mobileOtpError = e.toString().replaceAll("Exception: ", "");

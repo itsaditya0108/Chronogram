@@ -74,6 +74,8 @@ class SignUpMobileOtpProvider extends ChangeNotifier {
       } else {
         seconds = 0;
         canResend = true; // 🔥 enable resend
+        timer.cancel();
+        notifyListeners();
       }
     });
   }
@@ -165,7 +167,7 @@ class SignUpMobileOtpProvider extends ChangeNotifier {
 
   /// 🔁 RESEND OTP
   Future<void> resendOtp(BuildContext context) async {
-    if (!canResend) return;
+    if (isResending) return;
 
     String mobile = context.read<SignUpScreenProvider>().mobileController.text;
 
@@ -175,16 +177,30 @@ class SignUpMobileOtpProvider extends ChangeNotifier {
 
     try {
       final result = await ApiService.resendOtp(mobile: mobile);
-      if (result['success'] == true) {
+      final parent = context.read<SignUpScreenProvider>();
+
+      if (result['status'] == 'success' || result['success'] == true) {
         // 🔥 UPDATE PARENT PROVIDER COOLDOWN
-        if (context.mounted) {
-           final parent = context.read<SignUpScreenProvider>();
-           parent.lastOtpSentTime = DateTime.now();
-           parent.lastOtpMobile = mobile;
-        }
+        parent.lastOtpSentTime = DateTime.now();
+        parent.lastOtpMobile = mobile;
         startTimer(context); // 🔥 timer restart
       } else {
-        mobileOtpError = result['error'] ?? result['message'] ?? "Resend failed";
+        String msg = result['error'] ?? result['message'] ?? "Resend failed";
+        mobileOtpError = msg;
+
+        // If it's a rate limit or "wait" message, sync the timer anyway
+        String lowerMsg = msg.toLowerCase();
+        if (result['statusCode'] == 429 || lowerMsg.contains("wait") || lowerMsg.contains("active")) {
+          final RegExp regex = RegExp(r'wait (\d+)');
+          final match = regex.firstMatch(msg);
+          if (match != null) {
+            int unitValue = int.tryParse(match.group(1)!) ?? 0;
+            int waitSecs = msg.contains("minute") ? unitValue * 60 : unitValue;
+            parent.lastOtpSentTime = DateTime.now().subtract(Duration(seconds: parent.otpCooldown - waitSecs));
+            parent.lastOtpMobile = mobile;
+            startTimer(context);
+          }
+        }
       }
     } catch (e) {
       mobileOtpError = e.toString().replaceAll("Exception: ", "");

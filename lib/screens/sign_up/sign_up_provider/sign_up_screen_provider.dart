@@ -66,30 +66,25 @@ class SignUpScreenProvider extends ChangeNotifier {
       String errorMessage = result['error'] ?? result['message'] ?? "";
       String lowerError = errorMessage.toLowerCase();
 
-      // REGISTRATION COLLISION CHECK
-      // If the mobile is already registered/in-use, we HARD STOP.
-      bool isAlreadyRegistered = lowerError.contains("already in use") || 
-                                 lowerError.contains("already registered") ||
-                                 lowerError.contains("taken");
-
-      if (isAlreadyRegistered) {
+      // REGISTRATION COLLISION CHECK: Hard stop on 409 or "already registered"
+      if (result['statusCode'] == 409 || 
+          lowerError.contains("already registered") || 
+          lowerError.contains("already in use")) {
         showErrorTemporarily(errorMessage);
         return "error";
       }
 
       // RATE LIMIT / COOLDOWN BYPASS
-      // If OTP is already sent to THIS specific user, we can move forward (bypass).
-      if (lowerError.contains("already sent") || 
+      if (result['isAlreadySent'] == true || 
           lowerError.contains("wait") || 
-          lowerError.contains("active") ||
-          lowerError.contains("exists") ||
-          lowerError.contains("check your messages")) {
+          lowerError.contains("active")) {
         
-        final RegExp regex = RegExp(r'wait (\d+) seconds');
+        final RegExp regex = RegExp(r'wait (\d+)');
         final match = regex.firstMatch(errorMessage);
         if (match != null) {
-          int remaining = int.tryParse(match.group(1)!) ?? otpCooldown;
-          lastOtpSentTime = DateTime.now().subtract(Duration(seconds: otpCooldown - remaining));
+          int unitValue = int.tryParse(match.group(1)!) ?? 0;
+          int waitSecs = errorMessage.contains("minute") ? unitValue * 60 : unitValue;
+          lastOtpSentTime = DateTime.now().subtract(Duration(seconds: otpCooldown - waitSecs));
           lastOtpMobile = mobile;
         } else {
           lastOtpSentTime = DateTime.now();
