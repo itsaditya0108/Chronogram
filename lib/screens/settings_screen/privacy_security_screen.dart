@@ -1,4 +1,7 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:chronogram/service/api_service.dart';
+import 'package:chronogram/screens/login/login_screen/login_screen.dart';
 
 class PrivacySecurityScreen extends StatefulWidget {
   const PrivacySecurityScreen({super.key});
@@ -65,8 +68,30 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
             const SizedBox(height: 12),
             _buildCard([
               _buildNavTile(Icons.lock_person_outlined, "Data & Permissions", onTap: () {}),
-              const Divider(color: Colors.white12, height: 1),
-              _buildNavTile(Icons.delete_outline_rounded, "Delete Account", color: Colors.redAccent, onTap: () {}),
+              if (Platform.isIOS) ...[
+                const Divider(color: Colors.white12, height: 1),
+                _buildNavTile(Icons.delete_outline_rounded, "Delete Account", color: Colors.redAccent, onTap: () async {
+                  bool confirm = await showDialog(
+                    context: context,
+                    builder: (c) => AlertDialog(
+                      backgroundColor: const Color(0xff121212),
+                      title: const Text("Delete Account", style: TextStyle(color: Colors.white)),
+                      content: const Text("Are you sure you want to permanently delete your account?", style: TextStyle(color: Colors.white70)),
+                      actions: [
+                        TextButton(onPressed: () => Navigator.pop(c, false), child: const Text("Cancel", style: TextStyle(color: Colors.white54))),
+                        TextButton(onPressed: () => Navigator.pop(c, true), child: const Text("Delete", style: TextStyle(color: Colors.redAccent))),
+                      ]
+                    )
+                  ) ?? false;
+                  
+                  if (confirm && mounted) {
+                    bool x = await ApiService.deleteAccount();
+                    if (x && mounted) {
+                      Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const LoginMobileScreen()), (route) => false);
+                    }
+                  }
+                }),
+              ],
             ]),
             const SizedBox(height: 28),
             Container(

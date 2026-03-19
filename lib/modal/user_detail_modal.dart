@@ -8,6 +8,7 @@ class UserDetailModal {
   bool? mobileVerified;
   bool? emailVerified;
   String? status;
+  String? approvalStatus;
 
   UserDetailModal(
       {this.userId,
@@ -18,7 +19,8 @@ class UserDetailModal {
       this.profilePictureUrl,
       this.mobileVerified,
       this.emailVerified,
-      this.status});
+      this.status,
+      this.approvalStatus});
 
   UserDetailModal.fromJson(Map<String, dynamic> json) {
     userId = json['userId'] is int ? json['userId'] : (json['user_id'] is int ? json['user_id'] : int.tryParse(json['userId']?.toString() ?? json['user_id']?.toString() ?? ""));
@@ -30,6 +32,7 @@ class UserDetailModal {
     mobileVerified = json['mobileVerified'] == true || json['mobile_verified'] == true;
     emailVerified = json['emailVerified'] == true || json['email_verified'] == true;
     status = json['status']?.toString() ?? json['user_status_id']?.toString();
+    approvalStatus = json['approvalStatus']?.toString();
   }
 
   Map<String, dynamic> toJson() {
@@ -43,7 +46,7 @@ class UserDetailModal {
     data['mobileVerified'] = this.mobileVerified;
     data['emailVerified'] = this.emailVerified;
     data['status'] = this.status;
+    data['approvalStatus'] = this.approvalStatus;
     return data;
   }
-  
 }

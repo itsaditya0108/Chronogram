@@ -163,6 +163,8 @@ class _ProfileView extends StatelessWidget {
                                 firstDate: DateTime(1950),
                                 lastDate:
                                     minAllowedDate, // 🔥 12 saal se chhota select nahi hoga
+                                initialEntryMode: DatePickerEntryMode.calendarOnly,
+                                helpText: "Select your Date of Birth (Must be 12+)",
                                 builder: (context, child) {
                                   return Theme(
                                     data: ThemeData.dark().copyWith(

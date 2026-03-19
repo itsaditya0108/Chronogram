@@ -91,14 +91,15 @@ class SignUpProfileProvider extends ChangeNotifier {
         mobile: mobile,
       );
 
-      if (result?['accessToken'] == null) {
-        dobError = result?['error'];
+      if (result?['status'] == 'success') {
+        // Tokens are already saved by ApiService.completeProfile
+        // We just need to clear the temporary registration token now that we're fully logged in.
+        await TokenHelper.saveRegistrationToken(""); 
+        return true;
+      } else {
+        dobError = result?['error'] ?? result?['message'] ?? "Registration failed";
         return false;
       }
-
-      String finalToken = result?["accessToken"];
-      await TokenHelper.saveToken(finalToken);
-      return true;
     } finally {
       isLoading = false;
       notifyListeners();

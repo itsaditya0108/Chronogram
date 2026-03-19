@@ -1,3 +1,5 @@
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:chronogram/screens/login/login_provider/login_otp_provider.dart';
 import 'package:chronogram/screens/login/login_provider/login_screen_provider.dart';
 import 'package:chronogram/screens/sign_up/sign_up_provider/sign_up_email_otp_provider.dart';
@@ -7,11 +9,31 @@ import 'package:chronogram/screens/sign_up/sign_up_provider/sign_up_screen_provi
 import 'package:chronogram/screens/sign_up/sign_up_screen/sign_up_screen.dart';
 import 'package:chronogram/screens/splash_screen/splash_screen.dart';
 import 'package:chronogram/service/connectivity_service.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import 'package:chronogram/screens/home_screen/home_screen.dart';
+import 'package:chronogram/screens/login/login_screen/login_screen.dart';
+import 'package:chronogram/service/api_service.dart';
+import 'package:chronogram/app_helper/token_saver_helper/token_saver_helper.dart';
+import 'firebase_options.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
+  // Initialize App Check
+  // Use Debug Provider for local testing (requires debug token in console)
+  // Use Play Integrity for the final APK to avoid Captcha redirects
+  await FirebaseAppCheck.instance.activate(
+    androidProvider: kDebugMode ? AndroidProvider.debug : AndroidProvider.playIntegrity,
+    appleProvider: AppleProvider.deviceCheck,
+  );
+
+  // Add logic to read from secure storage initially
   await ConnectivityService().initialize();
   runApp(const MyApp());
 }

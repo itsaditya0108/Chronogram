@@ -1,3 +1,4 @@
+import 'package:chronogram/app_helper/constent.dart';
 import 'package:chronogram/app_helper/token_saver_helper/token_saver_helper.dart';
 import 'package:chronogram/main.dart';
 import 'package:chronogram/screens/sign_up/sign_up_screen/sign_up_screen.dart';
@@ -15,8 +16,7 @@ class ApiClient {
 
   ApiClient._internal() {
     BaseOptions options = BaseOptions(
-      baseUrl:
-          "https://glayds-unpainful-torri.ngrok-free.dev/api/", // 🔁 change base url
+      baseUrl: "https://glayds-unpainful-torri.ngrok-free.dev/api/", // 🔁 Reverted to ngrok for real device testing
       connectTimeout: const Duration(seconds: 30),
       receiveTimeout: const Duration(seconds: 30),
       headers: {
@@ -24,17 +24,15 @@ class ApiClient {
         "Accept": "application/json",
       },
       validateStatus: (status) {
-        return true; // 🔥 accept all status codes without throwing exception
+        return true; 
       },
     );
 
     dio = Dio(options);
 
-    // 🔐 Add interceptors
     dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) async {
-          // 🌐 Connectivity Check
           if (!ConnectivityService().isOnline) {
             return handler.reject(
               DioException(
@@ -45,9 +43,11 @@ class ApiClient {
             );
           }
 
-          // Add token if needed
-          String? token =
-              await TokenHelper.getToken(); // get token from storage
+          // 🔑 TOKEN LOGIC: Try primary token first, then fallback to registration token.
+          String? token = await TokenHelper.getToken();
+          if (token == null || token.isEmpty) {
+            token = await TokenHelper.getRegistrationToken();
+          }
 
           if (token?.isNotEmpty ?? false) {
             options.headers["Authorization"] = "Bearer $token";
@@ -56,37 +56,56 @@ class ApiClient {
           print("REQUEST[${options.method}] => PATH: ${options.path}");
           return handler.next(options);
         },
-        onResponse: (response, handler) {
+        onResponse: (response, handler) async {
           print("RESPONSE[${response.statusCode}] => DATA: ${response.data}");
 
           if (response.statusCode == 401) {
             bool isNewDevice = false;
             final data = response.data;
             if (data is Map) {
-              String msg = data['message']?.toString() ?? "";
+              String msg = (data['message'] ?? data['error'] ?? "").toString();
               if (msg.contains("APPROVAL_REQUIRED") || msg.contains("verify") || msg.contains("untrusted")) {
                 isNewDevice = true;
-              }
-              String error = data['error']?.toString() ?? "";
-              if (error.contains("APPROVAL_REQUIRED") || error.contains("verify") || error.contains("untrusted")) {
-                 isNewDevice = true;
               }
             }
 
             if (!isNewDevice && !isRedirecting) {
+              // 🔄 TOKEN REFRESH LOGIC
+              String? refreshToken = await TokenHelper.getRefreshToken();
+              if (refreshToken != null) {
+                try {
+                  // Assuming standard refresh endpoint based on guide's hint
+                  final refreshRes = await dio.post("auth/refresh-token", queryParameters: {"refreshToken": refreshToken});
+                  if (refreshRes.statusCode == 200) {
+                    String newToken = refreshRes.data["accessToken"];
+                    await TokenHelper.saveToken(newToken);
+                    
+                    // Retry original request
+                    final opts = response.requestOptions;
+                    opts.headers["Authorization"] = "Bearer $newToken";
+                    
+                    final clonedRes = await dio.fetch(opts);
+                    return handler.resolve(clonedRes);
+                  }
+                } catch (e) {
+                  print("Token refresh failed: $e");
+                }
+              }
+
               isRedirecting = true;
-              TokenHelper.clear();
-              // 🔴 Navigate to login & remove all routes
+              await TokenHelper.clear();
               navigatorKey.currentState?.pushAndRemoveUntil(
                 MaterialPageRoute(builder: (_) => const SignUpScreen()),
                 (route) => false,
               );
+              return handler.next(response);
             }
           }
 
           return handler.next(response);
         },
         onError: (DioException e, handler) async {
+          print("ERROR[${e.type}] => MESSAGE: ${e.message}");
           return handler.next(e);
         },
       ),
@@ -157,13 +176,13 @@ class ApiClient {
     if (error.type == DioExceptionType.connectionTimeout ||
         error.type == DioExceptionType.sendTimeout ||
         error.type == DioExceptionType.receiveTimeout) {
-      return {"message": "Connection timed out. Please check your internet connection.", "isNetworkError": true};
+      return {"message": Constent.sometingWntWrong, "isNetworkError": true};
     } else if (error.type == DioExceptionType.connectionError) {
-      return {"message": "No internet connection. Please check your Wi-Fi or mobile data.", "isNetworkError": true};
+      return {"message": Constent.sometingWntWrong, "isNetworkError": true};
     } else if (error.response != null && error.response?.data != null) {
       return error.response?.data;
     } else {
-      return {"message": "Network error. Please try again.", "isNetworkError": true};
+      return {"message": Constent.sometingWntWrong, "isNetworkError": true};
     }
   }
 }

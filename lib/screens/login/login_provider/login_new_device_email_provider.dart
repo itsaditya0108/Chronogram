@@ -90,12 +90,15 @@ class LoginNewDeviceEmailProvider extends ChangeNotifier {
     if (isResending) return;
     isResending = true;
     notifyListeners();
-    bool sent = await ApiService.resendNewDeviceOtp(temporaryToken);
+    final result = await ApiService.resendNewDeviceOtp(temporaryToken);
     isResending = false;
-    if (sent) {
+    if (result["status"] == "success") {
+      if (result["temporaryToken"] != null) {
+        temporaryToken = result["temporaryToken"];
+      }
       startTimer();
     } else {
-      error = "Failed to resend OTP";
+      error = result["message"] ?? result["error"] ?? "Failed to resend OTP";
     }
 
     notifyListeners();

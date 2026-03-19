@@ -1,5 +1,7 @@
-import 'package:chronogram/app_helper/token_saver_helper/token_saver_helper.dart';
+import 'dart:async';
+
 import 'package:chronogram/service/api_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 class SignUpScreenProvider extends ChangeNotifier {
@@ -7,10 +9,17 @@ class SignUpScreenProvider extends ChangeNotifier {
   String? mobileError;
   bool isMobileValid = false;
   bool isLoading = false;
+  
+  String? verificationId;
+  int? resendToken;
+
+  String? autoRetrievedSmsCode;
+  void Function(String)? onAutoRetrievedSmsCode;
 
   DateTime? lastOtpSentTime;
   String? lastOtpMobile;
   static const int otpCooldown = 300; // 5 min
+  int get otpCooldownValue => otpCooldown; // Instance getter for providers
   // Mobile Validation (realtime)
   void checkMobileValid() {
     String value = mobileController.text.trim();
@@ -55,55 +64,66 @@ class SignUpScreenProvider extends ChangeNotifier {
     return otpCooldown - diff;
   }
 
-  Future<String> sendOtp(String mobile) async {
+  Future<bool> sendOtp(String mobile, BuildContext context, VoidCallback onCodeSent) async {
     mobileError = null;
     isLoading = true;
     notifyListeners();
+    
     try {
-      final result = await ApiService.sendOtp(mobile);
+      // Step 1: Validate that the user is NOT already registered (skipSms = true so no backend SMS is sent)
+      final backendResult = await ApiService.sendOtp(mobile, skipSms: true);
+      final statusCode = backendResult['statusCode'];
 
-    if (result["status"] != "success") {
-      String errorMessage = result['error'] ?? result['message'] ?? "";
-      String lowerError = errorMessage.toLowerCase();
-
-      // REGISTRATION COLLISION CHECK: Hard stop on 409 or "already registered"
-      if (result['statusCode'] == 409 || 
-          lowerError.contains("already registered") || 
-          lowerError.contains("already in use")) {
-        showErrorTemporarily(errorMessage);
-        return "error";
+      // User already registered → stop here, show error
+      if (statusCode == 409 || backendResult['status'] != 'success') {
+        mobileError = backendResult['error'] ?? backendResult['message'] ?? "This number is already registered. Please login instead.";
+        isLoading = false;
+        notifyListeners();
+        return false;
       }
 
-      // RATE LIMIT / COOLDOWN BYPASS
-      if (result['isAlreadySent'] == true || 
-          lowerError.contains("wait") || 
-          lowerError.contains("active")) {
-        
-        final RegExp regex = RegExp(r'wait (\d+)');
-        final match = regex.firstMatch(errorMessage);
-        if (match != null) {
-          int unitValue = int.tryParse(match.group(1)!) ?? 0;
-          int waitSecs = errorMessage.contains("minute") ? unitValue * 60 : unitValue;
-          lastOtpSentTime = DateTime.now().subtract(Duration(seconds: otpCooldown - waitSecs));
-          lastOtpMobile = mobile;
-        } else {
+      // Step 2: Number is free → now send OTP via Firebase
+      Completer<bool> completer = Completer<bool>();
+
+      await FirebaseAuth.instance.verifyPhoneNumber(
+        phoneNumber: "+91$mobile",
+        timeout: const Duration(seconds: 60),
+        verificationCompleted: (PhoneAuthCredential credential) async {
+          if (credential.smsCode != null) {
+            autoRetrievedSmsCode = credential.smsCode;
+            if (onAutoRetrievedSmsCode != null) {
+              onAutoRetrievedSmsCode!(credential.smsCode!);
+            }
+          }
+        },
+        verificationFailed: (FirebaseAuthException e) {
+          isLoading = false;
+          mobileError = e.message ?? "Verification Failed";
+          notifyListeners();
+          if (!completer.isCompleted) completer.complete(false);
+        },
+        codeSent: (String verId, int? resendTokenId) {
+          verificationId = verId;
+          resendToken = resendTokenId;
           lastOtpSentTime = DateTime.now();
           lastOtpMobile = mobile;
-        }
-        return "success";
-      }
+          isLoading = false;
+          notifyListeners();
+          onCodeSent();
+          if (!completer.isCompleted) completer.complete(true);
+        },
+        codeAutoRetrievalTimeout: (String verId) {
+          verificationId = verId;
+        },
+        forceResendingToken: resendToken,
+      );
 
-      showErrorTemporarily(errorMessage);
-      return "error";
-    }
-
-    lastOtpSentTime = DateTime.now();
-    lastOtpMobile = mobile;
-
-    return "success";
-    } finally {
+      return await completer.future;
+    } catch (e) {
       isLoading = false;
+      mobileError = "Failed to send OTP";
       notifyListeners();
+      return false;
     }
   }
 
@@ -123,6 +143,54 @@ class SignUpScreenProvider extends ChangeNotifier {
     lastOtpMobile = null;
     mobileError = null;
     isMobileValid = false;
+    verificationId = null;
+    resendToken = null;
+    autoRetrievedSmsCode = null;
+    onAutoRetrievedSmsCode = null;
     notifyListeners();
+  }
+
+  /// 🔁 RESEND OTP (Firebase Direct)
+  Future<void> resendOtp(String mobile, BuildContext context, VoidCallback onCodeSent) async {
+    mobileError = null;
+    isLoading = true;
+    notifyListeners();
+
+    try {
+      await FirebaseAuth.instance.verifyPhoneNumber(
+        phoneNumber: "+91$mobile",
+        timeout: const Duration(seconds: 60),
+        forceResendingToken: resendToken,
+        verificationCompleted: (PhoneAuthCredential credential) {
+          if (credential.smsCode != null) {
+            autoRetrievedSmsCode = credential.smsCode;
+            if (onAutoRetrievedSmsCode != null) {
+              onAutoRetrievedSmsCode!(credential.smsCode!);
+            }
+          }
+        },
+        verificationFailed: (FirebaseAuthException e) {
+          isLoading = false;
+          mobileError = e.message ?? "Verification Failed";
+          notifyListeners();
+        },
+        codeSent: (String verId, int? resendTokenId) {
+          verificationId = verId;
+          resendToken = resendTokenId;
+          lastOtpSentTime = DateTime.now();
+          lastOtpMobile = mobile;
+          isLoading = false;
+          notifyListeners();
+          onCodeSent();
+        },
+        codeAutoRetrievalTimeout: (String verId) {
+          verificationId = verId;
+        },
+      );
+    } catch (e) {
+      isLoading = false;
+      mobileError = "Failed to resend OTP";
+      notifyListeners();
+    }
   }
 }

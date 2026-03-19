@@ -145,18 +145,15 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             return;
                           }
 
-                          String result = await value.sendOtp(mobile);
-
-                          if (!context.mounted) return;
-
-                          if (result == "success") {
+                          await value.sendOtp(mobile, context, () {
+                            if (!context.mounted) return;
                             Navigator.push(
                               context,
                               MaterialPageRoute(
                                 builder: (context) => const SignUpMobileOtpScreen(),
                               ),
                             );
-                          }
+                          });
                         }
                       },
                     );

@@ -82,6 +82,48 @@ class _HomeScreenState extends State<HomeScreen>
       SettingsScreen(user: user, userName: userName),
     ];
 
+    if (user?.approvalStatus == "PENDING") {
+      return Scaffold(
+        backgroundColor: Colors.black,
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.admin_panel_settings_outlined, color: Color(0xffFF8C00), size: 80),
+                const SizedBox(height: 24),
+                const Text(
+                  "Pending Approval",
+                  style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  "Your account is currently under review by an administrator. Please check back later.",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 16),
+                ),
+                const SizedBox(height: 48),
+                TextButton.icon(
+                  onPressed: () async {
+                    await ApiService.logout();
+                    if (!context.mounted) return;
+                    Navigator.pushAndRemoveUntil(
+                      context,
+                      MaterialPageRoute(builder: (_) => const LoginMobileScreen()),
+                      (route) => false,
+                    );
+                  },
+                  icon: const Icon(Icons.logout, color: Color(0xffFF8C00)),
+                  label: const Text("Logout", style: TextStyle(color: Color(0xffFF8C00))),
+                )
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: Colors.black,
 

@@ -27,10 +27,10 @@ class ConnectivityService {
   }
 
   void _updateStatus(List<ConnectivityResult> results) {
-    // Treat any result other than none as online for simple logic
     bool online = results.isNotEmpty && !results.contains(ConnectivityResult.none);
     if (_isOnline != online) {
       _isOnline = online;
+      print("CONNECTIVITY STATUS CHANGED: ${_isOnline ? "ONLINE" : "OFFLINE"} (Results: $results)");
       _connectivityStreamController.add(_isOnline);
     }
   }

@@ -52,6 +52,10 @@ dependencies:
   share_plus: ^10.1.4
   intl: ^0.20.2
   connectivity_plus: ^7.0.0
+  firebase_core: ^4.5.0
+  firebase_auth: ^6.2.0
+  firebase_app_check: ^0.4.1+5
+  pinput: ^6.0.2
 
 dev_dependencies:
   flutter_test:

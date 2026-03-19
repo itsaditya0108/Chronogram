@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "232075991557",
+    "project_id": "chronogram-auth",
+    "storage_bucket": "chronogram-auth.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:232075991557:android:abd0715c6a8d539632da6c",
+        "android_client_info": {
+          "package_name": "com.chronogram.live"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBpZYccwd-K4ch2HkejhRCwb1djeMUHfoc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

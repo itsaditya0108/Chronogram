@@ -7,9 +7,10 @@ import 'package:chronogram/buttons/buttons.dart';
 import 'package:chronogram/screens/login/login_helper/aseet_helper.dart';
 import 'package:chronogram/screens/sign_up/sign_up_provider/sign_up_mobile_otp_provider.dart';
 import 'package:chronogram/screens/sign_up/sign_up_screen/sign_up_email_screen.dart';
+import 'package:chronogram/screens/sign_up/sign_up_screen/sign_up_profile_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_otp_text_field/flutter_otp_text_field.dart';
+import 'package:pinput/pinput.dart';
 import 'package:provider/provider.dart';
 
 class SignUpMobileOtpScreen extends StatefulWidget {
@@ -156,38 +157,45 @@ class _SignUpMobileOtpScreenState extends State<SignUpMobileOtpScreen> {
                                     if (fieldWidth > 55) fieldWidth = 55;
                                     if (fieldWidth < 34) fieldWidth = 34;
 
-                                    return OtpTextField(
-                                      numberOfFields: 6,
-                                      fieldWidth: fieldWidth,
-                                      fieldHeight: 60,
-                                      borderRadius: BorderRadius.circular(14),
-                                      showFieldAsBox: true,
-                                      filled: true,
-                                      fillColor: const Color(0xff1C1C1E),
-                                      borderColor: Colors.white12,
-                                      focusedBorderColor: Colors.orange,
-                                      enabledBorderColor: Colors.white12,
-                                      cursorColor: Colors.orange,
-                                      margin: const EdgeInsets.symmetric(
-                                        horizontal: 2,
-                                      ),
-                                      textStyle: const TextStyle(
-                                        fontSize: 20,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.white,
-                                      ),
+                                    return Pinput(
+                                      length: 6,
+                                      controller: provider.mobileOtpController,
+                                      autofillHints: const [AutofillHints.oneTimeCode],
                                       keyboardType: TextInputType.number,
-                                      inputFormatters: [
-                                        FilteringTextInputFormatter.digitsOnly,
-                                      ],
-                                      onCodeChanged: (code) {
-                                        provider.mobileOtpController.text =
-                                            code;
-                                      },
-                                      onSubmit: (verificationCode) {
-                                        provider.mobileOtpController.text =
-                                            verificationCode;
+                                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                                      defaultPinTheme: PinTheme(
+                                        width: fieldWidth,
+                                        height: 60,
+                                        textStyle: const TextStyle(
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.white,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xff1C1C1E),
+                                          borderRadius: BorderRadius.circular(14),
+                                          border: Border.all(color: Colors.white12),
+                                        ),
+                                      ),
+                                      focusedPinTheme: PinTheme(
+                                        width: fieldWidth,
+                                        height: 60,
+                                        textStyle: const TextStyle(
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.white,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xff1C1C1E),
+                                          borderRadius: BorderRadius.circular(14),
+                                          border: Border.all(color: Colors.orange),
+                                        ),
+                                      ),
+                                      onCompleted: (code) {
                                         provider.validMobileOtp();
+                                      },
+                                      onChanged: (code) {
+                                        if (code.length == 6) provider.validMobileOtp();
                                       },
                                     );
                                   },
@@ -257,13 +265,24 @@ class _SignUpMobileOtpScreenState extends State<SignUpMobileOtpScreen> {
                               isEnabled: value.isMobileOtpValid,
                               onTap: () async {
                                 bool success = await value.verifyMobileOtp(context);
-                                if (success) {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (_) => const SignUpEmailScreen(),
-                                    ),
-                                  );
+                                if (success && context.mounted) {
+                                  if (value.nextStep == 'profile') {
+                                    // Backend says email step is done — go straight to profile
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => const SignUpProfileScreen(),
+                                      ),
+                                    );
+                                  } else {
+                                    // Normal flow — go to email verification
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => const SignUpEmailScreen(),
+                                      ),
+                                    );
+                                  }
                                 }
                               },
                             );

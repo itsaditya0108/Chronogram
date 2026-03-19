@@ -129,17 +129,15 @@ class LoginMobileScreen extends StatelessWidget {
                             return;
                           }
 
-                          final result = await provider.sendLoginOtp(mobile);
-                          if (!context.mounted) return;
-
-                          if (result == 'success') {
+                          await provider.sendLoginOtp(mobile, context, () {
+                            if (!context.mounted) return;
                             Navigator.push(
                               context,
                               MaterialPageRoute(
                                 builder: (_) => LoginOtpScreen(mobile: mobile),
                               ),
                             );
-                          }
+                          });
                         },
                       ),
 

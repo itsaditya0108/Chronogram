@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:chronogram/app_helper/constent.dart';
 import 'package:chronogram/app_helper/device_helper/device_helper.dart';
 import 'package:chronogram/modal/user_detail_modal.dart';
@@ -24,7 +25,7 @@ class ApiService {
     "Invalid email format": "Please enter a valid email address.",
     "Email already in use": "This email is already associated with another account.",
     "Invalid registration token": "Registration session expired. Please start over.",
-    "Invalid OTP": "Incorrect OTP. Please try again.",l
+    "Invalid OTP": "Incorrect OTP. Please try again.",
     "OTP expired": "OTP has expired. Please try resending.",
     "Only alphabetic characters": "Name should only contain letters.",
     "Users must be 12 years or older": "You must be at least 12 years old to register.",
@@ -35,6 +36,7 @@ class ApiService {
     "Account deleted.": "This account has been deleted. Please contact support.",
     "Mobile verified. Verify Email to proceed.": "Mobile verified. Please verify your email.",
     "Email verified. Complete profile": "Email verified. Please complete your profile.",
+    "Maximum OTP attempts reached": "Maximum OTP attempts reached. Please try again after 15 minutes.",
   };
 
   static String _getMappedMessage(String technicalMsg) {
@@ -43,7 +45,7 @@ class ApiService {
         return entry.value;
       }
     }
-    return technicalMsg;
+    return Constent.sometingWntWrong; // Sanitized generic fallback
   }
 
   static Map<String, dynamic> _cleanMap(Map<String, dynamic> map, {int? statusCode}) {
@@ -55,10 +57,29 @@ class ApiService {
     // 2. Handle 429 Too Many Requests (Rate Limiting)
     if (statusCode == 429) {
       String blockMsg = _errorMessages["Your account is temporarily locked"]!;
-      if (map.containsKey('message') || map.containsKey('error')) {
-        String raw = (map['message'] ?? map['error']).toString();
-        if (!raw.startsWith('uri=') && !raw.startsWith('path=')) {
-          blockMsg = _getMappedMessage(raw);
+      String? msgInput = map['message']?.toString();
+      String? errInput = map['error']?.toString();
+      
+      // Prioritize actual text over uri=/path=
+      String? raw;
+      if (errInput != null && !errInput.startsWith('uri=') && !errInput.startsWith('path=')) {
+        raw = errInput;
+      } else if (msgInput != null && !msgInput.startsWith('uri=') && !msgInput.startsWith('path=')) {
+        raw = msgInput;
+      } else {
+        raw = msgInput ?? errInput;
+      }
+
+      if (raw != null) {
+        // If the message contains specific wait time, use it
+        bool hasWait = raw.toLowerCase().contains("wait") || raw.toLowerCase().contains("minute");
+        if (hasWait) {
+          blockMsg = raw;
+        } else {
+          String mapped = _getMappedMessage(raw);
+          if (mapped != Constent.sometingWntWrong) {
+            blockMsg = mapped;
+          }
         }
       }
       return {"message": blockMsg, "isBlocked": true, "error": blockMsg, "statusCode": 429};
@@ -80,7 +101,18 @@ class ApiService {
     }
 
     // 4. Spring Boot technical message handling
-    String? currentMessage = map['message']?.toString() ?? map['error']?.toString();
+    String? msgInput = map['message']?.toString();
+    String? errInput = map['error']?.toString();
+    
+    // Prioritize the field that actually contains text (not just uri=...)
+    String? currentMessage;
+    if (errInput != null && !errInput.startsWith('uri=') && !errInput.startsWith('path=')) {
+      currentMessage = errInput;
+    } else if (msgInput != null && !msgInput.startsWith('uri=') && !msgInput.startsWith('path=')) {
+      currentMessage = msgInput;
+    } else {
+      currentMessage = msgInput ?? errInput;
+    }
     
     if (currentMessage != null) {
       // Clean up "Exception: " prefix if present
@@ -92,10 +124,9 @@ class ApiService {
         }
       }
 
-      // If it's a technical URI/Path without a clear message, use a fallback
+      // If it's still a technical URI/Path, use generic fallback UNLESS it's a known rate-limit/already-sent case
       if (currentMessage.startsWith('uri=') || currentMessage.startsWith('path=')) {
         if (currentMessage.contains('send-otp') || currentMessage.contains('resend')) {
-          // 🛑 CRITICAL: Preserve the "wait X seconds" for the timer logic
           final waitMatch = RegExp(r'wait (\d+) seconds').firstMatch(currentMessage);
           if (waitMatch != null) {
             String seconds = waitMatch.group(1)!;
@@ -110,20 +141,46 @@ class ApiService {
             map['isAlreadySent'] = true;
           }
         } else {
-          map['message'] = "Action failed. Please try again."; 
+          map['message'] = Constent.sometingWntWrong; 
+          map['error'] = Constent.sometingWntWrong;
         }
       } else {
         // Apply mapping for known technical strings
         String sanitized = _getMappedMessage(currentMessage.trim());
+        
+        // 🟢 IMPROVED SUCCESS HANDLING: 
+        // If it's a success code (2xx), or if the message is already friendly (doesn't look technical),
+        // and no mapping was found, PRESERVE the original message.
+        bool isSuccess = (statusCode != null && statusCode >= 200 && statusCode < 300);
+        if (sanitized == Constent.sometingWntWrong && isSuccess) {
+           sanitized = currentMessage.trim();
+        }
+
+        // 🛑 PRESERVE "attempts remaining" or "wait X seconds" even if sanitized
+        if (currentMessage.toLowerCase().contains("attempts remaining")) {
+          final attemptsMatch = RegExp(r'(\d+) attempts remaining', caseSensitive: false).firstMatch(currentMessage);
+          if (attemptsMatch != null) {
+            String count = attemptsMatch.group(1)!;
+            if (sanitized == Constent.sometingWntWrong) sanitized = "Incorrect OTP.";
+            sanitized = "$sanitized $count attempts remaining.";
+          }
+        }
+        
+        // 🔍 DEBUG LOG: Technical vs User Message
+        print("I/flutter: [API_SERVICE] TECHNICAL: $currentMessage | SANITIZED: $sanitized | STATUS: $statusCode");
+
         map['message'] = sanitized;
         map['error'] = sanitized; // Ensure both are consistent for UI providers
         
         // Add bypass flag if it matches bypassable patterns
-        if (sanitized.contains("already sent") || sanitized.contains("already exists") || sanitized.contains("OTP sent successfully")) {
+        if (sanitized.contains("already sent") || sanitized.contains("already exists") || sanitized.contains("OTP sent successfully") || sanitized.contains("successful")) {
           map['isAlreadySent'] = true;
         }
       }
     }
+    
+    // 🔍 DEBUG LOG: Technical vs User Message
+    print("I/flutter: [API_SERVICE] FINAL_DATA: $map");
     
     return map;
   }
@@ -176,14 +233,77 @@ class ApiService {
     return resultMap;
   }
 
+  /// ================== FIREBASE LOGIN ==================
+
+  static Future<Map<String, dynamic>> firebaseLogin(String idToken) async {
+    try {
+      const String url = "auth/firebase-login";
+      final device = await DeviceHelper.getDeviceData();
+      final otpSessionToken = await TokenHelper.getOtpSessionToken();
+
+      final response = await api.post(url, data: {
+        "firebaseIdToken": idToken,
+        "otpSessionToken": otpSessionToken,
+        ...device,
+      });
+      print("[API] firebaseLogin ← ${response.statusCode} | ${response.data}");
+
+      // Extract raw message BEFORE _parseData sanitizes it, so callers can check backend step info.
+      String rawMessage = '';
+      if (response.data is Map) {
+        rawMessage = (response.data['message'] ?? '').toString();
+      }
+
+      final data = _parseData(response.data, statusCode: response.statusCode);
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+         // 🔑 Robust Token Extraction
+         String? accessToken = data["accessToken"] ?? data["token"] ?? data["registrationToken"];
+         String? refreshToken = data["refreshToken"];
+
+         if (accessToken != null) {
+          if (refreshToken != null && refreshToken.isNotEmpty) {
+            await TokenHelper.saveToken(accessToken);
+            await TokenHelper.saveRefreshToken(refreshToken);
+            return {"status": "success", "rawMessage": rawMessage, ...data};
+          } else {
+             // 🕒 NEW/INCOMPLETE USER: Save as registration token
+             await TokenHelper.saveRegistrationToken(accessToken);
+             return {"status": "incomplete", "rawMessage": rawMessage, ...data};
+          }
+         }
+         return {"status": "success", "rawMessage": rawMessage, ...data};
+      } else if (response.statusCode == 401 && data["message"].toString().contains("APPROVAL_REQUIRED")) {
+        return {
+          "status": "untrusted",
+          "maskedEmail": data["maskedEmail"],
+          "temporaryToken": data["temporaryToken"],
+          "message": data["message"],
+        };
+      } else if (response.statusCode == 404 || data["message"].toString().contains("register") || data["message"].toString().contains("not found")) {
+        return {"status": "not_found", ...data};
+      }
+
+      return {"status": "error", ...data};
+
+    } catch (e) {
+      return {"status": "error", "error": Constent.sometingWntWrong};
+    }
+  }
+
   /// ================== REGISTRATION FLOW ==================
 
-  static Future<Map<String, dynamic>> sendOtp(String mobile) async {
+  /// [skipSms] = true: Backend validates user existence only; Firebase sends the SMS.
+  static Future<Map<String, dynamic>> sendOtp(String mobile, {bool skipSms = false}) async {
     try {
       const String url = "auth/register/send-otp";
       final device = await DeviceHelper.getDeviceData();
-      final response = await api.post(url, data: {"mobileNumber": mobile, "deviceId": device["deviceId"]});
-      
+      final response = await api.post(url, data: {
+        "mobileNumber": mobile,
+        "deviceId": device["deviceId"],
+        if (skipSms) "skipSms": true,
+      });
+      print("[API] sendOtp ← ${response.statusCode} | ${response.data}");
       final data = _parseData(response.data, statusCode: response.statusCode);
       if (response.statusCode == 200) {
         if (data["otpSessionToken"] != null) {
@@ -209,7 +329,7 @@ class ApiService {
         "otpSessionToken": otpSessionToken,
         ...device
       });
-
+      print("[API] verifyOtp ← ${response.statusCode} | ${response.data}");
       final data = _parseData(response.data, statusCode: response.statusCode);
       if (response.statusCode == 200) {
         if (data["accessToken"] != null) {
@@ -233,7 +353,7 @@ class ApiService {
         "registrationToken": regToken,
         "deviceId": device["deviceId"],
       });
-
+      print("[API] sendEmailOtp ← ${response.statusCode} | ${response.data}");
       final data = _parseData(response.data, statusCode: response.statusCode);
       if (response.statusCode == 200) {
         if (data["accessToken"] != null) {
@@ -257,7 +377,7 @@ class ApiService {
         "otpCode": otp,
         "registrationToken": regToken,
       });
-
+      print("[API] verifyEmailOtp ← ${response.statusCode} | ${response.data}");
       final data = _parseData(response.data, statusCode: response.statusCode);
       if (response.statusCode == 200) {
          if (data["accessToken"] != null) {
@@ -283,7 +403,7 @@ class ApiService {
         "registrationToken": regToken,
         ...device,
       });
-
+      print("[API] completeProfile ← ${response.statusCode} | ${response.data}");
       final data = _parseData(response.data, statusCode: response.statusCode);
       if (response.statusCode == 200) {
         if (data["accessToken"] != null) await TokenHelper.saveToken(data["accessToken"]);
@@ -298,12 +418,17 @@ class ApiService {
 
   /// ================== LOGIN FLOW ==================
 
-  static Future<Map<String, dynamic>> sendLoginOtp(String mobile) async {
+  /// [skipSms] = true: Backend validates user existence only; Firebase sends the SMS.
+  static Future<Map<String, dynamic>> sendLoginOtp(String mobile, {bool skipSms = false}) async {
     try {
       const url = "auth/login/send-otp";
       final device = await DeviceHelper.getDeviceData();
-      final response = await api.post(url, data: {"mobileNumber": mobile, "deviceId": device["deviceId"]});
-      
+      final response = await api.post(url, data: {
+        "mobileNumber": mobile,
+        "deviceId": device["deviceId"],
+        if (skipSms) "skipSms": true,
+      });
+      print("[API] sendLoginOtp ← ${response.statusCode} | ${response.data}");
       final data = _parseData(response.data, statusCode: response.statusCode);
       if (response.statusCode == 200) {
         if (data["otpSessionToken"] != null) {
@@ -329,7 +454,7 @@ class ApiService {
         "otpSessionToken": otpSessionToken,
         ...device
       });
-
+      print("[API] verifyLoginOtp ← ${response.statusCode} | ${response.data}");
       final data = _parseData(response.data, statusCode: response.statusCode);
       if (response.statusCode == 200) {
         if (data["accessToken"] != null) await TokenHelper.saveToken(data["accessToken"]);
@@ -359,7 +484,7 @@ class ApiService {
         "temporaryToken": temporaryToken,
         ...device,
       });
-
+      print("[API] verifyNewDeviceEmailOtp ← ${response.statusCode} | ${response.data}");
       final data = _parseData(response.data, statusCode: response.statusCode);
       if (response.statusCode == 200) {
         if (data["accessToken"] != null) await TokenHelper.saveToken(data["accessToken"]);
@@ -391,6 +516,7 @@ class ApiService {
             };
 
       final response = await api.post(url, data: body);
+      print("[API] resendOtp ← ${response.statusCode} | ${response.data}");
       final data = _parseData(response.data, statusCode: response.statusCode);
       
       if (response.statusCode == 200 || response.statusCode == 201) {
@@ -423,7 +549,7 @@ class ApiService {
       final device = await DeviceHelper.getDeviceData();
       const String url = "auth/login/resend-otp";
       final response = await api.post(url, data: {"mobileNumber": mobile, "deviceId": device["deviceId"]});
-      
+      print("[API] resendLoginOtp ← ${response.statusCode} | ${response.data}");
       final data = _parseData(response.data, statusCode: response.statusCode);
       if (response.statusCode == 200) {
         if (data["otpSessionToken"] != null) {
@@ -441,6 +567,7 @@ class ApiService {
     try {
       const url = "auth/resend-new-device-otp";
       final response = await api.post(url, data: {"temporaryToken": temporaryToken});
+      print("[API] resendNewDeviceOtp ← ${response.statusCode} | ${response.data}");
       final data = _parseData(response.data, statusCode: response.statusCode);
       
       if (response.statusCode == 200) {
@@ -493,6 +620,31 @@ class ApiService {
     } catch (e) {
       await TokenHelper.clear();
       return true;
+    }
+  }
+
+  static Future<bool> deleteAccount() async {
+    try {
+      String? token = await TokenHelper.getToken();
+      if (token == null) return false;
+
+      final response = await api.dio.delete(
+        "account",
+        options: Options(
+          headers: {
+            "Authorization": "Bearer $token",
+            if (Platform.isIOS) "X-Platform": "iOS"
+          }
+        ),
+      );
+
+      if (response.statusCode == 200) {
+        await TokenHelper.clear();
+        return true;
+      }
+      return false;
+    } catch (e) {
+      return false;
     }
   }
 }

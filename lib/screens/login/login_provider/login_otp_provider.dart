@@ -1,12 +1,10 @@
 import 'dart:async';
 import 'package:chronogram/screens/home_screen/home_screen.dart';
-import 'package:chronogram/screens/login/login_screen/login_new_device_email_screen.dart';
-import 'package:chronogram/app_helper/mask/email_mask/email_mask.dart';
-import 'package:chronogram/screens/sign_up/sign_up_screen/sign_up_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../service/api_service.dart';
 import '../../../app_helper/token_saver_helper/token_saver_helper.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'login_screen_provider.dart';
 
 class LoginMobileOtpScreenProvider extends ChangeNotifier {
@@ -20,17 +18,18 @@ class LoginMobileOtpScreenProvider extends ChangeNotifier {
 
   bool showRegisterButton = false;
   bool showVerifyEmailButton = false;
+  bool isIncomplete = false;
   // String? maskedEmail; // for new device
 
   /// TIMER
   int seconds = 300;
   Timer? _timer;
+
   bool canResend = false;
   bool isResending = false;
 
   LoginMobileOtpScreenProvider() {
     mobileOtpController.addListener(checkMobileOtpFill);
-    // startTimer() removed - will be called in init() with BuildContext
   }
 
   /// OTP realtime validation
@@ -38,6 +37,16 @@ class LoginMobileOtpScreenProvider extends ChangeNotifier {
     String value = mobileOtpController.text.trim();
     isMobileOtpValid = RegExp(r'^\d{6}$').hasMatch(value);
     notifyListeners();
+  }
+
+  void _applySmsCode(String code, BuildContext context) {
+    if (mobileOtpController.text == code) return; 
+    mobileOtpController.text = code;
+
+    if (validMobileOtp() && context.mounted) {
+      final mobileProvider = context.read<LoginMobileScreenProvider>();
+      verifyLoginOtp(context, mobileProvider.mobileController.text);
+    }
   }
 
   bool validMobileOtp() {
@@ -60,19 +69,40 @@ class LoginMobileOtpScreenProvider extends ChangeNotifier {
     isLoading = true;
     showRegisterButton = false;
     showVerifyEmailButton = false;
+    isIncomplete = false;
     mobileOtpError = null;
     notifyListeners();
 
     try {
-      final result = await ApiService.verifyLoginOtp(
-        mobile: mobile,
-        otp: mobileOtpController.text.trim(),
+      final loginProvider = context.read<LoginMobileScreenProvider>();
+      final verificationId = loginProvider.verificationId;
+      
+      if (verificationId == null) {
+        mobileOtpError = "Session expired. Please request a new OTP.";
+        isLoading = false;
+        notifyListeners();
+        return;
+      }
+
+      // 1. Verify OTP with Firebase
+      PhoneAuthCredential credential = PhoneAuthProvider.credential(
+        verificationId: verificationId,
+        smsCode: mobileOtpController.text.trim(),
       );
 
-      /// ✅ LOGIN SUCCESS
-      if (result["status"] == "success") {
-        await TokenHelper.saveToken(result["token"]);
+      UserCredential userCredential = await FirebaseAuth.instance.signInWithCredential(credential);
+      
+      // 2. Extract Firebase ID Token
+      final idToken = await userCredential.user?.getIdToken();
+      if (idToken == null) {
+        throw Exception("Failed to retrieve ID token from Firebase");
+      }
 
+      // 3. Call Backend API
+      final result = await ApiService.firebaseLogin(idToken);
+
+      /// ✅ LOGIN SUCCESS (Complete User)
+      if (result["status"] == "success") {
         if (!context.mounted) return;
         Navigator.pushAndRemoveUntil(
           context,
@@ -84,28 +114,40 @@ class LoginMobileOtpScreenProvider extends ChangeNotifier {
         );
       }
 
+      /// 🕒 NEW/INCOMPLETE USER (Needs Email/Profile)
+      else if (result["status"] == "incomplete") {
+        isIncomplete = true;
+        mobileOtpError = "Registration incomplete. Please verify your email to continue.";
+        showVerifyEmailButton = true;
+      }
+
       /// 🔥 NEW DEVICE (401)
       else if (result["status"] == "untrusted") {
         maskedEmail = result["maskedEmail"] ?? "";
         temporaryToken = result['temporaryToken'] ?? "";
         print('Temp Token From 401:c $temporaryToken');
         mobileOtpError = "New device detected. Verify email to continue";
-
         showVerifyEmailButton = true;
       }
 
       /// 🔴 USER NOT REGISTERED
       else if (result["status"] == "not_found") {
-        mobileOtpError =
-            "Mobile number is not registered. Please register first";
-
+        mobileOtpError = "Mobile number is not registered. Please register first";
         showRegisterButton = true;
       }
 
-      /// ❌ INVALID OTP
+      /// ❌ OTHER ERRORS
       else {
-        mobileOtpError = result['error'] ?? result['message'] ?? "Invalid OTP";
+        mobileOtpError = result['error'] ?? result['message'] ?? "Login failed. Please try again.";
       }
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'invalid-verification-code') {
+        mobileOtpError = "Incorrect OTP. Please check and try again.";
+      } else {
+        mobileOtpError = e.message ?? "Verification failed";
+      }
+    } catch (e) {
+      mobileOtpError = e.toString().replaceAll("Exception: ", "");
     } finally {
       isLoading = false;
       notifyListeners();
@@ -134,6 +176,18 @@ class LoginMobileOtpScreenProvider extends ChangeNotifier {
     if (!canResend) {
       startTimer(context);
     }
+    
+    if (context.mounted) {
+      final mainProvider = context.read<LoginMobileScreenProvider>();
+      if (mainProvider.autoRetrievedSmsCode != null) {
+        _applySmsCode(mainProvider.autoRetrievedSmsCode!, context);
+      } else {
+        mainProvider.onAutoRetrievedSmsCode = (code) {
+          if (context.mounted) _applySmsCode(code, context);
+        };
+      }
+    }
+    
     notifyListeners();
   }
 
@@ -183,7 +237,7 @@ class LoginMobileOtpScreenProvider extends ChangeNotifier {
     }
   }
 
-  /// 🔥 RESEND OTP
+  /// 🔁 RESEND OTP (Firebase Direct)
   Future<void> resendLoginOtp(String mobile, BuildContext context) async {
     if (isResending) return;
 
@@ -192,38 +246,43 @@ class LoginMobileOtpScreenProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final result = await ApiService.resendLoginOtp(mobile: mobile);
       final mainProvider = context.read<LoginMobileScreenProvider>();
       
-      if (result["status"] == "success") {
-        // Sync with LoginMobileScreenProvider cooldown
-        mainProvider.lastOtpSentTime = DateTime.now();
-        mainProvider.lastOtpMobile = mobile;
-        startTimer(context);
-      } else {
-        String msg = result['error'] ?? result['message'] ?? "Resend failed";
-        mobileOtpError = msg;
-
-        // If it's a rate limit or "wait" message, sync the timer anyway
-        String lowerMsg = msg.toLowerCase();
-        if (result['statusCode'] == 429 || lowerMsg.contains("wait") || lowerMsg.contains("active")) {
-          final RegExp regex = RegExp(r'wait (\d+)');
-          final match = regex.firstMatch(msg);
-          if (match != null) {
-            int unitValue = int.tryParse(match.group(1)!) ?? 0;
-            int waitSecs = msg.contains("minute") ? unitValue * 60 : unitValue;
-            mainProvider.lastOtpSentTime = DateTime.now().subtract(Duration(seconds: mainProvider.otpCooldown - waitSecs));
-            mainProvider.lastOtpMobile = mobile;
-            startTimer(context);
+      // We directly re-invoke Firebase with the forceResendingToken.
+      // This ensures we get a fresh OTP from Firebase without bothering the backend or MySQL.
+      await FirebaseAuth.instance.verifyPhoneNumber(
+        phoneNumber: "+91$mobile",
+        timeout: const Duration(seconds: 60),
+        forceResendingToken: mainProvider.resendToken,
+        verificationCompleted: (PhoneAuthCredential credential) {
+          if (credential.smsCode != null && context.mounted) {
+            _applySmsCode(credential.smsCode!, context);
           }
-        }
-      }
+        },
+        verificationFailed: (FirebaseAuthException e) {
+          mobileOtpError = e.message ?? "Verification Failed";
+          isResending = false;
+          notifyListeners();
+        },
+        codeSent: (String verId, int? resendTokenId) {
+          mainProvider.verificationId = verId;
+          mainProvider.resendToken = resendTokenId;
+          mainProvider.lastOtpSentTime = DateTime.now();
+          mainProvider.lastOtpMobile = mobile;
+          
+          startTimer(context);
+          isResending = false;
+          notifyListeners();
+        },
+        codeAutoRetrievalTimeout: (String verId) {
+          mainProvider.verificationId = verId;
+        },
+      );
     } catch (e) {
-      mobileOtpError = e.toString().replaceAll("Exception: ", "");
+      mobileOtpError = "Failed to resend OTP";
+      isResending = false;
+      notifyListeners();
     }
-
-    isResending = false;
-    notifyListeners();
   }
 
   @override

@@ -103,6 +103,9 @@ class _SignUpEmailScreenState extends State<SignUpEmailScreen> {
                                   child: TextFormField(
                                     controller: value.emailController,
                                     keyboardType: TextInputType.emailAddress,
+                                    inputFormatters: [
+                                      LengthLimitingTextInputFormatter(100),
+                                    ],
                                     style: const TextStyle(color: Colors.white),
                                     cursorColor: Colors.orange,
                                     onChanged: (v) {

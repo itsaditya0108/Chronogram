@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'package:chronogram/app_helper/token_saver_helper/token_saver_helper.dart';
 import 'package:chronogram/service/api_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 class LoginMobileScreenProvider extends ChangeNotifier {
@@ -8,11 +10,18 @@ class LoginMobileScreenProvider extends ChangeNotifier {
 DateTime? lastOtpSentTime;
 String? lastOtpMobile;
 static const int otpCooldown = 300; // 5 min
+int get otpCooldownValue => otpCooldown; // Instance getter for providers
 
   String? mobileError;
   bool isMobileValid = false;
   bool isLoading = false;
   String? successMessage;
+  
+  String? verificationId;
+  int? resendToken;
+
+  String? autoRetrievedSmsCode;
+  void Function(String)? onAutoRetrievedSmsCode;
 
   LoginMobileScreenProvider() {
     mobileController.addListener(checkMobileValid);
@@ -68,54 +77,67 @@ int remainingSeconds() {
   return otpCooldown - diff;
 }
 
-////Api Method
-Future<String> sendLoginOtp(String mobile) async {
+////Api Method (Re-enabled Firebase Auth)
+Future<bool> sendLoginOtp(String mobile, BuildContext context, VoidCallback onCodeSent) async {
   mobileError = null;
   isLoading = true;
   notifyListeners();
+  
   try {
-    final result = await ApiService.sendLoginOtp(mobile);
+    // Step 1: Validate that the user exists in the database (skipSms = true so no backend SMS is sent)
+    final backendResult = await ApiService.sendLoginOtp(mobile, skipSms: true);
+    final statusCode = backendResult['statusCode'];
 
-    if (result["status"] != "success") {
-      String errorMessage = result['error'] ?? result['message'] ?? "";
-      String lowerError = errorMessage.toLowerCase();
-
-      // SPECIFIC STOP CONDITIONS: User not found or Account Locked
-      if (result['statusCode'] == 404 || lowerError.contains("not found") || result['statusCode'] == 429 || result['isDeleted'] == true) {
-        showErrorTemporarily(errorMessage);
-        return "error";
-      }
-
-      // Bypass logic: Only if explicitly told it's already sent OR a wait message is present
-      if (result['isAlreadySent'] == true || 
-          lowerError.contains("wait") || 
-          lowerError.contains("active")) {
-        
-        final RegExp regex = RegExp(r'wait (\d+)'); // Catch wait 15 minute(s) or wait 10 seconds
-        final match = regex.firstMatch(errorMessage);
-        if (match != null) {
-          int unitValue = int.tryParse(match.group(1)!) ?? 0;
-          int waitSecs = errorMessage.contains("minute") ? unitValue * 60 : unitValue;
-          lastOtpSentTime = DateTime.now().subtract(Duration(seconds: otpCooldown - waitSecs));
-          lastOtpMobile = mobile;
-        } else {
-          lastOtpSentTime = DateTime.now();
-          lastOtpMobile = mobile;
-        }
-        return "success";
-      }
-
-      showErrorTemporarily(errorMessage);
-      return "error";
+    // User not registered → stop here, show error
+    if (statusCode == 404 || backendResult['status'] != 'success') {
+      mobileError = backendResult['error'] ?? backendResult['message'] ?? "User not found. Please register.";
+      isLoading = false;
+      notifyListeners();
+      return false;
     }
 
-  lastOtpSentTime = DateTime.now();
-  lastOtpMobile = mobile;
+    // Step 2: User exists → now send OTP via Firebase
+    Completer<bool> completer = Completer<bool>();
 
-  return 'success';
-  } finally {
+    await FirebaseAuth.instance.verifyPhoneNumber(
+      phoneNumber: "+91$mobile",
+      timeout: const Duration(seconds: 60),
+      verificationCompleted: (PhoneAuthCredential credential) async {
+        if (credential.smsCode != null) {
+          autoRetrievedSmsCode = credential.smsCode;
+          if (onAutoRetrievedSmsCode != null) {
+            onAutoRetrievedSmsCode!(credential.smsCode!);
+          }
+        }
+      },
+      verificationFailed: (FirebaseAuthException e) {
+        isLoading = false;
+        mobileError = e.message ?? "Verification Failed";
+        notifyListeners();
+        if (!completer.isCompleted) completer.complete(false);
+      },
+      codeSent: (String verId, int? resendTokenId) {
+        verificationId = verId;
+        resendToken = resendTokenId;
+        lastOtpSentTime = DateTime.now();
+        lastOtpMobile = mobile;
+        isLoading = false;
+        notifyListeners();
+        onCodeSent();
+        if (!completer.isCompleted) completer.complete(true);
+      },
+      codeAutoRetrievalTimeout: (String verId) {
+        verificationId = verId;
+      },
+      forceResendingToken: resendToken,
+    );
+
+    return await completer.future;
+  } catch (e) {
     isLoading = false;
+    mobileError = "Failed to send OTP";
     notifyListeners();
+    return false;
   }
 }
 
@@ -137,10 +159,13 @@ Future<String> sendLoginOtp(String mobile) async {
   void clearState() {
     mobileController.clear();
     lastOtpSentTime = null;
-    lastOtpMobile = null;
     mobileError = null;
     isMobileValid = false;
     successMessage = null;
+    verificationId = null;
+    resendToken = null;
+    autoRetrievedSmsCode = null;
+    onAutoRetrievedSmsCode = null;
     notifyListeners();
   }
 }

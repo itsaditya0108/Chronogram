@@ -5,6 +5,7 @@ import 'package:chronogram/screens/login/login_helper/aseet_helper.dart';
 import 'package:chronogram/buttons/buttons.dart';
 import 'package:flutter_otp_text_field/flutter_otp_text_field.dart';
 import 'package:provider/provider.dart';
+import 'package:chronogram/app_helper/mask/email_mask/email_mask.dart';
 import '../login_provider/login_new_device_email_provider.dart';
 
 class LoginNewDeviceEmailScreen extends StatelessWidget {
@@ -59,7 +60,7 @@ class LoginNewDeviceEmailScreen extends StatelessWidget {
                       const SizedBox(height: 10),
         
                       Text(
-                        "OTP sent to $maskedEmail",
+                        "OTP sent to ${EmailMask.sanitizeMaskedEmail(maskedEmail)}",
                         style: const TextStyle(color: Colors.white60),
                       ),
         

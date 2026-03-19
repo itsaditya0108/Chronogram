@@ -1,4 +1,4 @@
-package com.example.chronogram
+package com.chronogram.live
 
 import io.flutter.embedding.android.FlutterActivity
 
