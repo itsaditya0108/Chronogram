@@ -300,7 +300,7 @@ class ApiService {
       final device = await DeviceHelper.getDeviceData();
       final response = await api.post(url, data: {
         "mobileNumber": mobile,
-        "deviceId": device["deviceId"],
+        ...device,
         if (skipSms) "skipSms": true,
       });
       print("[API] sendOtp ← ${response.statusCode} | ${response.data}");
@@ -425,7 +425,7 @@ class ApiService {
       final device = await DeviceHelper.getDeviceData();
       final response = await api.post(url, data: {
         "mobileNumber": mobile,
-        "deviceId": device["deviceId"],
+        ...device,
         if (skipSms) "skipSms": true,
       });
       print("[API] sendLoginOtp ← ${response.statusCode} | ${response.data}");

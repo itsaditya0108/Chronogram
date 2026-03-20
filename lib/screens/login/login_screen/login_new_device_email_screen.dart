@@ -112,7 +112,7 @@ class LoginNewDeviceEmailScreen extends StatelessWidget {
                           ? GestureDetector(
                               onTap: provider.isResending
                                   ? null
-                                  : () => provider.resendOtp(temporaryToken),
+                                  : () => provider.resendOtp(),
                               child: Text(
                                 provider.isResending
                                     ? "Sending..."

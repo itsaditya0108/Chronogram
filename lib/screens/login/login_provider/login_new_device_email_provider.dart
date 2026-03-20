@@ -86,7 +86,7 @@ class LoginNewDeviceEmailProvider extends ChangeNotifier {
   }
 
   /// RESEND
-  Future<void> resendOtp(String temporaryToken) async {
+  Future<void> resendOtp() async {
     if (isResending) return;
     isResending = true;
     notifyListeners();
@@ -94,7 +94,7 @@ class LoginNewDeviceEmailProvider extends ChangeNotifier {
     isResending = false;
     if (result["status"] == "success") {
       if (result["temporaryToken"] != null) {
-        temporaryToken = result["temporaryToken"];
+        this.temporaryToken = result["temporaryToken"];
       }
       startTimer();
     } else {
