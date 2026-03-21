@@ -12,6 +12,7 @@ import 'package:chronogram/service/connectivity_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:chronogram/screens/home_screen_provider/home_screen_provider.dart';
 
 import 'package:chronogram/screens/home_screen/home_screen.dart';
 import 'package:chronogram/screens/login/login_screen/login_screen.dart';
@@ -52,6 +53,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => SignUpEmailOtpProvider()),
         ChangeNotifierProvider(create: (_) => LoginMobileScreenProvider()),
         ChangeNotifierProvider(create: (_) => LoginMobileOtpScreenProvider()),
+        ChangeNotifierProvider(create: (_) => HomeScreenProvider()),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,

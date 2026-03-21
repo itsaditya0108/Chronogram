@@ -120,142 +120,77 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
               ),
             ),
           ),
-
           // ── Main content ──
           Center(
-            child: AnimatedBuilder(
-              animation: _mainController,
-              builder: (context, child) {
-                return FadeTransition(
-                  opacity: _fadeAnimation,
-                  child: SlideTransition(
-                    position: _slideAnimation,
-                    child: Transform.scale(
-                      scale: _scaleAnimation.value,
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
+            child: FadeTransition(
+              opacity: _fadeAnimation,
+              child: ScaleTransition(
+                scale: _scaleAnimation,
+                child: SlideTransition(
+                  position: _slideAnimation,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      // ── Logo with Sweeping Ring ──
+                      Stack(
+                        alignment: Alignment.center,
                         children: [
-                          // ── Logo with sweeping ring ──
-                          SizedBox(
-                            width: 170, height: 170,
-                            child: Stack(
-                              alignment: Alignment.center,
-                              children: [
-                                // Outer breathing ring
-                                AnimatedBuilder(
-                                  animation: _pulseController,
-                                  builder: (_, __) => Container(
-                                    width: 154,
-                                    height: 154,
-                                    decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      border: Border.all(
-                                        color: Colors.orange.withOpacity(0.06 + 0.05 * _pulseController.value),
-                                        width: 1,
-                                      ),
-                                    ),
-                                  ),
+                          AnimatedBuilder(
+                            animation: _ringAnimation,
+                            builder: (context, child) => CustomPaint(
+                              painter: _RingPainter(_ringAnimation.value),
+                              size: const Size(140, 140),
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.all(20),
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.orange.withOpacity(0.15),
+                                  blurRadius: 40,
+                                  spreadRadius: 10,
                                 ),
-                                // Sweeping arc with rotation
-                                Transform.rotate(
-                                  angle: _ringAnimation.value * 1.5,
-                                  child: CustomPaint(
-                                    size: const Size(130, 130),
-                                    painter: _RingPainter(_ringAnimation.value),
-                                  ),
-                                ),
-                                // Logo glow
-                                AnimatedBuilder(
-                                  animation: _pulseController,
-                                  builder: (_, __) => Container(
-                                    width: 105, height: 105,
-                                    decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.orange.withOpacity(0.2 + 0.12 * _pulseController.value),
-                                          blurRadius: 50, spreadRadius: 10,
-                                        ),
-                                        BoxShadow(
-                                          color: Colors.white.withOpacity(0.1 * _pulseController.value),
-                                          blurRadius: 20, spreadRadius: 2,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                                Image.asset(ScreenImage.allLogoBr, height: 92),
                               ],
                             ),
-                          ),
-
-                          const SizedBox(height: 42),
-
-                          // ── App name with gradient ──
-                          AnimatedBuilder(
-                            animation: _pulseController,
-                            builder: (context, child) {
-                              return ShaderMask(
-                                shaderCallback: (bounds) => LinearGradient(
-                                  colors: [
-                                    Colors.white,
-                                    Colors.orange.shade300.withOpacity(0.8 + 0.2 * _pulseController.value),
-                                    Colors.white,
-                                  ],
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                  stops: [0.0, 0.4 + 0.2 * _pulseController.value, 1.0],
-                                ).createShader(bounds),
-                                child: const Text(
-                                  "CHRONOGRAM",
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 32,
-                                    fontWeight: FontWeight.w900,
-                                    letterSpacing: 8.0,
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-
-                          const SizedBox(height: 12),
-
-                          // ── Tagline ──
-                          FadeTransition(
-                            opacity: CurvedAnimation(parent: _mainController, curve: const Interval(0.6, 1.0)),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-                              decoration: BoxDecoration(
-                                border: Border.symmetric(
-                                  horizontal: BorderSide(color: Colors.white.withOpacity(0.06), width: 1),
-                                ),
-                              ),
-                              child: Text(
-                                "PRESERVING MOMENTS FOREVER",
-                                style: TextStyle(
-                                  color: Colors.white.withOpacity(0.28),
-                                  fontSize: 9.5,
-                                  fontWeight: FontWeight.w600,
-                                  letterSpacing: 4.0,
-                                ),
-                              ),
-                            ),
-                          ),
-
-                          const SizedBox(height: 80),
-
-                          // ── 3-dot bouncing loader ──
-                          AnimatedBuilder(
-                            animation: _dotsController,
-                            builder: (_, __) => _DotsLoader(progress: _dotsController.value),
+                            child: Image.asset(ScreenImage.allLogoBr, height: 100),
                           ),
                         ],
                       ),
-                    ),
+                      const SizedBox(height: 30),
+                      // ── App name ──
+                      const Text(
+                        "CHRONOGRAM",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 28,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 6.0,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        "PRESERVING MOMENTS FOREVER",
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.4),
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 3.0,
+                        ),
+                      ),
+                      const SizedBox(height: 60),
+                      // ── Custom Dots loader ──
+                      AnimatedBuilder(
+                        animation: _dotsController,
+                        builder: (context, child) => _DotsLoader(
+                          progress: _dotsController.value,
+                        ),
+                      ),
+                    ],
                   ),
-                );
-              },
+                ),
+              ),
             ),
           ),
 

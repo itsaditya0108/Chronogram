@@ -1,5 +1,14 @@
+import 'dart:io';
+import 'package:chronogram/service/api_service.dart';
 import 'package:flutter/material.dart';
 import 'package:chronogram/modal/user_detail_modal.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:provider/provider.dart';
+import 'package:chronogram/screens/home_screen_provider/home_screen_provider.dart';
+import 'package:chronogram/widgets/token_image.dart';
+import 'dart:async';
+import 'package:chronogram/service/image_api_client.dart';
+import 'package:image_cropper/image_cropper.dart';
 
 class ViewProfileScreen extends StatefulWidget {
   final UserDetailModal? user;
@@ -12,6 +21,17 @@ class ViewProfileScreen extends StatefulWidget {
 }
 
 class _ViewProfileScreenState extends State<ViewProfileScreen> {
+  File? _profileImage;
+  bool _isUploading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<HomeScreenProvider>().fetchProfileHistory();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -59,35 +79,47 @@ class _ViewProfileScreenState extends State<ViewProfileScreen> {
                           ],
                         ),
                       ),
-                      Container(
-                        width: 112,
-                        height: 112,
-                        decoration: const BoxDecoration(
-                          color: Colors.black,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Center(
-                          child: Text(
-                            _getInitials(widget.userName),
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 38,
-                              fontWeight: FontWeight.bold,
-                            ),
+                      CircleAvatar(
+                        radius: 53,
+                        backgroundColor: Colors.orange,
+                        child: ClipOval(
+                          child: Container(
+                            width: 102,
+                            height: 102,
+                            color: const Color(0xff1A1A1A),
+                            child: context.watch<HomeScreenProvider>().isProfileLoading
+                                ? const Center(child: CircularProgressIndicator(color: Colors.orange, strokeWidth: 2))
+                                : context.watch<HomeScreenProvider>().profileUrl != null
+                                    ? TokenImage(
+                                        imageUrl: context.watch<HomeScreenProvider>().profileUrl!,
+                                        fit: BoxFit.cover,
+                                      )
+                                    : Center(
+                                        child: Text(
+                                          _getInitials(widget.user?.name ?? "U"),
+                                          style: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 30,
+                                              fontWeight: FontWeight.bold),
+                                        ),
+                                      ),
                           ),
                         ),
                       ),
                       Positioned(
                         bottom: 4,
                         right: 4,
-                        child: Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: Colors.orange,
-                            shape: BoxShape.circle,
-                            border: Border.all(color: Colors.black, width: 2.5),
+                        child: GestureDetector(
+                          onTap: _pickAndUploadImage,
+                          child: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: Colors.orange,
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.black, width: 2.5),
+                            ),
+                            child: const Icon(Icons.edit_rounded, color: Colors.white, size: 18),
                           ),
-                          child: const Icon(Icons.edit_rounded, color: Colors.white, size: 18),
                         ),
                       ),
                     ],
@@ -104,15 +136,12 @@ class _ViewProfileScreenState extends State<ViewProfileScreen> {
                   const SizedBox(height: 6),
                   const Text(
                     "Member Since 2024",
-                    style: TextStyle(
-                      color: Colors.white38,
-                      fontSize: 14,
-                    ),
+                    style: TextStyle(color: Colors.white38, fontSize: 14),
                   ),
                 ],
               ),
             ),
-            
+
             const SizedBox(height: 45),
 
             /// INFO LIST
@@ -138,9 +167,14 @@ class _ViewProfileScreenState extends State<ViewProfileScreen> {
               value: _maskPhone(widget.user?.mobileNumber ?? "Not verified"),
               isLocked: true,
             ),
-            
+
             const SizedBox(height: 30),
-            
+
+            /// PROFILE HISTORY
+            _buildHistorySection(),
+
+            const SizedBox(height: 40),
+
             /// SECURITY NOTE
             Container(
               padding: const EdgeInsets.all(16),
@@ -170,6 +204,67 @@ class _ViewProfileScreenState extends State<ViewProfileScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _pickAndUploadImage() async {
+    final ImagePicker picker = ImagePicker();
+    try {
+      final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+      if (image == null) return;
+
+      setState(() {
+        _isUploading = true;
+      });
+      
+      // ✂️ Image Cropping
+      final croppedFile = await ImageCropper().cropImage(
+        sourcePath: image.path,
+        aspectRatio: const CropAspectRatio(ratioX: 1, ratioY: 1), // Square
+        uiSettings: [
+          AndroidUiSettings(
+            toolbarTitle: 'Crop Profile Photo',
+            toolbarColor: Colors.black,
+            toolbarWidgetColor: Colors.white,
+            activeControlsWidgetColor: Colors.orange,
+            statusBarColor: Colors.black,
+            initAspectRatio: CropAspectRatioPreset.square,
+            lockAspectRatio: false, // Allow resetting to other ratios if needed
+            backgroundColor: Colors.black,
+          ),
+          IOSUiSettings(
+            title: 'Crop Profile Photo',
+            aspectRatioLockEnabled: true,
+            resetButtonHidden: false, // Already exists on iOS
+          ),
+        ],
+      );
+
+      if (croppedFile == null) {
+        setState(() => _isUploading = false);
+        return;
+      }
+
+      _profileImage = File(croppedFile.path);
+      final result = await context.read<HomeScreenProvider>().uploadProfilePicture(_profileImage!);
+      
+      if (mounted) {
+        setState(() => _isUploading = false);
+        if (result["status"] == "success") {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Profile photo updated successfully")));
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(result["message"] ?? "Upload failed"), backgroundColor: Colors.redAccent),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isUploading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error: $e"), backgroundColor: Colors.redAccent),
+        );
+      }
+    }
   }
 
   Widget _buildInfoTile({
@@ -247,5 +342,102 @@ class _ViewProfileScreenState extends State<ViewProfileScreen> {
     String visibleEnd = phone.substring(phone.length - 3);
     String maskedMiddle = '*' * (phone.length - 6);
     return '$visibleStart $maskedMiddle $visibleEnd';
+  }
+
+  Widget _buildHistorySection() {
+    final history = context.watch<HomeScreenProvider>().profileHistory;
+    if (history.isEmpty) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          "Profile History",
+          style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 15),
+        SizedBox(
+          height: 100,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            itemCount: history.length,
+            itemBuilder: (context, index) {
+              final item = history[index];
+              final isActive = item['active'] == true;
+
+              return GestureDetector(
+                onTap: isActive ? null : () => _showSelectPhotoDialog(item),
+                child: Container(
+                  width: 90,
+                  margin: const EdgeInsets.only(right: 12),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: isActive ? Colors.orange : Colors.white10,
+                      width: isActive ? 2 : 1,
+                    ),
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(14),
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        if (item['mediumPath'] != null)
+                          TokenImage(
+                            imageUrl: ApiService.getImageUrl(item['mediumPath']),
+                            fit: BoxFit.cover,
+                          )
+                        else
+                          const Center(
+                            child: Icon(Icons.person, color: Colors.white24),
+                          ),
+                        if (isActive)
+                          Positioned(
+                            top: 4,
+                            right: 4,
+                            child: Container(
+                              padding: const EdgeInsets.all(2),
+                              decoration: const BoxDecoration(
+                                color: Colors.orange,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.check,
+                                color: Colors.white,
+                                size: 10,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
+        ),
+      ),
+    ],
+  );
+}
+
+  void _showSelectPhotoDialog(Map<String, dynamic> item) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xff1A1A1A),
+        title: const Text("Set Profile Picture", style: TextStyle(color: Colors.white)),
+        content: const Text("Kyun aap is photo ko fir se profile picture banana chahte hain?", style: TextStyle(color: Colors.white70)),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text("Nahi", style: TextStyle(color: Colors.white54))),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              context.read<HomeScreenProvider>().setActiveProfilePicture(item['id']);
+            },
+            child: const Text("Haan", style: TextStyle(color: Colors.orange, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
   }
 }

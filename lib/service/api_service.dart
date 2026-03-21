@@ -5,10 +5,19 @@ import 'package:chronogram/app_helper/device_helper/device_helper.dart';
 import 'package:chronogram/modal/user_detail_modal.dart';
 import 'package:chronogram/app_helper/token_saver_helper/token_saver_helper.dart';
 import 'package:chronogram/service/api_client.dart';
+import 'package:chronogram/service/image_api_client.dart';
+import 'package:chronogram/service/video_api_client.dart';
 import 'package:dio/dio.dart';
+
+import 'package:flutter/material.dart';
+import 'package:http/http.dart' hide MultipartFile, Response;
 
 class ApiService {
   static final api = ApiClient();
+  static final imageApi = ImageApiClient();
+  static final videoApi = VideoApiClient();
+  final ApiClient client = ApiClient();
+
 
   /// ================== ERROR MAPPING & SANITIZATION ==================
   
@@ -647,4 +656,289 @@ class ApiService {
       return false;
     }
   }
+
+  /// ======  Profile Photo (Image Service - 8084) ======
+
+  static Future<Map<String, dynamic>> uploadProfilePicture(File imageFile) async {
+    try {
+      const String url = 'profile-picture';
+      FormData formData = FormData.fromMap({
+        'file': await MultipartFile.fromFile(
+          imageFile.path,
+          filename: imageFile.path.split('/').last,
+        ),
+      });
+      // ✅ imageApi — Image Service (port 8084)
+      final response = await imageApi.post(url, data: formData);
+      final data = _parseData(response.data, statusCode: response.statusCode);
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return {'status': 'success', ...data};
+      }
+      return data;
+    } catch (e) {
+      return {'error': Constent.sometingWntWrong};
+    }
+  }
+
+  static Future<Map<String, dynamic>> getProfileHistory() async {
+    try {
+      const String url = 'profile-picture/history';
+      final response = await imageApi.get(url);
+      if (response.statusCode == 200) {
+        // Directly handle list response
+        final data = response.data;
+        if (data is List) {
+          return {'status': 'success', 'history': data};
+        }
+        return {'status': 'success', 'history': []};
+      }
+      return _parseData(response.data, statusCode: response.statusCode);
+    } catch (e) {
+      return {'error': Constent.sometingWntWrong};
+    }
+  }
+
+  static Future<Map<String, dynamic>> setActiveProfilePicture(int id) async {
+    try {
+      final String url = 'profile-picture/$id/select';
+      print("[API] setActiveProfilePicture → URL: $url");
+      final response = await imageApi.post(url, data: {});
+      print("[API] setActiveProfilePicture ← ${response.statusCode} | ${response.data}");
+      final data = _parseData(response.data, statusCode: response.statusCode);
+      if (response.statusCode == 200) {
+        return {'status': 'success', ...data};
+      }
+      return data;
+    } catch (e) {
+      print("[API] setActiveProfilePicture ERROR: $e");
+      return {'error': Constent.sometingWntWrong};
+    }
+  }
+
+  static String getActiveProfileUrl({String size = 'medium'}) {
+    // Returns full URL for the active profile picture
+    return "${ImageApiClient.imageBaseUrl}profile-picture/$size";
+  }
+
+  static String getImageUrl(String? path) {
+    if (path == null || path.isEmpty) return "";
+    if (path.startsWith('http')) return path;
+
+    String baseUrl = ImageApiClient.imageBaseUrl;
+    
+    // Normalizing overlap: If path starts with /api/ and baseUrl ends with /api/
+    if (path.startsWith('/api/') && baseUrl.endsWith('/api/')) {
+      // Remove '/api/' from the end of baseUrl before joining (baseUrl length is X, '/api/' is 5)
+      // Or just join from the domain root.
+      String root = baseUrl.substring(0, baseUrl.indexOf('/api/')); // e.g. http://192.168.1.3:8084
+      return root + path;
+    }
+
+    if (baseUrl.endsWith('/') && path.startsWith('/')) {
+      return baseUrl + path.substring(1);
+    } else if (!baseUrl.endsWith('/') && !path.startsWith('/')) {
+      return "$baseUrl/$path";
+    }
+    return baseUrl + path;
+  }
+
+  // ============================================================
+  // STORAGE APIs
+  // ============================================================
+
+  /// Storage usage fetch karo (used vs limit)
+  static Future<Map<String, dynamic>> getStorageUsage() async {
+    try {
+      final response = await api.get("storage/usage");
+      final data = _parseData(response.data, statusCode: response.statusCode);
+      if (response.statusCode == 200) {
+        return {"status": "success", ...data};
+      }
+      return data;
+    } catch (e) {
+      return {"error": Constent.sometingWntWrong};
+    }
+  }
+
+  /// Storage breakdown fetch karo (photos vs videos alag alag)
+  static Future<Map<String, dynamic>> getStorageDetails() async {
+    try {
+      final response = await api.get("storage/details");
+      final data = _parseData(response.data, statusCode: response.statusCode);
+      if (response.statusCode == 200) {
+        return {"status": "success", ...data};
+      }
+      return data;
+    } catch (e) {
+      return {"error": Constent.sometingWntWrong};
+    }
+  }
+
+  /// ====== SETTINGS APIs =======
+
+  static Future<Map<String, dynamic>> getSyncPreference() async {
+    try {
+      final response = await api.get('settings/sync');
+      final data = _parseData(response.data, statusCode: response.statusCode);
+      if (response.statusCode == 200) {
+        return {'status': 'success', ...data};
+      }
+      return data;
+    } catch (e) {
+      return {'error': Constent.sometingWntWrong};
+    }
+  }
+
+  static Future<Map<String, dynamic>> updateSyncPreference(String mode) async {
+    try {
+      final response = await api.put('settings/sync', data: {'mode': mode});
+      final data = _parseData(response.data, statusCode: response.statusCode);
+      if (response.statusCode == 200) {
+        return {'status': 'success', ...data};
+      }
+      return data;
+    } catch (e) {
+      return {'error': Constent.sometingWntWrong};
+    }
+  }
+
+  // ================================================================
+  // IMAGE VAULT APIs  (Image Service - port 8084)
+  // ================================================================
+ 
+  /// Bulk upload — sirf unsync photos upload karta hai, 5-5 ke batches mein
+  static Future<Map<String, dynamic>> uploadImagesBulk({
+    required List<File> files,
+    String type = "personal",
+  }) async {
+    try {
+      const String url = "images/bulk";
+      print("=== UPLOAD START: ${files.length} files ===");
+ 
+      final List<MultipartFile> multipartFiles = [];
+      for (final file in files) {
+        try {
+          final filename = file.path.split('/').last;
+          final bool exists = await file.exists();
+          final int size = exists ? await file.length() : 0;
+          print("FILE: $filename | exists=$exists | size=$size bytes");
+          if (!exists || size == 0) { print("SKIP: $filename"); continue; }
+ 
+          String contentType = "image/jpeg";
+          final ext = filename.split('.').last.toLowerCase();
+          if (ext == "png")  contentType = "image/png";
+          else if (ext == "webp") contentType = "image/webp";
+          else if (ext == "gif")  contentType = "image/gif";
+          else if (ext == "heic" || ext == "heif") contentType = "image/heic";
+          else if (ext == "bmp" || ext == "dib") contentType = "image/bmp";
+          else if (ext == "tif" || ext == "tiff") contentType = "image/tiff";
+          else if (ext == "avif") contentType = "image/avif";
+ 
+          multipartFiles.add(await MultipartFile.fromFile(
+            file.path, filename: filename, contentType: DioMediaType.parse(contentType),
+          ));
+          print("ADDED: $filename ($contentType)");
+        } catch (fileErr) {
+          print("ERROR adding file ${file.path}: $fileErr");
+        }
+      }
+ 
+      if (multipartFiles.isEmpty) {
+        print("=== NO VALID FILES ===");
+        return {"status": "error", "uploaded": 0, "failed": files.length, "message": "No valid files to upload"};
+      }
+ 
+      print("=== SENDING ${multipartFiles.length} files to $url ===");
+      final FormData formData = FormData.fromMap({"files": multipartFiles, "type": type});
+ 
+      // ✅ imageApi — Image Service (port 8084)
+      final response = await imageApi.post(url, data: formData);
+      final statusCode = response.statusCode ?? 500;
+      print("=== RESPONSE STATUS: $statusCode ===");
+      print("=== RESPONSE DATA: ${response.data} ===");
+ 
+      if (statusCode == 200 || statusCode == 201) {
+        final dynamic rawData = response.data;
+        List<dynamic> uploadedList = [];
+        if (rawData is List) uploadedList = rawData;
+        else if (rawData is Map && rawData.containsKey('data')) uploadedList = rawData['data'] as List? ?? [];
+ 
+        return {
+          "status": "success",
+          "uploaded": uploadedList.length,
+          "failed": files.length - uploadedList.length,
+          "responses": uploadedList,
+        };
+      }
+ 
+      final data = _parseData(response.data, statusCode: statusCode);
+      return {"status": "error", "uploaded": 0, "failed": files.length, ...data};
+    } catch (e, stack) {
+      print("=== UPLOAD EXCEPTION: $e ===");
+      print("=== STACK: $stack ===");
+      return {"status": "error", "uploaded": 0, "failed": files.length, "message": Constent.sometingWntWrong};
+    }
+  }
+
+  /// Video Bulk upload
+  static Future<Map<String, dynamic>> uploadVideosBulk({
+    required List<File> files,
+  }) async {
+    try {
+      const String url = "videos/uploads/bulk";
+      print("=== VIDEO UPLOAD START: ${files.length} files ===");
+
+      final List<MultipartFile> multipartFiles = [];
+      for (final file in files) {
+        try {
+          final filename = file.path.split('/').last;
+          final bool exists = await file.exists();
+          final int size = exists ? await file.length() : 0;
+          if (!exists || size == 0) continue;
+
+          String contentType = "video/mp4";
+          final ext = filename.split('.').last.toLowerCase();
+          if (ext == "mov") contentType = "video/quicktime";
+          else if (ext == "m4v") contentType = "video/x-m4v";
+          else if (ext == "avi") contentType = "video/x-msvideo";
+          else if (ext == "mkv") contentType = "video/x-matroska";
+          else if (ext == "webm") contentType = "video/webm";
+          else if (ext == "ogv") contentType = "video/ogg";
+
+          multipartFiles.add(await MultipartFile.fromFile(
+            file.path,
+            filename: filename,
+            contentType: DioMediaType.parse(contentType),
+          ));
+        } catch (e) {
+          print("Error adding video file: $e");
+        }
+      }
+
+      if (multipartFiles.isEmpty) {
+        return {"status": "error", "message": "No valid videos found"};
+      }
+
+      final FormData formData = FormData.fromMap({"files": multipartFiles});
+      final response = await videoApi.post(url, data: formData);
+      final statusCode = response.statusCode ?? 500;
+
+      if (statusCode == 200 || statusCode == 201) {
+        final List<dynamic> resultList = response.data is List ? response.data : (response.data['data'] as List? ?? []);
+        return {
+          "status": "success",
+          "uploaded": resultList.length,
+          "failed": files.length - resultList.length,
+          "data": resultList,
+        };
+      }
+
+      final data = _parseData(response.data, statusCode: statusCode);
+      return {"status": "error", ...data};
+    } catch (e) {
+      print("Video upload exception: $e");
+      return {"status": "error", "message": Constent.sometingWntWrong};
+    }
+  }
 }
+

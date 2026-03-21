@@ -2,6 +2,7 @@ import 'package:chronogram/screens/home_screen/chat_screen.dart';
 import 'package:chronogram/screens/home_screen/photo_screen.dart';
 import 'package:chronogram/screens/home_screen/video_screen.dart';
 import 'package:chronogram/screens/settings_screen/settings_screen.dart';
+import 'package:chronogram/screens/home_screen_provider/home_screen_provider.dart';
 import 'package:chronogram/screens/login/login_helper/aseet_helper.dart';
 import 'package:chronogram/screens/login/login_provider/login_screen_provider.dart';
 import 'package:chronogram/screens/login/login_screen/login_screen.dart';
@@ -34,7 +35,12 @@ class _HomeScreenState extends State<HomeScreen>
   @override
   void initState() {
     super.initState();
-    _fetchUser();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<HomeScreenProvider>().fetchUser();
+      context.read<HomeScreenProvider>().fetchProfileHistory();
+      // 🚀 Clear image/video thumbnail cache on startup to keep APK size low
+      PhotoManager.clearFileCache();
+    });
 
     glowController = AnimationController(
       vsync: this,
@@ -42,38 +48,12 @@ class _HomeScreenState extends State<HomeScreen>
     )..repeat(reverse: true);
   }
 
-  Future<void> _fetchUser() async {
-    try {
-      // 1. Fetch user profile first (Independent of permissions)
-      final userProfile = await ApiService.getUserProfile();
-      if (userProfile != null) {
-        if (mounted) {
-          setState(() {
-            user = userProfile;
-            userName = userProfile.name ?? userProfile.mobileNumber ?? "User";
-          });
-        }
-      }
-      
-      // 2. Request permissions (Optional here as children also handle it)
-      // Moving this after profile ensures name is updated even if this hangs
-      PhotoManager.requestPermissionExtend().then((ps) {
-         if (ps.isAuth && mounted) {
-           // Permission granted
-         }
-      });
-
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          userName = "User";
-        });
-      }
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
+    final homeProvider = context.watch<HomeScreenProvider>();
+    final user = homeProvider.user;
+    final userName = homeProvider.userName;
 
     final List<Widget> pages = [
       PhotoScreen(user: user, userName: userName),
